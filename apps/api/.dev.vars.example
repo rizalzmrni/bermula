@@ -1,0 +1,14 @@
+# Salin ke .dev.vars untuk development lokal. Produksi: `wrangler secret put` / vars di dashboard.
+# Skema: packages/env/src/api.ts
+
+# Fungsi: Origin apps/app (redirect & trusted origin)
+# Wajib: ya | Sisi: server | Contoh format: http://localhost:5173
+APP_URL=http://localhost:5173
+
+# Fungsi: Origin apps/web (situs marketing)
+# Wajib: ya | Sisi: server | Contoh format: http://localhost:5174
+WEB_URL=http://localhost:5174
+
+# Fungsi: Origin yang diizinkan CORS (credentials: true), dipisah koma, tanpa `*`
+# Wajib: ya | Sisi: server | Contoh format: http://localhost:5173,http://localhost:5174
+CORS_ORIGINS=http://localhost:5173,http://localhost:5174
