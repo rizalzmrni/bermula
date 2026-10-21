@@ -36,7 +36,7 @@ agar bekerja bersama), **type-safe** dari database sampai UI, **modern**, dan **
 | Observability | Sentry + logging + BetterStack |
 | Lint & format | Ultracite (Oxlint + Oxfmt) |
 | Git hooks | Husky + lint-staged + commitlint |
-| Testing | `bun test` |
+| Testing | Vitest (+ `@cloudflare/vitest-pool-workers`) |
 
 ---
 
@@ -139,7 +139,7 @@ Setiap variabel didefinisikan di dua tempat yang harus selalu sinkron: file cont
 | `bun run build` | Build semua app |
 | `bun run check-types` | Type-check seluruh monorepo |
 | `bun run check` / `bun run fix` | Lint & format via Ultracite |
-| `bun test` | Jalankan unit test |
+| `bun run test` | Jalankan unit test (Vitest) |
 | `bun run db:generate` | Buat file migrasi Drizzle |
 | `bun run db:migrate` | Terapkan migrasi (lokal/dev) |
 | `bun run db:studio` | Buka Drizzle Studio |

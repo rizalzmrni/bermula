@@ -70,7 +70,7 @@ agar deployment seragam.
 | Observability | `@sentry/cloudflare` (+ `@sentry/react`), logging, BetterStack | |
 | Lint & format | Ultracite (backend Oxlint + Oxfmt) | Lihat "Standar Lint & Format" |
 | Git hooks | Husky + lint-staged + commitlint | Lihat "Alur Git & Commit" |
-| Testing | `bun test` | Bawaan bun, tanpa dependensi tambahan |
+| Testing | Vitest (+ `@cloudflare/vitest-pool-workers`) | Selaras dengan Vite; menguji kode Worker di runtime workerd asli |
 
 Gunakan versi stabil terbaru dari setiap library dan ikuti API versi yang
 terpasang di `package.json`. Jika ragu soal API suatu library, **cek dokumentasi
@@ -95,7 +95,7 @@ didefinisikan **sekali** di `package.json` root, lalu dirujuk dari semua paket.
 Tentukan dulu lokasinya dengan urutan keputusan berikut (berhenti di jawaban
 pertama yang cocok):
 
-1. **Paket internal** (`@repo/*`)? → tulis `"workspace:*"`. Tidak pernah masuk catalog.
+1. **Paket internal** (`@bermula/*`)? → tulis `"workspace:*"`. Tidak pernah masuk catalog.
 2. **Tooling yang hanya dipakai di root** (hook, linter, orkestrasi monorepo)?
    → `devDependencies` di `package.json` root dengan versi langsung, tanpa catalog.
 3. **Termasuk salah satu kelompok di `catalogs`** (tabel di bawah)? → masuk
@@ -135,6 +135,7 @@ bersamaan:
 | `api` | `hono`, `@hono/zod-openapi`, `@scalar/hono-api-reference`, `wrangler`, `@cloudflare/workers-types`, `@cloudflare/vite-plugin` | Runtime & tooling Cloudflare Workers + Hono (dipakai web & api) |
 | `db` | `drizzle-orm`, `drizzle-kit`, `@neondatabase/serverless` | `drizzle-orm` dan `drizzle-kit` wajib berversi cocok |
 | `services` | `better-auth`, `resend`, `stripe`, `posthog-js`, `@sentry/cloudflare`, `@sentry/react` | Integrasi layanan pihak ketiga |
+| `test` | `vitest`, `@vitest/ui`, `@cloudflare/vitest-pool-workers`, `@testing-library/react`, `@testing-library/dom`, `happy-dom` | Runner & lingkungan test; versi `vitest` dan pool-workers harus cocok (semua `devDependencies`) |
 
 Daftar di atas adalah kondisi awal. Paket baru yang jelas termasuk sebuah kelompok
 langsung masuk catalog kelompok itu. Membuat catalog bernama **baru** harus
@@ -146,7 +147,7 @@ bersamaan.
 
 ```json
 {
-  "name": "repo",
+  "name": "bermula",
   "private": true,
   "workspaces": {
     "packages": ["apps/*", "packages/*"],
@@ -209,16 +210,15 @@ bersamaan.
 - Jangan menambahkan entri catalog yang tidak dirujuk paket mana pun; hapus entri
   saat paket terakhir yang memakainya dihapus.
 
-> **Catatan penamaan scope:** boilerplate ini memakai scope `@repo/*`. Ganti ke
-> nama proyekmu (`@namaproyek/*`) sekali di seluruh monorepo bila mau, dan
-> konsistenkan di semua `package.json`, path impor, dan `tsconfig`.
+> **Catatan penamaan scope:** proyek ini memakai scope `@bermula/*` (mis.
+> `@bermula/db`), konsisten di semua `package.json`, path impor, dan `tsconfig`.
 
 ---
 
 ## Struktur Folder (Monorepo)
 
 ```
-repo/
+bermula/
 ├── apps/
 │   ├── web/                    # Marketing — React Router v7 (SSR) → Cloudflare Workers
 │   │   ├── .dev.vars.example
@@ -275,7 +275,7 @@ repo/
 ```
 
 Aturan struktur:
-- Nama paket internal memakai scope `@repo/*` (contoh `@repo/db`) dan dirujuk
+- Nama paket internal memakai scope `@bermula/*` (contoh `@bermula/db`) dan dirujuk
   dengan `"workspace:*"`.
 - Letakkan kode sedekat mungkin dengan pemakainya. Angkat ke `packages/` hanya
   jika dipakai oleh lebih dari satu app.
@@ -471,8 +471,20 @@ Aturan struktur:
 - Jangan menonaktifkan aturan lint secara inline kecuali dengan komentar alasan.
 
 ## Pengujian
-- Gunakan `bun test`. File uji diletakkan di samping file sumbernya
-  (`rate-limit.ts` → `rate-limit.test.ts`).
+- Gunakan **Vitest**, bukan `bun test`. Alasan: Vitest berbagi pipeline Vite dengan
+  app (alias, plugin, transform React Router) dan bisa menjalankan test kode Worker
+  di runtime **workerd** asli — runtime produksi kita — bukan di Node/Bun. File uji
+  diletakkan di samping file sumbernya (`rate-limit.ts` → `rate-limit.test.ts`).
+- Pilih lingkungan test sesuai jenis kode:
+  - **Fungsi murni & util** (`packages/core`, dll.): Vitest default (Node), tercepat.
+  - **Komponen React** (`packages/design-system`, fitur app): Vitest + `happy-dom`
+    (atau `jsdom`) + `@testing-library/react`.
+  - **Kode Worker** (`apps/api`, handler Hono, akses binding R2/Neon): Vitest dengan
+    `@cloudflare/vitest-pool-workers` agar berjalan di workerd asli dengan binding
+    sungguhan. Alasan: runtime test = runtime produksi, menghindari rasa aman palsu.
+- Konfigurasi Vitest meng-extend `vite.config` app agar alias & plugin konsisten.
+  Jalankan test lewat skrip turbo (`bun run test`), bukan memanggil runner per paket
+  secara manual.
 - Wajib diuji: semua fungsi murni di `packages/core`, service yang berisi logika
   bisnis, validasi skema Zod penting, dan util yang dipakai lintas fitur.
 - Test harus deterministik: tanpa jaringan nyata, tanpa database produksi, dan
@@ -514,7 +526,7 @@ Gunakan skrip ini, jangan memanggil tool secara langsung jika skripnya tersedia:
 | `bun run build` | Build semua app |
 | `bun run check-types` | Type-check semua paket (`tsc --noEmit` via turbo) |
 | `bun run check` / `bun run fix` | Lint & format via Ultracite |
-| `bun test` | Jalankan unit test |
+| `bun run test` | Jalankan unit test (Vitest) |
 | `bun run db:generate` | Buat file migrasi Drizzle |
 | `bun run db:migrate` | Terapkan migrasi (lokal/dev) |
 | `bun run db:studio` | Buka Drizzle Studio |
@@ -544,7 +556,7 @@ Kebiasaan kerja:
 - Baca hanya kode terkait yang dibutuhkan, dan gunakan kembali pola yang sudah ada.
 - Jika tugas butuh env baru, buat/perbarui file contoh env terlebih dahulu.
 - Saat iterasi, jalankan check pada paket yang berubah saja (`--filter`). Sebelum
-  commit, jalankan `bun run check-types`, `bun run check`, dan `bun test` penuh.
+  commit, jalankan `bun run check-types`, `bun run check`, dan `bun run test` penuh.
 - Bila sebuah integrasi tak punya pola bersih di stack ini, **hentikan dan
   laporkan opsi + trade-off**; jangan memaksakan solusi rapuh.
 - Temuan di luar tugas (bug lain, ide, utang teknis) cukup disebutkan di laporan,
@@ -583,7 +595,7 @@ dapat diubah developer).
 Tugas selesai jika poin berikut terpenuhi (lewati poin yang tidak relevan):
 - [ ] `bun run check-types` lolos tanpa error.
 - [ ] `bun run check` (Ultracite: Oxlint + Oxfmt) bersih tanpa error dan warning.
-- [ ] `bun test` lolos; fungsi/logika baru atau berubah memiliki test.
+- [ ] `bun run test` (Vitest) lolos; fungsi/logika baru atau berubah memiliki test.
 - [ ] Tidak ada `any`, `@ts-ignore`, `console.log`, atau TODO yang menutupi bug.
 - [ ] Struktur file dan penamaan sesuai dokumen ini.
 - [ ] Input eksternal tervalidasi Zod.
