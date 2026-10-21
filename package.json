@@ -20,6 +20,10 @@
         "@neondatabase/serverless": "^1.2.0",
         "drizzle-kit": "1.0.0-rc.4",
         "drizzle-orm": "1.0.0-rc.4"
+      },
+      "services": {
+        "@better-auth/drizzle-adapter": "^1.7.12",
+        "better-auth": "^1.7.12"
       }
     }
   },

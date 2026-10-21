@@ -1,0 +1,27 @@
+{
+  "name": "@bermula/auth",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./client": "./src/client.ts",
+    "./server": "./src/server.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@bermula/db": "workspace:*",
+    "@bermula/env": "workspace:*",
+    "@bermula/observability": "workspace:*",
+    "@better-auth/drizzle-adapter": "catalog:services",
+    "better-auth": "catalog:services",
+    "drizzle-orm": "catalog:db"
+  },
+  "devDependencies": {
+    "@bermula/typescript-config": "workspace:*",
+    "typescript": "catalog:",
+    "vitest": "catalog:test"
+  }
+}

@@ -5,7 +5,7 @@
 
 ## Fase berjalan
 
-**Fase 2 — sebagian** (`packages/db` selesai; `apps/api` sengaja ditunda).
+**Fase 2–3 — sebagian** (`packages/db` & konfigurasi `packages/auth` selesai; tabel auth menunggu review developer; `apps/api` sengaja ditunda).
 Arahan developer (2026-10-21): siapkan **semua `packages/*` lebih dulu**, baru
 kemudian `apps/*`.
 
@@ -16,7 +16,7 @@ kemudian `apps/*`.
 | 0    | Root `package.json` + catalog, `turbo.json`, `packages/typescript-config`, Ultracite, Husky, commitlint | ✅     |
 | 1    | `packages/env`, `packages/core`, `packages/observability`                                               | ✅     |
 | 2    | `apps/api` (Hono + OpenAPI + Scalar), `packages/db`                                                     | 🚧     |
-| 3    | `packages/auth` + better-auth di api, auth gate di `apps/app`                                           | ⏳     |
+| 3    | `packages/auth` + better-auth di api, auth gate di `apps/app`                                           | 🚧     |
 | 4    | `packages/design-system`, `apps/storybook`, `apps/app`, `apps/web`                                      | ⏳     |
 | 5    | `packages/email` + `apps/email`, `packages/storage`                                                     | ⏳     |
 | 6    | `packages/payments` (Stripe + webhook), `packages/analytics`, `packages/seo`                            | ⏳     |
@@ -29,20 +29,20 @@ Status: ⏳ belum · 🚧 sedang · ✅ selesai
 - `packages/typescript-config` — preset `base.json` (Worker/paket murni/tooling) dan `react.json` (app React Router & paket React). Lihat README-nya.
 - Root tooling: turbo 2.11, Ultracite 8 (Oxlint + Oxfmt), Husky (`pre-commit`, `commit-msg`, `pre-push`), lint-staged, commitlint (`commitlint.config.ts`).
 - `packages/core` — `@bermula/core/format`: `formatNumber`, `formatCurrency`, `formatDate`, `formatRelativeTime` (default `id-ID`, IDR, `Asia/Jakarta`). Belum ada `src/schemas` (dibuat saat fitur pertama).
-- `packages/env` — skema t3-env: `@bermula/env/api` (`APP_URL`, `WEB_URL`, `CORS_ORIGINS`, `DATABASE_URL`, `LOG_LEVEL`, pasangan opsional BetterStack & PostHog), `/app` (`VITE_API_URL`), `/web` (`VITE_APP_URL`). File contoh di `apps/api/.dev.vars.example`, `apps/{app,web}/.env.example`.
+- `packages/env` — skema t3-env: `@bermula/env/api` (`APP_URL`, `WEB_URL`, `CORS_ORIGINS`, `DATABASE_URL`, `LOG_LEVEL`, `BETTER_AUTH_URL`, `BETTER_AUTH_SECRET`, `AUTH_COOKIE_DOMAIN` opsional, pasangan opsional BetterStack, PostHog & Google OAuth), `/app` (`VITE_API_URL`), `/web` (`VITE_APP_URL`). File contoh di `apps/api/.dev.vars.example`, `apps/{app,web}/.env.example`.
 - `packages/observability` — `logger` (JSON ke console/Workers Logs + buffer + `flush`), `better-stack` (transport HTTP), `posthog` (`$exception` ke PostHog Error Tracking). Tanpa dependensi runtime.
 - `packages/db` — Drizzle v1 RC + Neon: `createDb` (neon-http), `createTxDb` (Pool per request + `close`), `relations.ts` (masih kosong), `drizzle.config.ts`, skrip `db:generate|migrate|studio`. **Belum ada tabel.**
-- Vitest 5 (`catalogs.test`) dipakai `core`, `env`, `observability`.
+- `packages/auth` — better-auth 1.7: `@bermula/auth/server` (`createAuth` per request: email+password wajib verifikasi, Google opsional, plugin organization, email via `waitUntil`), `@bermula/auth/client` (klien vanilla + `organizationClient`). **Tabel auth belum dibuat** (menunggu review konfigurasi).
+- Vitest 5 (`catalogs.test`) dipakai `core`, `env`, `observability`, `auth`.
 - `apps/*`, `packages/{storage,payments}` baru berisi `CLAUDE.md` / file contoh env (belum jadi workspace).
 
 ## Keputusan tertunda
 
 Bila tugas menyentuh salah satunya: berhenti dan tanyakan.
 
-| Topik           | Opsi                                                                                        | Batas waktu                         |
-| --------------- | ------------------------------------------------------------------------------------------- | ----------------------------------- |
-| Scoping data    | per-user (`user_id`) / per-organisasi (`organization_id` + plugin organization better-auth) | Sebelum tabel data pengguna pertama |
-| Domain produksi | —                                                                                           | Sebelum deploy pertama (Fase 7)     |
+| Topik           | Opsi | Batas waktu                     |
+| --------------- | ---- | ------------------------------- |
+| Domain produksi | —    | Sebelum deploy pertama (Fase 7) |
 
 ## Keputusan yang sudah diambil
 
@@ -60,6 +60,11 @@ Bila tugas menyentuh salah satunya: berhenti dan tanyakan.
 - 2026-10-21 — `packages/observability` memakai lib `WebWorker` (tanpa DOM) agar hanya API yang ada di Workers & browser yang lolos type-check.
 - 2026-10-21 — **Drizzle v1 RC** (`drizzle-orm` & `drizzle-kit` `1.0.0-rc.4`, dist-tag `rc`), dipin persis karena prerelease: caret akan ikut menarik build preview `rc.5-<hash>`. Casing lewat `snakeCase.table(...)`; relasi lewat `defineRelations`.
 - 2026-10-21 — `@types/node` di catalog mengikuti Node 24 (`engines`), bukan versi terbaru (26).
+- 2026-10-21 — **Scoping data: per-organisasi** (plugin organization better-auth). Tabel data pengguna memakai `organization_id`; service menerima `organizationId` dari sesi aktif.
+- 2026-10-21 — Metode login: email + password (wajib verifikasi) dan Google OAuth (opsional lewat env).
+- 2026-10-21 — Adapter `@better-auth/drizzle-adapter/relations-v2` (RQB v2 Drizzle v1) dengan `createDb` (neon-http), `transaction: false`. Jalur transaksi wajib di adapter hanya untuk MySQL. Konsekuensi: operasi multi-langkah better-auth tidak atomik.
+- 2026-10-21 — Rate limiter bawaan better-auth dimatikan (memori per isolate); `/api/auth/*` dibatasi binding Rate Limiting di apps/api.
+- 2026-10-21 — `packages/auth` tidak bergantung pada `packages/email`: fungsi kirim disuntikkan oleh apps/api lewat `createAuth({ emails })`.
 - 2026-10-21 — `drizzle.config.ts` membaca `.env` dengan `process.loadEnvFile()` bawaan Node (tanpa `dotenv`), type-check terpisah lewat `tsconfig.node.json`.
 
 ## Hal yang perlu diverifikasi
@@ -67,7 +72,8 @@ Bila tugas menyentuh salah satunya: berhenti dan tanyakan.
 - `wrangler types` vs `@cloudflare/workers-types` untuk versi terpasang (saat `apps/api` dibuat).
 - Kompatibilitas TypeScript 7 dengan tool yang memakai JS API TypeScript / peer `typescript@^5` (mis. `@react-router/dev`, Storybook). Bila bermasalah, opsi: `typescript@^6` di catalog.
 - Ekstensi VS Code untuk TS 7: TS 7 tidak menyertakan `tsserver`, sehingga `js/ts.tsdk.path` di `.vscode/settings.json` mungkin tidak berpengaruh.
-- Kompatibilitas adapter Drizzle better-auth dengan Drizzle v1 RC (Fase 3) — cek dokumentasinya sebelum memilih adapter.
+- Cara menjalankan CLI better-auth (`bunx auth@latest generate`) terhadap factory `createAuth` per request (butuh file konfigurasi statis khusus CLI) — saat tabel auth dibuat.
+- `activeOrganizationId` belum diisi otomatis saat login (perlu `databaseHooks.session.create.before` setelah tabel `member` ada), dan belum diputuskan apakah organisasi pribadi dibuat saat sign-up.
 - `createDb`/`createTxDb` belum diuji ke database nyata (belum ada tabel/branch Neon dev).
 
 Sudah terverifikasi (2026-10-21): `ultracite init` menambah blok sendiri ke `AGENTS.md` (tidak menimpa `CLAUDE.md`); blok turbo di `AGENTS.md` dikelola `turbo` (opt-in via `agentGuidance`); `commitlint.config.ts` didukung commitlint 21; format BetterStack HTTP ingest & PostHog `$exception` dicek dari dokumentasi resmi.
