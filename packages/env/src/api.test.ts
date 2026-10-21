@@ -4,6 +4,8 @@ import { createApiEnv } from "./api";
 
 const VALID_ENV = {
   APP_URL: "http://localhost:5173",
+  BETTER_AUTH_SECRET: "test-secret-that-is-at-least-32-chars",
+  BETTER_AUTH_URL: "http://localhost:8787",
   CORS_ORIGINS: "http://localhost:5173, http://localhost:5174",
   DATABASE_URL: "postgresql://user:pass@ep-test.neon.tech/app?sslmode=require",
   WEB_URL: "http://localhost:5174",
@@ -72,5 +74,27 @@ describe(createApiEnv, () => {
     expect(() =>
       createApiEnv({ ...VALID_ENV, POSTHOG_HOST: "https://eu.i.posthog.com" })
     ).toThrow("POSTHOG_PROJECT_TOKEN");
+  });
+
+  it("rejects a BETTER_AUTH_SECRET shorter than 32 characters", () => {
+    expect(() =>
+      createApiEnv({ ...VALID_ENV, BETTER_AUTH_SECRET: "too-short" })
+    ).toThrow("BETTER_AUTH_SECRET");
+  });
+
+  it("requires both Google OAuth credentials", () => {
+    expect(() =>
+      createApiEnv({ ...VALID_ENV, GOOGLE_CLIENT_ID: "client-id" })
+    ).toThrow("GOOGLE_CLIENT_SECRET");
+  });
+
+  it("accepts a bare cookie domain and rejects a URL", () => {
+    expect(
+      createApiEnv({ ...VALID_ENV, AUTH_COOKIE_DOMAIN: "example.com" })
+        .AUTH_COOKIE_DOMAIN
+    ).toBe("example.com");
+    expect(() =>
+      createApiEnv({ ...VALID_ENV, AUTH_COOKIE_DOMAIN: "https://example.com" })
+    ).toThrow("AUTH_COOKIE_DOMAIN");
   });
 });

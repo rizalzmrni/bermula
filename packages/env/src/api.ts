@@ -10,12 +10,26 @@ const POSTGRES_URL_PATTERN = /^postgres(?:ql)?:\/\//u;
 // apps/api meneruskan `env.LOG_LEVEL` ke `createLogger`.
 const LOG_LEVEL_VALUES = ["debug", "info", "warn", "error"] as const;
 
+// Domain cookie tanpa skema/port, mis. `example.com`; titik di depan opsional.
+const COOKIE_DOMAIN_PATTERN = /^\.?[a-z0-9-]+(?:\.[a-z0-9-]+)+$/u;
+
+// better-auth menolak secret yang lebih pendek di production.
+const AUTH_SECRET_MIN_LENGTH = 32;
+
 const server = {
   APP_URL: originSchema,
+  AUTH_COOKIE_DOMAIN: z
+    .string()
+    .regex(COOKIE_DOMAIN_PATTERN, "Harus domain, mis. example.com")
+    .optional(),
+  BETTER_AUTH_SECRET: z.string().min(AUTH_SECRET_MIN_LENGTH),
+  BETTER_AUTH_URL: originSchema,
   BETTER_STACK_INGESTING_URL: z.url().optional(),
   BETTER_STACK_SOURCE_TOKEN: z.string().min(1).optional(),
   CORS_ORIGINS: originListSchema,
   DATABASE_URL: z.url().regex(POSTGRES_URL_PATTERN, "Harus URL postgresql://"),
+  GOOGLE_CLIENT_ID: z.string().min(1).optional(),
+  GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
   LOG_LEVEL: z.enum(LOG_LEVEL_VALUES).default("info"),
   POSTHOG_HOST: originSchema.optional(),
   POSTHOG_PROJECT_TOKEN: z.string().min(1).optional(),
@@ -27,6 +41,7 @@ const server = {
 const OPTIONAL_PAIRS = [
   ["BETTER_STACK_SOURCE_TOKEN", "BETTER_STACK_INGESTING_URL"],
   ["POSTHOG_PROJECT_TOKEN", "POSTHOG_HOST"],
+  ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"],
 ] as const satisfies readonly (readonly [
   keyof typeof server,
   keyof typeof server,
