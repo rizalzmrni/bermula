@@ -1,0 +1,11 @@
+import { defineConfig } from "oxlint";
+import core from "ultracite/oxlint/core";
+import react from "ultracite/oxlint/react";
+import remix from "ultracite/oxlint/remix";
+import vitest from "ultracite/oxlint/vitest";
+
+export default defineConfig({
+  env: core.env,
+  extends: [core, react, remix, vitest],
+  ignorePatterns: core.ignorePatterns,
+});
