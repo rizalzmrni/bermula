@@ -1,0 +1,18 @@
+{
+  "name": "@bermula/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./format": "./src/format.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@bermula/typescript-config": "workspace:*",
+    "typescript": "catalog:",
+    "vitest": "catalog:test"
+  }
+}

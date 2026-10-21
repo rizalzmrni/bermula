@@ -17,8 +17,7 @@
       "dependsOn": ["transit", "typegen"]
     },
     "test": {
-      "dependsOn": ["transit", "typegen"],
-      "outputs": ["coverage/**"]
+      "dependsOn": ["transit", "typegen"]
     },
     "dev": {
       "cache": false,
