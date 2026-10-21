@@ -50,7 +50,7 @@ Sebutkan hasil keputusan (lokasi + alasan satu kalimat) di "Catatan" laporan.
 | `tanstack`  | `@tanstack/react-query`, `@tanstack/react-table`, `@tanstack/react-form` + devtools                                                                                     | Satu ekosistem                                        |
 | `api`       | `hono`, `@hono/zod-openapi`, `@scalar/hono-api-reference`, `wrangler`, `@cloudflare/vite-plugin` (+ `@cloudflare/workers-types` hanya bila masih dibutuhkan)            | Runtime & tooling Workers + Hono                      |
 | `db`        | `drizzle-orm`, `drizzle-kit`, `@neondatabase/serverless`                                                                                                                | `drizzle-orm` & `drizzle-kit` wajib cocok             |
-| `services`  | `better-auth`, `resend`, `stripe`, `posthog-js`, `@sentry/cloudflare`, `@sentry/react`, `@react-email/*`                                                                | Integrasi layanan pihak ketiga                        |
+| `services`  | `better-auth`, `resend`, `stripe`, `posthog-js`, `@react-email/*`                                                                                                       | Integrasi layanan pihak ketiga                        |
 | `test`      | `vitest`, `@vitest/ui`, `@cloudflare/vitest-pool-workers`, `@testing-library/react`, `@testing-library/dom`, `happy-dom`                                                | Versi `vitest` & pool-workers harus cocok (semua dev) |
 | `storybook` | `storybook` dan paket `@storybook/*` yang dipakai                                                                                                                       | Semua paket Storybook wajib berversi sama             |
 

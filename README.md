@@ -15,28 +15,28 @@ agar bekerja bersama), **type-safe** dari database sampai UI, **modern**, dan **
 
 ## Teknologi
 
-| Area                | Pilihan                                       |
-| ------------------- | --------------------------------------------- |
-| Bahasa              | TypeScript (strict)                           |
-| Monorepo            | Turborepo + Bun workspaces                    |
-| Frontend            | React + React Router v7 (framework mode, SSR) |
-| Backend / API       | Hono                                          |
-| Runtime & deploy    | Cloudflare Workers (Wrangler)                 |
-| Database            | Neon (Postgres serverless)                    |
-| ORM                 | Drizzle + drizzle-kit                         |
-| Autentikasi         | better-auth                                   |
-| Pembayaran          | Stripe                                        |
-| Email               | Resend + React Email                          |
-| Object storage      | Cloudflare R2                                 |
-| UI                  | Tailwind CSS + shadcn/ui                      |
-| Data / tabel / form | TanStack Query, Table, Form                   |
-| Validasi & env      | Zod + t3-env                                  |
-| Dokumentasi API     | OpenAPI 3.1 (`@hono/zod-openapi`) + Scalar    |
-| Analitik            | Google Analytics (web) + PostHog (produk)     |
-| Observability       | Sentry + logging + BetterStack                |
-| Lint & format       | Ultracite (Oxlint + Oxfmt)                    |
-| Git hooks           | Husky + lint-staged + commitlint              |
-| Testing             | Vitest (+ `@cloudflare/vitest-pool-workers`)  |
+| Area                | Pilihan                                        |
+| ------------------- | ---------------------------------------------- |
+| Bahasa              | TypeScript (strict)                            |
+| Monorepo            | Turborepo + Bun workspaces                     |
+| Frontend            | React + React Router v7 (framework mode, SSR)  |
+| Backend / API       | Hono                                           |
+| Runtime & deploy    | Cloudflare Workers (Wrangler)                  |
+| Database            | Neon (Postgres serverless)                     |
+| ORM                 | Drizzle + drizzle-kit                          |
+| Autentikasi         | better-auth                                    |
+| Pembayaran          | Stripe                                         |
+| Email               | Resend + React Email                           |
+| Object storage      | Cloudflare R2                                  |
+| UI                  | Tailwind CSS + shadcn/ui                       |
+| Data / tabel / form | TanStack Query, Table, Form                    |
+| Validasi & env      | Zod + t3-env                                   |
+| Dokumentasi API     | OpenAPI 3.1 (`@hono/zod-openapi`) + Scalar     |
+| Analitik            | Google Analytics (web) + PostHog (produk)      |
+| Observability       | Logging + BetterStack + PostHog Error Tracking |
+| Lint & format       | Ultracite (Oxlint + Oxfmt)                     |
+| Git hooks           | Husky + lint-staged + commitlint               |
+| Testing             | Vitest (+ `@cloudflare/vitest-pool-workers`)   |
 
 ---
 
@@ -64,7 +64,7 @@ bermula/
 │   ├── email/          # Resend
 │   ├── storage/        # Cloudflare R2
 │   ├── analytics/      # GA + PostHog
-│   ├── observability/  # Sentry + logging + BetterStack
+│   ├── observability/  # Logging, BetterStack, PostHog Error Tracking
 │   ├── seo/            # Metadata, sitemap, JSON-LD
 │   └── typescript-config/ # Preset tsconfig bersama (base, react)
 ├── CLAUDE.md       # Aturan proyek untuk AI agent
@@ -83,7 +83,7 @@ dengan `"workspace:*"`. Dependensi mengalir satu arah: `apps/*` → `packages/*`
 - **Node.js 20+** (untuk sebagian tooling)
 - **Wrangler** (CLI Cloudflare) — ikut terpasang sebagai dependensi
 - Akun layanan: **Cloudflare**, **Neon**, **Stripe**, **Resend**
-  (serta PostHog/Sentry/BetterStack bila mengaktifkan analitik & observability)
+  (serta PostHog/BetterStack bila mengaktifkan analitik & observability)
 
 ---
 

@@ -58,30 +58,30 @@ React Router (framework mode), Hono, dan Drizzle.
 Satu bahasa (TypeScript) agar tipe dan logika dibagikan antar-paket; satu runtime
 (Workers) agar deployment seragam.
 
-| Area               | Pilihan                                                                       |
-| ------------------ | ----------------------------------------------------------------------------- |
-| Bahasa             | TypeScript `strict: true`                                                     |
-| Monorepo / PM      | Turborepo + bun workspaces (bun satu-satunya package manager)                 |
-| Frontend           | React + React Router (framework mode, SSR) + Vite + `@cloudflare/vite-plugin` |
-| Backend            | Hono + `@hono/zod-openapi` + Scalar                                           |
-| Database           | Neon Postgres + Drizzle (lihat `packages/db/CLAUDE.md` untuk driver)          |
-| Validasi / Env     | Zod / t3-env (`@t3-oss/env-core`)                                             |
-| UI                 | Tailwind CSS + shadcn/ui                                                      |
-| Auth               | better-auth                                                                   |
-| Pembayaran / Email | Stripe / Resend + React Email                                                 |
-| Storage            | Cloudflare R2 (dibungkus `packages/storage`)                                  |
-| Data               | TanStack Query, Table, Form                                                   |
-| Analitik           | Google Analytics (web) + PostHog (produk)                                     |
-| Observability      | `@sentry/cloudflare` + `@sentry/react`, Workers Logs, BetterStack             |
-| Lint & format      | Ultracite (Oxlint + Oxfmt)                                                    |
-| Git hooks          | Husky + lint-staged + commitlint                                              |
-| Testing            | Vitest (+ `@cloudflare/vitest-pool-workers`)                                  |
+| Area               | Pilihan                                                                                      |
+| ------------------ | -------------------------------------------------------------------------------------------- |
+| Bahasa             | TypeScript `strict: true`                                                                    |
+| Monorepo / PM      | Turborepo + bun workspaces (bun satu-satunya package manager)                                |
+| Frontend           | React + React Router (framework mode, SSR) + Vite + `@cloudflare/vite-plugin`                |
+| Backend            | Hono + `@hono/zod-openapi` + Scalar                                                          |
+| Database           | Neon Postgres + Drizzle (lihat `packages/db/CLAUDE.md` untuk driver)                         |
+| Validasi / Env     | Zod / t3-env (`@t3-oss/env-core`)                                                            |
+| UI                 | Tailwind CSS + shadcn/ui                                                                     |
+| Auth               | better-auth                                                                                  |
+| Pembayaran / Email | Stripe / Resend + React Email                                                                |
+| Storage            | Cloudflare R2 (dibungkus `packages/storage`)                                                 |
+| Data               | TanStack Query, Table, Form                                                                  |
+| Analitik           | Google Analytics (web) + PostHog (produk)                                                    |
+| Observability      | Logger `packages/observability` → Workers Logs + BetterStack; error → PostHog Error Tracking |
+| Lint & format      | Ultracite (Oxlint + Oxfmt)                                                                   |
+| Git hooks          | Husky + lint-staged + commitlint                                                             |
+| Testing            | Vitest (+ `@cloudflare/vitest-pool-workers`)                                                 |
 
 **Versi:** saat instalasi awal sebuah paket, pakai versi stabil terbaru. Setelah
 itu, ikuti versi di catalog — **jangan upgrade di tengah tugas lain**. Cek API
 library dari versi yang terpasang di `package.json` dan dokumentasi resminya,
 **jangan menebak dari ingatan**; React Router, Hono, Drizzle, better-auth,
-`@hono/zod-openapi`, dan Sentry bergerak cepat.
+`@hono/zod-openapi`, dan PostHog bergerak cepat.
 
 **Library baru** di luar tabel harus diusulkan dulu (nama, alasan, alternatif,
 lokasi catalog) dan menunggu persetujuan.
@@ -148,7 +148,7 @@ bermula/
 │   ├── email/          # Template React Email + fungsi kirim Resend
 │   ├── storage/        # Cloudflare R2: binding + presigned URL
 │   ├── analytics/      # GA (web) + PostHog
-│   ├── observability/  # Sentry + logger + BetterStack
+│   ├── observability/  # Logger, BetterStack, PostHog Error Tracking
 │   ├── seo/            # Metadata, sitemap, JSON-LD
 │   └── typescript-config/ # Preset tsconfig bersama (base, react)
 ├── docs/               # Dokumen rujukan untuk AI & developer
@@ -171,7 +171,7 @@ bermula/
 - Komponen & tipe: `PascalCase`, tipe tanpa prefiks `I`.
 - Fungsi, variabel, hook: `camelCase`. Konstanta modul: `UPPER_SNAKE_CASE`.
 - Tanpa `enum`: pakai objek `as const` + tipe turunannya.
-- DB: `snake_case` di Postgres, `camelCase` di kode (`casing: "snake_case"`).
+- DB: `snake_case` di Postgres, `camelCase` di kode (`snakeCase.table(...)`).
 - Route API: kata benda jamak `kebab-case` (`/api-keys`).
 - Tanpa barrel file; impor langsung dari file sumber. Pengecualian: titik masuk
   paket lewat field `exports` di `package.json`.

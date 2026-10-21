@@ -60,11 +60,14 @@ atau binding R2 langsung.
 
 ## Logging, error tracking, analitik
 
-- Sentry via `@sentry/cloudflare` (bungkus handler sesuai dokumentasi versi
-  terpasang).
-- Logger dari `packages/observability`: aktifkan Workers Logs di
-  `wrangler.jsonc`; pengiriman ke BetterStack lewat `fetch` dibungkus
-  `c.executionCtx.waitUntil()` agar tidak menahan respons.
+- Logger dari `@bermula/observability/logger`, dibuat **per request** di
+  middleware (transport BetterStack bila env-nya diisi). Aktifkan Workers Logs
+  di `wrangler.jsonc`; `logger.flush()` dibungkus `c.executionCtx.waitUntil()`
+  agar tidak menahan respons.
+- Error tracking: PostHog Error Tracking lewat
+  `@bermula/observability/posthog` (`$exception` via HTTP capture API) dari
+  `app.onError`, dengan `handled: false` dan `distinctId` dari sesi bila ada;
+  juga dibungkus `waitUntil`.
 - Event PostHog dari server dikirim lewat HTTP capture API dengan `fetch` +
   `waitUntil` (tanpa SDK Node).
 
