@@ -99,13 +99,11 @@ Keputusan yang sudah ditetapkan. Jangan menyimpang tanpa persetujuan.
 | Analitik server             | PostHog dari Worker lewat HTTP capture API dengan `fetch` (tanpa SDK Node); `posthog-js` hanya di browser.                                                                                        | `apps/api/CLAUDE.md`    |
 | Rate limiting               | Binding Rate Limiting Workers, bukan state in-memory.                                                                                                                                             | `apps/api/CLAUDE.md`    |
 | Driver DB                   | `neon-http` untuk query biasa; `neon-serverless` (Pool per request) bila butuh transaksi.                                                                                                         | `packages/db/CLAUDE.md` |
+| Scoping data                | Per-organisasi: plugin organization better-auth; tabel data pengguna memakai `organization_id` dari organisasi aktif di sesi.                                                                     | `packages/db/CLAUDE.md` |
 
 **Keputusan tertunda** (dicatat di `STATUS.md`): bila tugas menyentuhnya,
 **berhenti dan tanyakan**, jangan memilih sendiri.
 
-- **Scoping data:** per-user (`user_id`) atau per-organisasi (`organization_id`
-  - plugin organization better-auth). Wajib diputuskan sebelum tabel data
-    pengguna pertama dibuat.
 - **Domain produksi:** semua URL/origin dari env sampai ditetapkan.
 
 ## Dependensi (ringkas)

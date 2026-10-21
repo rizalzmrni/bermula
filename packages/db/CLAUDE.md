@@ -36,11 +36,12 @@ Aturan root `CLAUDE.md` tetap berlaku.
 
 ## Scoping data
 
-- **Keputusan tertunda** (lihat `STATUS.md`): per-user (`user_id`) atau
-  per-organisasi (`organization_id`). Sebelum membuat tabel data pengguna
-  pertama, **berhenti dan tanyakan** jika belum diputuskan.
-- Setelah diputuskan: setiap tabel data pengguna punya kolom scoping tersebut,
-  dan setiap query di service membatasi hasil dengan nilai dari sesi aktif.
+- **Per-organisasi** (diputuskan 2026-10-21): setiap tabel data pengguna punya
+  kolom `organization_id` (FK ke tabel `organization` better-auth), dan setiap
+  query di service membatasi hasil dengan `activeOrganizationId` dari sesi.
+- Tabel milik better-auth (`user`, `session`, `account`, `verification`,
+  `organization`, `member`, `invitation`) mengikuti skema yang dihasilkan CLI
+  better-auth, bukan aturan scoping ini.
 - Index untuk kolom scoping, timestamp, dan kolom yang sering difilter/diurut.
 
 ## Env & tooling
