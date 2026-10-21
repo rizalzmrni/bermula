@@ -7,6 +7,7 @@
 > pada konsistensi desain.
 
 ## Prinsip
+
 - **Token dulu, bukan nilai mentah.** Selalu pakai token semantik (`bg-background`,
   `text-foreground`, `border-border`, `bg-primary`, dll.), jangan pernah menulis
   warna hex/oklch atau kelas warna Tailwind mentah (`bg-zinc-900`, `text-white`)
@@ -22,6 +23,7 @@
   dan setiap kontrol punya label.
 
 ## Identitas Visual
+
 - **Warna utama (primary):** hijau emerald/mint (`--primary`), dipakai untuk aksi
   utama, tautan penting, state aktif, dan aksen. Gunakan secukupnya sebagai sorotan,
   bukan untuk mewarnai area luas.
@@ -35,23 +37,25 @@
   bayangan ad-hoc.
 
 ## Peta Token Warna (kapan memakai apa)
-| Token | Pemakaian |
-|---|---|
-| `background` / `foreground` | Latar halaman & teks utama |
-| `card` / `card-foreground` | Permukaan kartu, panel, kontainer konten |
-| `popover` / `popover-foreground` | Dropdown, popover, tooltip |
-| `primary` / `primary-foreground` | Tombol utama, aksi utama, state aktif |
-| `secondary` / `secondary-foreground` | Tombol/aksi sekunder |
-| `muted` / `muted-foreground` | Latar redup & teks pembantu (hint, placeholder, meta) |
-| `accent` / `accent-foreground` | Hover/aktif halus pada item (mis. baris menu) |
-| `destructive` / `destructive-foreground` | Aksi merusak & pesan error (hapus, gagal) |
-| `border` | Semua garis batas |
-| `input` | Latar/garis kontrol form |
-| `ring` | Cincin fokus (keyboard focus) |
-| `chart-1 … chart-5` | Seri warna grafik/visualisasi |
-| `sidebar*` | Token khusus area sidebar (latar, teks, item aktif, border, ring) |
+
+| Token                                    | Pemakaian                                                         |
+| ---------------------------------------- | ----------------------------------------------------------------- |
+| `background` / `foreground`              | Latar halaman & teks utama                                        |
+| `card` / `card-foreground`               | Permukaan kartu, panel, kontainer konten                          |
+| `popover` / `popover-foreground`         | Dropdown, popover, tooltip                                        |
+| `primary` / `primary-foreground`         | Tombol utama, aksi utama, state aktif                             |
+| `secondary` / `secondary-foreground`     | Tombol/aksi sekunder                                              |
+| `muted` / `muted-foreground`             | Latar redup & teks pembantu (hint, placeholder, meta)             |
+| `accent` / `accent-foreground`           | Hover/aktif halus pada item (mis. baris menu)                     |
+| `destructive` / `destructive-foreground` | Aksi merusak & pesan error (hapus, gagal)                         |
+| `border`                                 | Semua garis batas                                                 |
+| `input`                                  | Latar/garis kontrol form                                          |
+| `ring`                                   | Cincin fokus (keyboard focus)                                     |
+| `chart-1 … chart-5`                      | Seri warna grafik/visualisasi                                     |
+| `sidebar*`                               | Token khusus area sidebar (latar, teks, item aktif, border, ring) |
 
 Aturan:
+
 - Teks di atas sebuah permukaan **selalu** memakai pasangan `-foreground`-nya
   (mis. teks di `bg-card` memakai `text-card-foreground`), agar kontras terjaga di
   terang maupun gelap.
@@ -60,6 +64,7 @@ Aturan:
 - Warna grafik memakai `chart-1..5` secara berurutan; jangan memakai warna acak.
 
 ## Dark Mode
+
 - Mekanisme: berbasis **class** `.dark` (varian `@custom-variant dark (&:is(.dark *))`).
   Token di blok `.dark` menimpa nilai `:root`.
 - Karena stack memakai React Router (bukan next-themes), kelola tema lewat **cookie**
@@ -70,6 +75,7 @@ Aturan:
   menangani keduanya, cukup pakai token — jangan menulis `dark:` dengan warna mentah.
 
 ## Komponen
+
 - Komponen shadcn/ui ditambahkan lewat CLI (`bunx shadcn@latest add <komponen>`),
   jangan disalin manual. Komponen mendarat di `components/ui` app (atau `packages/design-system`
   bila dipakai lintas app) dan otomatis memakai token di atas.
@@ -83,7 +89,9 @@ Aturan:
   dan beri `aria-invalid` pada input bermasalah.
 
 ## State Wajib per Komponen Data
+
 Setiap komponen yang memuat data menampilkan empat state:
+
 1. **Loading** — skeleton/placeholder memakai `bg-muted`, bukan spinner kosong bila
    memungkinkan.
 2. **Error** — pesan ringkas + aksi coba lagi; warna `destructive`.
@@ -91,18 +99,21 @@ Setiap komponen yang memuat data menampilkan empat state:
 4. **Success** — konten sebenarnya.
 
 ## Format Angka, Tanggal, Mata Uang
+
 - Gunakan **satu helper formatter terpusat** (`packages/design-system` atau `apps/*/app/lib/format.ts`),
   jangan memformat inline di komponen.
 - Default locale `id-ID` (dapat diubah developer). Tampilkan tanggal/waktu dalam zona
   waktu pengguna.
 
 ## Layout & Spacing
+
 - Skala spacing memakai kelipatan `--spacing` (0.25rem) via utilitas Tailwind
   (`p-4`, `gap-6`, dst.). Hindari margin/padding bernilai piksel acak.
 - Lebar konten dibatasi dengan kontainer yang wajar; hindari baris teks terlalu panjang.
 - Konsisten: jarak antar-section, padding kartu, dan tinggi kontrol seragam di seluruh app.
 
 ## Yang Dilarang
+
 - Menulis warna hex/oklch atau kelas warna Tailwind mentah di komponen.
 - Mendefinisikan ulang token atau menambah warna di luar `globals.css` tanpa update
   dokumen ini.
@@ -113,6 +124,7 @@ Setiap komponen yang memuat data menampilkan empat state:
 ---
 
 ## CSS Kanonik
+
 File berikut adalah isi kanonik `packages/design-system/src/styles/globals.css`. Ini satu-satunya
 tempat token didefinisikan. Jangan mengubah nilai token tanpa memperbarui dokumen ini.
 
@@ -128,9 +140,9 @@ tempat token didefinisikan. Jangan mengubah nilai token tanpa memperbarui dokume
   --card-foreground: oklch(0.2046 0 0);
   --popover: oklch(0.9911 0 0);
   --popover-foreground: oklch(0.4386 0 0);
-  --primary: oklch(0.8348 0.1302 160.9080);
+  --primary: oklch(0.8348 0.1302 160.908);
   --primary-foreground: oklch(0.2626 0.0147 166.4589);
-  --secondary: oklch(0.9940 0 0);
+  --secondary: oklch(0.994 0 0);
   --secondary-foreground: oklch(0.2046 0 0);
   --muted: oklch(0.9461 0 0);
   --muted-foreground: oklch(0.2435 0 0);
@@ -140,20 +152,20 @@ tempat token didefinisikan. Jangan mengubah nilai token tanpa memperbarui dokume
   --destructive-foreground: oklch(0.9934 0.0032 17.2118);
   --border: oklch(0.9037 0 0);
   --input: oklch(0.9731 0 0);
-  --ring: oklch(0.8348 0.1302 160.9080);
-  --chart-1: oklch(0.8348 0.1302 160.9080);
-  --chart-2: oklch(0.6231 0.1880 259.8145);
+  --ring: oklch(0.8348 0.1302 160.908);
+  --chart-1: oklch(0.8348 0.1302 160.908);
+  --chart-2: oklch(0.6231 0.188 259.8145);
   --chart-3: oklch(0.6056 0.2189 292.7172);
   --chart-4: oklch(0.7686 0.1647 70.0804);
   --chart-5: oklch(0.6959 0.1491 162.4796);
   --sidebar: oklch(0.9911 0 0);
   --sidebar-foreground: oklch(0.5452 0 0);
-  --sidebar-primary: oklch(0.8348 0.1302 160.9080);
+  --sidebar-primary: oklch(0.8348 0.1302 160.908);
   --sidebar-primary-foreground: oklch(0.2626 0.0147 166.4589);
   --sidebar-accent: oklch(0.9461 0 0);
   --sidebar-accent-foreground: oklch(0.2435 0 0);
   --sidebar-border: oklch(0.9037 0 0);
-  --sidebar-ring: oklch(0.8348 0.1302 160.9080);
+  --sidebar-ring: oklch(0.8348 0.1302 160.908);
   --font-sans: Outfit, sans-serif;
   --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   --font-mono: monospace;
@@ -166,11 +178,16 @@ tempat token didefinisikan. Jangan mengubah nilai token tanpa memperbarui dokume
   --shadow-color: #000000;
   --shadow-2xs: 0px 1px 3px 0px hsl(0 0% 0% / 0.09);
   --shadow-xs: 0px 1px 3px 0px hsl(0 0% 0% / 0.09);
-  --shadow-sm: 0px 1px 3px 0px hsl(0 0% 0% / 0.17), 0px 1px 2px -1px hsl(0 0% 0% / 0.17);
-  --shadow: 0px 1px 3px 0px hsl(0 0% 0% / 0.17), 0px 1px 2px -1px hsl(0 0% 0% / 0.17);
-  --shadow-md: 0px 1px 3px 0px hsl(0 0% 0% / 0.17), 0px 2px 4px -1px hsl(0 0% 0% / 0.17);
-  --shadow-lg: 0px 1px 3px 0px hsl(0 0% 0% / 0.17), 0px 4px 6px -1px hsl(0 0% 0% / 0.17);
-  --shadow-xl: 0px 1px 3px 0px hsl(0 0% 0% / 0.17), 0px 8px 10px -1px hsl(0 0% 0% / 0.17);
+  --shadow-sm:
+    0px 1px 3px 0px hsl(0 0% 0% / 0.17), 0px 1px 2px -1px hsl(0 0% 0% / 0.17);
+  --shadow:
+    0px 1px 3px 0px hsl(0 0% 0% / 0.17), 0px 1px 2px -1px hsl(0 0% 0% / 0.17);
+  --shadow-md:
+    0px 1px 3px 0px hsl(0 0% 0% / 0.17), 0px 2px 4px -1px hsl(0 0% 0% / 0.17);
+  --shadow-lg:
+    0px 1px 3px 0px hsl(0 0% 0% / 0.17), 0px 4px 6px -1px hsl(0 0% 0% / 0.17);
+  --shadow-xl:
+    0px 1px 3px 0px hsl(0 0% 0% / 0.17), 0px 8px 10px -1px hsl(0 0% 0% / 0.17);
   --shadow-2xl: 0px 1px 3px 0px hsl(0 0% 0% / 0.43);
   --tracking-normal: 0.025em;
   --spacing: 0.25rem;
@@ -195,12 +212,12 @@ tempat token didefinisikan. Jangan mengubah nilai token tanpa memperbarui dokume
   --destructive-foreground: oklch(0.9368 0.0045 34.3092);
   --border: oklch(0.2809 0 0);
   --input: oklch(0.2603 0 0);
-  --ring: oklch(0.8003 0.1821 151.7110);
-  --chart-1: oklch(0.8003 0.1821 151.7110);
-  --chart-2: oklch(0.7137 0.1434 254.6240);
-  --chart-3: oklch(0.7090 0.1592 293.5412);
+  --ring: oklch(0.8003 0.1821 151.711);
+  --chart-1: oklch(0.8003 0.1821 151.711);
+  --chart-2: oklch(0.7137 0.1434 254.624);
+  --chart-3: oklch(0.709 0.1592 293.5412);
   --chart-4: oklch(0.8369 0.1644 84.4286);
-  --chart-5: oklch(0.7845 0.1325 181.9120);
+  --chart-5: oklch(0.7845 0.1325 181.912);
   --sidebar: oklch(0.1822 0 0);
   --sidebar-foreground: oklch(0.9288 0.0126 255.5078);
   --sidebar-primary: oklch(0.4365 0.1044 156.7556);
@@ -208,7 +225,7 @@ tempat token didefinisikan. Jangan mengubah nilai token tanpa memperbarui dokume
   --sidebar-accent: oklch(0.3132 0 0);
   --sidebar-accent-foreground: oklch(0.9851 0 0);
   --sidebar-border: oklch(0.2809 0 0);
-  --sidebar-ring: oklch(0.8003 0.1821 151.7110);
+  --sidebar-ring: oklch(0.8003 0.1821 151.711);
   --font-sans: Outfit, sans-serif;
   --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   --font-mono: monospace;
@@ -221,11 +238,16 @@ tempat token didefinisikan. Jangan mengubah nilai token tanpa memperbarui dokume
   --shadow-color: #000000;
   --shadow-2xs: 0px 1px 3px 0px hsl(0 0% 0% / 0.09);
   --shadow-xs: 0px 1px 3px 0px hsl(0 0% 0% / 0.09);
-  --shadow-sm: 0px 1px 3px 0px hsl(0 0% 0% / 0.17), 0px 1px 2px -1px hsl(0 0% 0% / 0.17);
-  --shadow: 0px 1px 3px 0px hsl(0 0% 0% / 0.17), 0px 1px 2px -1px hsl(0 0% 0% / 0.17);
-  --shadow-md: 0px 1px 3px 0px hsl(0 0% 0% / 0.17), 0px 2px 4px -1px hsl(0 0% 0% / 0.17);
-  --shadow-lg: 0px 1px 3px 0px hsl(0 0% 0% / 0.17), 0px 4px 6px -1px hsl(0 0% 0% / 0.17);
-  --shadow-xl: 0px 1px 3px 0px hsl(0 0% 0% / 0.17), 0px 8px 10px -1px hsl(0 0% 0% / 0.17);
+  --shadow-sm:
+    0px 1px 3px 0px hsl(0 0% 0% / 0.17), 0px 1px 2px -1px hsl(0 0% 0% / 0.17);
+  --shadow:
+    0px 1px 3px 0px hsl(0 0% 0% / 0.17), 0px 1px 2px -1px hsl(0 0% 0% / 0.17);
+  --shadow-md:
+    0px 1px 3px 0px hsl(0 0% 0% / 0.17), 0px 2px 4px -1px hsl(0 0% 0% / 0.17);
+  --shadow-lg:
+    0px 1px 3px 0px hsl(0 0% 0% / 0.17), 0px 4px 6px -1px hsl(0 0% 0% / 0.17);
+  --shadow-xl:
+    0px 1px 3px 0px hsl(0 0% 0% / 0.17), 0px 8px 10px -1px hsl(0 0% 0% / 0.17);
   --shadow-2xl: 0px 1px 3px 0px hsl(0 0% 0% / 0.43);
 }
 
@@ -307,6 +329,7 @@ tempat token didefinisikan. Jangan mengubah nilai token tanpa memperbarui dokume
 ---
 
 ## Daftar Periksa UI (bagian dari "Definisi Selesai" untuk tugas UI)
+
 - [ ] Hanya memakai token semantik; tidak ada warna hex/oklch atau kelas warna
       Tailwind mentah di komponen.
 - [ ] Teks memakai pasangan `-foreground` dari permukaannya (kontras benar).

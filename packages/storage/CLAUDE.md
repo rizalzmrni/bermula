@@ -1,0 +1,50 @@
+# packages/storage — Cloudflare R2
+
+Aturan root `CLAUDE.md` tetap berlaku.
+
+## Antarmuka
+
+Semua akses R2 lewat antarmuka netral di paket ini: `putObject`, `getObject`,
+`deleteObject`, `getSignedUploadUrl`, `getSignedDownloadUrl`. Route dan service
+tidak memanggil binding R2 langsung, agar provider bisa diganti (R2 → S3/GCS)
+tanpa menyentuh fitur.
+
+## Dua jalur akses
+
+| Jalur                                    | Dipakai untuk                                                   | Kredensial                                                                                     |
+| ---------------------------------------- | --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| **Binding Worker** (`env.BUCKET`)        | Operasi server-side: put/get/delete kecil, cek keberadaan objek | Tidak ada secret; nama bucket di `wrangler.jsonc`                                              |
+| **S3 API + presigned URL** (`aws4fetch`) | Upload/download langsung dari browser (file besar)              | R2 S3 API token: `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_ACCOUNT_ID`, `R2_BUCKET_NAME` |
+
+- Binding Worker **tidak bisa** membuat presigned URL; jalur kedua wajib
+  memakai kredensial S3 API.
+- Kredensial S3 API adalah secret: catat di `.dev.vars.example` app yang
+  memakainya (biasanya `apps/api`), skema t3-env, dan setel produksi dengan
+  `wrangler secret put`. Buat token dengan izin minimum (hanya bucket ini,
+  object read/write).
+- `aws4fetch` dipasang langsung di paket ini (hanya dipakai di sini → tanpa
+  catalog).
+
+## Aturan
+
+- Upload file besar dari klien lewat presigned URL, bukan mem-proxy byte lewat
+  Worker (batas memori/ukuran Worker).
+- Bucket privat; presigned URL berumur pendek (mis. ≤15 menit). Hanya aset yang
+  memang publik (mis. logo) yang boleh publik, di bucket/prefix terpisah.
+- Key berawalan pemilik sesuai keputusan scoping, mis.
+  `uploads/<user_id>/<uuid>-<nama-aman>`. Nama file disanitasi.
+- Service memverifikasi kepemilikan (lewat metadata di Postgres) **sebelum**
+  memberi URL akses.
+- Metadata file (nama asli, tipe, ukuran, key, pemilik) disimpan di Postgres;
+  R2 hanya menyimpan byte-nya.
+- Validasi tipe & ukuran file di server sebelum membuat presigned URL upload
+  (sertakan batas ukuran/tipe di URL bila didukung).
+- Nama bucket dari binding/env; jangan hardcode.
+- Konfigurasi CORS bucket R2 untuk origin `APP_URL` agar upload dari browser
+  berhasil; tulis langkahnya di laporan sebagai langkah manual.
+
+## Testing
+
+- Jalur binding diuji dengan `@cloudflare/vitest-pool-workers` (R2 lokal).
+- Pembuatan presigned URL diuji secara deterministik: waktu disuntikkan,
+  tanpa request jaringan.
