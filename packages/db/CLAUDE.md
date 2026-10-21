@@ -21,7 +21,14 @@ Aturan root `CLAUDE.md` tetap berlaku.
 
 - Skema adalah sumber kebenaran struktur data; tipe diturunkan dengan
   `$inferSelect` / `$inferInsert`.
-- `casing: "snake_case"`: `snake_case` di Postgres, `camelCase` di kode.
+- Versi: Drizzle **v1 release candidate** (`drizzle-orm` & `drizzle-kit`
+  dipin persis di catalog `db`). API v1 berbeda dari 0.x; cek tipe di
+  `node_modules` dan skill bawaan `drizzle-kit/skills`, jangan dari ingatan.
+- `snake_case` di Postgres, `camelCase` di kode: definisikan tabel dengan
+  `snakeCase.table(...)` dari `drizzle-orm/pg-core` (v1 tidak lagi punya opsi
+  `casing` di `drizzle()`).
+- Satu file skema per domain di `src/schema/<domain>.ts`; relasi didaftarkan di
+  `src/relations.ts` dengan `defineRelations` (relational query v2).
 - Perubahan skema → `bun run db:generate` (drizzle-kit generate), lalu commit
   file migrasi. **Jangan** `drizzle-kit push` ke database produksi.
 - **Jangan** menjalankan migrasi ke produksi tanpa izin eksplisit.
