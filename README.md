@@ -1,159 +1,178 @@
-# Turborepo starter
+# Bermula
 
-This Turborepo starter is maintained by the Turborepo core team.
+> Pondasi SaaS produksi yang siap dikembangkan — monorepo type-safe end-to-end
+> di atas React Router v7, Hono, dan Cloudflare Workers.
 
-## Using this example
+**Bermula** adalah boilerplate untuk memulai aplikasi SaaS tanpa merakit ulang
+fondasi yang sama setiap kali: autentikasi, database, pembayaran, email, object
+storage, analitik, observability, dan dokumentasi API sudah tertata dan saling
+terhubung. Tinggal bangun fiturmu di atasnya.
 
-Run the following command:
+Dibuat dengan prinsip: **cepat** dijalankan, **opinionated** (tooling yang dipilih
+agar bekerja bersama), **type-safe** dari database sampai UI, **modern**, dan **aman**.
 
-```sh
-npx create-turbo@latest
+---
+
+## Teknologi
+
+| Area | Pilihan |
+|---|---|
+| Bahasa | TypeScript (strict) |
+| Monorepo | Turborepo + Bun workspaces |
+| Frontend | React + React Router v7 (framework mode, SSR) |
+| Backend / API | Hono |
+| Runtime & deploy | Cloudflare Workers (Wrangler) |
+| Database | Neon (Postgres serverless) |
+| ORM | Drizzle + drizzle-kit |
+| Autentikasi | better-auth |
+| Pembayaran | Stripe |
+| Email | Resend + React Email |
+| Object storage | Cloudflare R2 |
+| UI | Tailwind CSS + shadcn/ui |
+| Data / tabel / form | TanStack Query, Table, Form |
+| Validasi & env | Zod + t3-env |
+| Dokumentasi API | OpenAPI 3.1 (`@hono/zod-openapi`) + Scalar |
+| Analitik | Google Analytics (web) + PostHog (produk) |
+| Observability | Sentry + logging + BetterStack |
+| Lint & format | Ultracite (Oxlint + Oxfmt) |
+| Git hooks | Husky + lint-staged + commitlint |
+| Testing | `bun test` |
+
+---
+
+## Struktur Proyek
+
+Monorepo dengan dua folder utama: `apps/` (aplikasi yang dideploy) dan
+`packages/` (kode bersama). Setiap app adalah Worker Cloudflare yang berdiri sendiri.
+
+```
+bermula/
+├── apps/
+│   ├── web/        # Situs marketing — React Router v7 (SSR)
+│   ├── app/        # Aplikasi utama — React Router v7 (SSR) + auth + data
+│   ├── api/        # API — Hono + OpenAPI/Scalar
+│   ├── email/      # Template React Email + preview
+│   └── storybook/  # Katalog komponen UI
+├── packages/
+│   ├── env/            # Skema environment variable (t3-env + Zod)
+│   ├── db/             # Skema Drizzle, klien Neon, migrasi, seed
+│   ├── auth/           # Konfigurasi better-auth (server & client)
+│   ├── core/           # Logika domain murni + skema Zod bersama
+│   ├── design-system/  # Sumber utama UI: token, globals.css, komponen shadcn/ui
+│   ├── data/           # Setup TanStack Query/Form/Table
+│   ├── payments/       # Stripe
+│   ├── email/          # Resend
+│   ├── storage/        # Cloudflare R2
+│   ├── analytics/      # GA + PostHog
+│   ├── observability/  # Sentry + logging + BetterStack
+│   ├── seo/            # Metadata, sitemap, JSON-LD
+│   └── config/         # tsconfig base & konfigurasi bersama
+├── CLAUDE.md       # Aturan proyek untuk AI agent
+├── DESIGN.md       # Aturan tampilan & token UI
+└── AGENTS.md       # Panduan Turborepo (dikelola otomatis oleh turbo)
 ```
 
-## What's inside?
+Paket internal memakai scope `@bermula/*` (mis. `@bermula/db`) dan dirujuk antar-paket
+dengan `"workspace:*"`. Dependensi mengalir satu arah: `apps/*` → `packages/*`.
 
-This Turborepo includes the following packages/apps:
+---
 
-### Apps and Packages
+## Prasyarat
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `@next/eslint-plugin-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+- **Bun** (package manager & test runner) — lihat https://bun.sh
+- **Node.js 20+** (untuk sebagian tooling)
+- **Wrangler** (CLI Cloudflare) — ikut terpasang sebagai dependensi
+- Akun layanan: **Cloudflare**, **Neon**, **Stripe**, **Resend**
+  (serta PostHog/Sentry/BetterStack bila mengaktifkan analitik & observability)
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+---
 
-### Utilities
+## Mulai Cepat
 
-This Turborepo has some additional tools already setup for you:
+```bash
+# 1. Pasang dependensi
+bun install
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+# 2. Siapkan environment variable
+#    Salin tiap file contoh ke file lokal yang dibaca wrangler/Vite.
+#    Setiap app/paket yang butuh env punya file contohnya sendiri.
+#    Contoh untuk apps/api:
+cp apps/api/.dev.vars.example apps/api/.dev.vars
+#    lalu isi nilainya (lihat "Environment Variable" di bawah).
 
-### Build
+# 3. Siapkan database (buat & terapkan migrasi, lalu seed opsional)
+bun run db:generate
+bun run db:migrate
+bun run db:seed        # jika tersedia
 
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo build
+# 4. Jalankan semua app dalam mode development
+bun run dev
 ```
 
-Without global `turbo`, use your package manager:
+Setelah `bun run dev` berjalan:
+- Aplikasi utama dan situs marketing tersedia di port lokalnya masing-masing
+  (lihat output terminal).
+- Dokumentasi API interaktif: buka **`/docs`** pada server `apps/api`.
 
-```sh
-cd my-turborepo
-npx turbo build
-bun exec turbo build
-bun exec turbo build
-```
+---
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+## Environment Variable
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+Setiap variabel didefinisikan di dua tempat yang harus selalu sinkron: file contoh
+(`.env.example` / `.dev.vars.example`) di tiap app/paket, dan skema **t3-env** di
+`packages/env`. Env dibaca lewat objek t3-env yang tervalidasi — jangan mengakses
+`process.env`/`import.meta.env` langsung.
 
-```sh
-turbo build --filter=docs
-```
+- **Development:** salin file contoh ke `.dev.vars` (dibaca Wrangler/Vite di lokal).
+- **Produksi (Cloudflare):** setel secret dengan `wrangler secret put <NAMA>` per app.
+- Variabel sisi-klien React Router wajib berawalan `VITE_` dan tidak boleh berisi secret.
+- Jangan pernah commit secret. Hanya file `*.example` yang masuk ke repo.
 
-Without global `turbo`:
+---
 
-```sh
-npx turbo build --filter=docs
-bun exec turbo build --filter=docs
-bun exec turbo build --filter=docs
-```
+## Perintah Umum
 
-### Develop
+| Perintah | Fungsi |
+|---|---|
+| `bun install` | Pasang dependensi |
+| `bun run dev` | Jalankan semua app (Turborepo) |
+| `bun run build` | Build semua app |
+| `bun run check-types` | Type-check seluruh monorepo |
+| `bun run check` / `bun run fix` | Lint & format via Ultracite |
+| `bun test` | Jalankan unit test |
+| `bun run db:generate` | Buat file migrasi Drizzle |
+| `bun run db:migrate` | Terapkan migrasi (lokal/dev) |
+| `bun run db:studio` | Buka Drizzle Studio |
+| `bun run deploy` | Deploy app ke Cloudflare (per app, via Wrangler) |
 
-To develop all apps and packages, run the following command:
+---
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+## Deploy
 
-```sh
-cd my-turborepo
-turbo dev
-```
+Setiap app di `apps/` adalah Worker Cloudflare terpisah dengan `wrangler.jsonc`-nya
+sendiri, sehingga bisa dideploy independen.
 
-Without global `turbo`, use your package manager:
+1. Pastikan Wrangler sudah terautentikasi ke akun Cloudflare-mu.
+2. Setel semua secret produksi dengan `wrangler secret put` untuk tiap app.
+3. Siapkan binding (database Neon, bucket R2) sesuai `wrangler.jsonc`.
+4. Jalankan deploy (`bun run deploy`, atau `wrangler deploy` di folder app).
 
-```sh
-cd my-turborepo
-npx turbo dev
-bun exec turbo dev
-bun exec turbo dev
-```
+Untuk autentikasi lintas-origin, tempatkan app dan api pada subdomain dari satu
+domain induk (mis. `app.domain.com` dan `api.domain.com`) dan isi variabel URL/CORS
+yang relevan — detailnya ada di `CLAUDE.md`.
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+---
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+## Dokumen Pendamping
 
-```sh
-turbo dev --filter=web
-```
+- **`CLAUDE.md`** — aturan pengembangan lengkap (arsitektur, manajemen dependensi,
+  konvensi, keamanan, definisi selesai) untuk dipakai AI agent maupun developer.
+- **`DESIGN.md`** — sumber kebenaran tampilan: token warna, tipografi, dark mode,
+  dan `globals.css` kanonik.
+- **`AGENTS.md`** — panduan Turborepo (dikelola otomatis oleh `turbo`; jangan diedit manual).
 
-Without global `turbo`:
+---
 
-```sh
-npx turbo dev --filter=web
-bun exec turbo dev --filter=web
-bun exec turbo dev --filter=web
-```
+## Lisensi
 
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-bun exec turbo login
-bun exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-bun exec turbo link
-bun exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+{{LISENSI}} — sesuaikan sebelum rilis.
