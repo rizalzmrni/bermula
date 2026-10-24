@@ -3,10 +3,10 @@
 Konfigurasi better-auth. Handler dipasang di `apps/api` (`/api/auth/*`);
 apps/app & apps/web hanya memakai entry client.
 
-| Entry                  | Isi                                                                  | Dipakai oleh           |
-| ---------------------- | -------------------------------------------------------------------- | ---------------------- |
-| `@bermula/auth/server` | `createAuth(options)` → instance better-auth; tipe `Auth`, `Session` | `apps/api`             |
-| `@bermula/auth/client` | `createAuthClient({ baseURL, fetch? })` → klien vanilla + plugin org | `apps/app`, `apps/web` |
+| Entry                  | Isi                                                                              | Dipakai oleh           |
+| ---------------------- | -------------------------------------------------------------------------------- | ---------------------- |
+| `@bermula/auth/server` | `createAuth(options)` → instance better-auth; tipe `Auth`, `Session`             | `apps/api`             |
+| `@bermula/auth/client` | `createAuthClient({ baseURL, fetch? })` → klien vanilla + plugin admin, org, 2FA | `apps/app`, `apps/web` |
 
 ## Yang dikonfigurasi
 
@@ -18,6 +18,12 @@ apps/app & apps/web hanya memakai entry client.
 - **Plugin organization** (scoping data per-organisasi). Undangan berlaku 48
   jam dan mewajibkan email penerima terverifikasi. Link undangan:
   `${APP_URL}/accept-invitation/:id`.
+- **Plugin admin**: role level aplikasi di `auth_users.role` (`user` default,
+  `admin` untuk pengelola), ban pengguna, dan impersonate (`auth_sessions.impersonated_by`).
+  Terpisah dari role owner/admin/member di organisasi.
+- **Plugin twoFactor**: TOTP (aplikasi authenticator, issuer = `APP_NAME` dari
+  `@bermula/core/brand`) + backup code, disimpan terenkripsi di
+  `auth_two_factors`. OTP via email belum diaktifkan.
 - **Sesi** 7 hari, diperpanjang per 1 hari; cookie cache 5 menit.
 - **ID** berupa UUID (`advanced.database.generateId: "uuid"`).
 - **Cookie lintas subdomain** aktif bila `AUTH_COOKIE_DOMAIN` diisi.

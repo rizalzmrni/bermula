@@ -57,9 +57,29 @@ describe(createAuth, () => {
       "http://localhost:5173",
       "http://localhost:5174",
     ]);
-    expect(auth.options.plugins.map((plugin) => plugin.id)).toContain(
-      "organization"
-    );
+    expect(auth.options.plugins.map((plugin) => plugin.id)).toStrictEqual([
+      "admin",
+      "organization",
+      "two-factor",
+    ]);
+  });
+
+  it("keeps the active organization carried by a replacement session", async () => {
+    const { auth } = setup();
+    const { before } = auth.options.databaseHooks.session.create;
+
+    // Tanpa query DB: `db` di setup kosong, jadi panggilan store akan gagal.
+    await expect(
+      before({
+        activeOrganizationId: "org-current",
+        createdAt: new Date("2026-01-01T00:00:00Z"),
+        expiresAt: new Date("2026-01-08T00:00:00Z"),
+        id: "session-1",
+        token: "token",
+        updatedAt: new Date("2026-01-01T00:00:00Z"),
+        userId: "user-1",
+      })
+    ).resolves.toBeUndefined();
   });
 
   it("marks personal organizations as server-only and undeletable", async () => {

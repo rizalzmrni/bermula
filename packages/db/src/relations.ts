@@ -6,6 +6,7 @@ import {
   members,
   organizations,
   sessions,
+  twoFactors,
   verifications,
 } from "./schema/auth";
 import { users } from "./schema/users";
@@ -24,6 +25,7 @@ export const relations = defineRelations(
     members,
     organizations,
     sessions,
+    twoFactors,
     users,
     verifications,
   },
@@ -58,6 +60,9 @@ export const relations = defineRelations(
     sessions: {
       user: r.one.users({ from: r.sessions.userId, to: r.users.id }),
     },
+    twoFactors: {
+      user: r.one.users({ from: r.twoFactors.userId, to: r.users.id }),
+    },
     users: {
       accounts: r.many.accounts({ from: r.users.id, to: r.accounts.userId }),
       invitations: r.many.invitations({
@@ -66,6 +71,10 @@ export const relations = defineRelations(
       }),
       members: r.many.members({ from: r.users.id, to: r.members.userId }),
       sessions: r.many.sessions({ from: r.users.id, to: r.sessions.userId }),
+      twoFactors: r.many.twoFactors({
+        from: r.users.id,
+        to: r.twoFactors.userId,
+      }),
     },
   })
 );

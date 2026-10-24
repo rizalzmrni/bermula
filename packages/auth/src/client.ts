@@ -1,5 +1,9 @@
 import { createAuthClient as createBetterAuthClient } from "better-auth/client";
-import { organizationClient } from "better-auth/client/plugins";
+import {
+  adminClient,
+  organizationClient,
+  twoFactorClient,
+} from "better-auth/client/plugins";
 
 export interface AuthClientOptions {
   /** Origin apps/api, mis. `VITE_API_URL` di browser. */
@@ -25,7 +29,8 @@ export const createAuthClient = ({ baseURL, fetch }: AuthClientOptions) =>
       credentials: "include",
       customFetchImpl: fetch,
     },
-    plugins: [organizationClient()],
+    // Harus sepadan dengan plugin di `server.ts` agar tipe & endpoint cocok.
+    plugins: [adminClient(), organizationClient(), twoFactorClient()],
   });
 
 export type AuthClient = ReturnType<typeof createAuthClient>;

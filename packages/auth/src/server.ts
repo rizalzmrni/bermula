@@ -1,9 +1,12 @@
+import { APP_NAME } from "@bermula/core/brand";
 import type { Db } from "@bermula/db/client";
 import type { Logger } from "@bermula/observability/logger";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
 import { betterAuth } from "better-auth";
 import { APIError } from "better-auth/api";
+import { admin } from "better-auth/plugins/admin";
 import { organization } from "better-auth/plugins/organization";
+import { twoFactor } from "better-auth/plugins/two-factor";
 
 import {
   buildCrossSubDomainCookies,
@@ -99,6 +102,8 @@ export const createAuth = ({
       // klien; `x-forwarded-for` bisa diisi bebas oleh penyerang.
       ipAddress: { ipAddressHeaders: ["cf-connecting-ip"] },
     },
+    // Juga dipakai sebagai issuer kode TOTP di aplikasi authenticator.
+    appName: APP_NAME,
     baseURL: env.BETTER_AUTH_URL,
     // Tabel memakai nama jamak (`users`, `sessions`, ...) di `packages/db`.
     database: drizzleAdapter(db, { provider: "pg", usePlural: true }),
@@ -107,15 +112,22 @@ export const createAuth = ({
         create: {
           // Setiap sesi selalu punya organisasi aktif, sehingga service di
           // apps/api bisa langsung men-scope data dengan `activeOrganizationId`.
-          before: async (session) => ({
-            data: {
-              ...session,
-              activeOrganizationId: await resolveActiveOrganizationId({
-                store: personalOrganizations,
-                userId: session.userId,
-              }),
-            },
-          }),
+          // Sesi pengganti (aktivasi 2FA, refresh) sudah membawa organisasi
+          // aktif sebelumnya; nilai itu dipertahankan.
+          before: async (session) => {
+            if (typeof session.activeOrganizationId === "string") {
+              return;
+            }
+            return {
+              data: {
+                ...session,
+                activeOrganizationId: await resolveActiveOrganizationId({
+                  store: personalOrganizations,
+                  userId: session.userId,
+                }),
+              },
+            };
+          },
         },
       },
     },
@@ -142,6 +154,12 @@ export const createAuth = ({
     },
     logger: toAuthLogger(logger),
     plugins: [
+      // Role level aplikasi (`user`/`admin`), ban, dan impersonate. Terpisah
+      // dari role owner/admin/member di organisasi.
+      admin({
+        adminRoles: ["admin"],
+        defaultRole: "user",
+      }),
       organization({
         invitationExpiresIn: INVITATION_EXPIRES_IN,
         organizationHooks: {
@@ -185,6 +203,9 @@ export const createAuth = ({
             })
           ),
       }),
+      // TOTP (aplikasi authenticator) + backup code. Rahasia & kode disimpan
+      // terenkripsi dengan `BETTER_AUTH_SECRET`; OTP via email belum dipakai.
+      twoFactor(),
     ],
     // Limiter bawaan menyimpan hitungan di memori isolate, yang tidak berlaku
     // di Workers. `/api/auth/*` dibatasi binding Rate Limiting di apps/api.

@@ -47,10 +47,23 @@ CREATE TABLE "auth_sessions" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
 	"user_id" uuid NOT NULL,
 	"active_organization_id" uuid,
+	"impersonated_by" uuid,
 	"token" text NOT NULL UNIQUE,
 	"expires_at" timestamp with time zone NOT NULL,
 	"ip_address" text,
 	"user_agent" text,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "auth_two_factors" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+	"user_id" uuid NOT NULL,
+	"secret" text NOT NULL,
+	"backup_codes" text NOT NULL,
+	"verified" boolean DEFAULT true NOT NULL,
+	"failed_verification_count" integer DEFAULT 0 NOT NULL,
+	"locked_until" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -70,6 +83,11 @@ CREATE TABLE "auth_users" (
 	"email" text NOT NULL UNIQUE,
 	"email_verified" boolean DEFAULT false NOT NULL,
 	"image" text,
+	"role" text DEFAULT 'user' NOT NULL,
+	"banned" boolean DEFAULT false NOT NULL,
+	"ban_reason" text,
+	"ban_expires" timestamp with time zone,
+	"two_factor_enabled" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -80,6 +98,8 @@ CREATE INDEX "auth_invitations_email_idx" ON "auth_invitations" ("email");--> st
 CREATE INDEX "auth_members_user_id_idx" ON "auth_members" ("user_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "auth_members_organization_id_user_id_idx" ON "auth_members" ("organization_id","user_id");--> statement-breakpoint
 CREATE INDEX "auth_sessions_user_id_idx" ON "auth_sessions" ("user_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "auth_two_factors_user_id_idx" ON "auth_two_factors" ("user_id");--> statement-breakpoint
+CREATE INDEX "auth_two_factors_secret_idx" ON "auth_two_factors" ("secret");--> statement-breakpoint
 CREATE INDEX "auth_verifications_identifier_idx" ON "auth_verifications" ("identifier");--> statement-breakpoint
 ALTER TABLE "auth_accounts" ADD CONSTRAINT "auth_accounts_user_id_auth_users_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth_users"("id") ON DELETE CASCADE;--> statement-breakpoint
 ALTER TABLE "auth_invitations" ADD CONSTRAINT "auth_invitations_organization_id_auth_organizations_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "auth_organizations"("id") ON DELETE CASCADE;--> statement-breakpoint
@@ -87,4 +107,6 @@ ALTER TABLE "auth_invitations" ADD CONSTRAINT "auth_invitations_inviter_id_auth_
 ALTER TABLE "auth_members" ADD CONSTRAINT "auth_members_organization_id_auth_organizations_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "auth_organizations"("id") ON DELETE CASCADE;--> statement-breakpoint
 ALTER TABLE "auth_members" ADD CONSTRAINT "auth_members_user_id_auth_users_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth_users"("id") ON DELETE CASCADE;--> statement-breakpoint
 ALTER TABLE "auth_sessions" ADD CONSTRAINT "auth_sessions_user_id_auth_users_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth_users"("id") ON DELETE CASCADE;--> statement-breakpoint
-ALTER TABLE "auth_sessions" ADD CONSTRAINT "auth_sessions_active_organization_id_auth_organizations_id_fkey" FOREIGN KEY ("active_organization_id") REFERENCES "auth_organizations"("id") ON DELETE SET NULL;
+ALTER TABLE "auth_sessions" ADD CONSTRAINT "auth_sessions_active_organization_id_auth_organizations_id_fkey" FOREIGN KEY ("active_organization_id") REFERENCES "auth_organizations"("id") ON DELETE SET NULL;--> statement-breakpoint
+ALTER TABLE "auth_sessions" ADD CONSTRAINT "auth_sessions_impersonated_by_auth_users_id_fkey" FOREIGN KEY ("impersonated_by") REFERENCES "auth_users"("id") ON DELETE SET NULL;--> statement-breakpoint
+ALTER TABLE "auth_two_factors" ADD CONSTRAINT "auth_two_factors_user_id_auth_users_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth_users"("id") ON DELETE CASCADE;

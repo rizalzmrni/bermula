@@ -1,4 +1,4 @@
-import { boolean, snakeCase, text } from "drizzle-orm/pg-core";
+import { boolean, snakeCase, text, timestamp } from "drizzle-orm/pg-core";
 
 import { createdAt, id, updatedAt } from "../columns";
 
@@ -13,6 +13,13 @@ export const users = snakeCase.table("auth_users", {
   email: text().notNull().unique(),
   emailVerified: boolean().default(false).notNull(),
   image: text(),
+  // Plugin admin: role level aplikasi (bukan role di organisasi) & status ban.
+  role: text().default("user").notNull(),
+  banned: boolean().default(false).notNull(),
+  banReason: text(),
+  banExpires: timestamp({ withTimezone: true }),
+  // Plugin twoFactor.
+  twoFactorEnabled: boolean().default(false).notNull(),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });

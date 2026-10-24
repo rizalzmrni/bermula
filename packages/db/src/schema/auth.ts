@@ -1,6 +1,7 @@
 import {
   boolean,
   index,
+  integer,
   snakeCase,
   text,
   timestamp,
@@ -90,6 +91,8 @@ export const sessions = snakeCase.table(
     activeOrganizationId: uuid().references(() => organizations.id, {
       onDelete: "set null",
     }),
+    // Plugin admin: admin yang sedang menyamar sebagai pengguna sesi ini.
+    impersonatedBy: uuid().references(() => users.id, { onDelete: "set null" }),
     token: text().notNull().unique(),
     expiresAt: timestamp({ withTimezone: true }).notNull(),
     ipAddress: text(),
@@ -133,6 +136,28 @@ export const verifications = snakeCase.table(
     updatedAt: updatedAt(),
   },
   (table) => [index("auth_verifications_identifier_idx").on(table.identifier)]
+);
+
+/** Plugin twoFactor: rahasia TOTP & backup code (terenkripsi), satu baris per pengguna. */
+export const twoFactors = snakeCase.table(
+  "auth_two_factors",
+  {
+    id: id(),
+    userId: uuid()
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    secret: text().notNull(),
+    backupCodes: text().notNull(),
+    verified: boolean().default(true).notNull(),
+    failedVerificationCount: integer().default(0).notNull(),
+    lockedUntil: timestamp({ withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    uniqueIndex("auth_two_factors_user_id_idx").on(table.userId),
+    index("auth_two_factors_secret_idx").on(table.secret),
+  ]
 );
 
 export type Organization = typeof organizations.$inferSelect;
