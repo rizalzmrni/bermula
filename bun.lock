@@ -20,6 +20,7 @@
       "name": "@bermula/auth",
       "version": "0.0.0",
       "dependencies": {
+        "@bermula/core": "workspace:*",
         "@bermula/db": "workspace:*",
         "@bermula/env": "workspace:*",
         "@bermula/observability": "workspace:*",
@@ -60,6 +61,7 @@
       "name": "@bermula/email",
       "version": "0.0.0",
       "dependencies": {
+        "@bermula/core": "workspace:*",
         "@react-email/components": "catalog:services",
         "react": "catalog:react",
         "react-dom": "catalog:react",

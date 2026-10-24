@@ -1,3 +1,4 @@
+import { APP_NAME } from "@bermula/core/brand";
 import {
   Body,
   Button,
@@ -13,12 +14,7 @@ import {
 } from "@react-email/components";
 import type { ReactNode } from "react";
 
-import {
-  BRAND_NAME,
-  EMAIL_COLORS,
-  EMAIL_FONT_FAMILY,
-  EMAIL_RADIUS,
-} from "../brand";
+import { EMAIL_COLORS, EMAIL_FONT_FAMILY, EMAIL_RADIUS } from "../brand";
 
 const styles = {
   body: {
@@ -110,7 +106,7 @@ export const EmailLayout = ({
     <Body style={styles.body}>
       <Preview>{preview}</Preview>
       <Container style={styles.container}>
-        <Text style={styles.brand}>{BRAND_NAME}</Text>
+        <Text style={styles.brand}>{APP_NAME}</Text>
         <Heading as="h1" style={styles.heading}>
           {heading}
         </Heading>

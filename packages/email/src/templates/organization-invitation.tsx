@@ -1,6 +1,6 @@
+import { APP_NAME } from "@bermula/core/brand";
 import { Text } from "@react-email/components";
 
-import { BRAND_NAME } from "../brand";
 import { EmailLayout, emailTextStyle } from "../components/email-layout";
 
 export interface OrganizationInvitationProps {
@@ -13,7 +13,7 @@ export const organizationInvitationSubject = ({
   inviterName,
   organizationName,
 }: Pick<OrganizationInvitationProps, "inviterName" | "organizationName">) =>
-  `${inviterName} mengundang Anda ke ${organizationName} di ${BRAND_NAME}`;
+  `${inviterName} mengundang Anda ke ${organizationName} di ${APP_NAME}`;
 
 export const OrganizationInvitation = ({
   inviterName,
@@ -28,7 +28,7 @@ export const OrganizationInvitation = ({
   >
     <Text style={emailTextStyle}>
       {inviterName} mengundang Anda untuk bergabung dengan organisasi{" "}
-      <strong>{organizationName}</strong> di {BRAND_NAME}.
+      <strong>{organizationName}</strong> di {APP_NAME}.
     </Text>
     <Text style={emailTextStyle}>
       Masuk atau daftar dengan alamat email ini untuk menerima undangan.

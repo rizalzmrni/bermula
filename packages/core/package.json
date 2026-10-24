@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./brand": "./src/brand.ts",
     "./format": "./src/format.ts"
   },
   "scripts": {

@@ -1,6 +1,6 @@
+import { APP_NAME } from "@bermula/core/brand";
 import { Text } from "@react-email/components";
 
-import { BRAND_NAME } from "../brand";
 import { EmailLayout, emailTextStyle } from "../components/email-layout";
 
 export interface VerifyEmailProps {
@@ -8,15 +8,14 @@ export interface VerifyEmailProps {
   url: string;
 }
 
-export const verifyEmailSubject = () =>
-  `Verifikasi email Anda di ${BRAND_NAME}`;
+export const verifyEmailSubject = () => `Verifikasi email Anda di ${APP_NAME}`;
 
 export const VerifyEmail = ({ name, url }: VerifyEmailProps) => (
   <EmailLayout
     action={{ label: "Verifikasi email", url }}
-    footnote={`Anda menerima email ini karena alamat ini didaftarkan di ${BRAND_NAME}. Jika bukan Anda, abaikan email ini.`}
+    footnote={`Anda menerima email ini karena alamat ini didaftarkan di ${APP_NAME}. Jika bukan Anda, abaikan email ini.`}
     heading="Verifikasi alamat email Anda"
-    preview={`Satu langkah lagi untuk mulai memakai ${BRAND_NAME}`}
+    preview={`Satu langkah lagi untuk mulai memakai ${APP_NAME}`}
   >
     <Text style={emailTextStyle}>Halo {name},</Text>
     <Text style={emailTextStyle}>

@@ -33,7 +33,7 @@ const auth = createAuth({ db, emails, env, logger, waitUntil });
 
 ## Aturan
 
-- **Teks UI berbahasa Indonesia**; nama produk di `src/brand.ts` (`BRAND_NAME`).
+- **Teks UI berbahasa Indonesia**; nama produk dari `APP_NAME` di `@bermula/core/brand`.
 - **Gaya inline**, bukan Tailwind: klien email tidak mendukung CSS variable,
   `oklch`, flexbox, maupun media query. Warna diambil dari token
   `DESIGN.md` yang dikonversi ke hex di `src/brand.ts` (satu-satunya tempat

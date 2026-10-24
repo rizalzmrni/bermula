@@ -1,6 +1,6 @@
+import { APP_NAME } from "@bermula/core/brand";
 import { Text } from "@react-email/components";
 
-import { BRAND_NAME } from "../brand";
 import { EmailLayout, emailTextStyle } from "../components/email-layout";
 
 export interface ResetPasswordProps {
@@ -9,7 +9,7 @@ export interface ResetPasswordProps {
 }
 
 export const resetPasswordSubject = () =>
-  `Atur ulang kata sandi ${BRAND_NAME} Anda`;
+  `Atur ulang kata sandi ${APP_NAME} Anda`;
 
 export const ResetPassword = ({ name, url }: ResetPasswordProps) => (
   <EmailLayout

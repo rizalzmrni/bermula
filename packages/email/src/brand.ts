@@ -1,6 +1,3 @@
-/** Nama produk di subjek & isi email. Ganti di sini saat memakai template ini. */
-export const BRAND_NAME = "Bermula";
-
 /**
  * Klien email tidak mendukung CSS variable maupun `oklch`, jadi token
  * `packages/design-system` (lihat DESIGN.md) dikonversi ke hex di sini.
