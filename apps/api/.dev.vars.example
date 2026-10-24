@@ -45,6 +45,22 @@ RESEND_API_KEY=
 # Wajib: ya | Sisi: server | Contoh format: Bermula <noreply@example.com> (dev tanpa domain: onboarding@resend.dev, hanya bisa mengirim ke email pemilik akun Resend)
 EMAIL_FROM=
 
+# Fungsi: Account ID Cloudflare pemilik bucket R2 (dashboard R2 → Account Details)
+# Wajib: ya | Sisi: server | Contoh format: 0123456789abcdef0123456789abcdef
+R2_ACCOUNT_ID=
+
+# Fungsi: Access Key ID token S3 API R2 (izin Object Read & Write, hanya bucket ini)
+# Wajib: ya | Sisi: server | Contoh format: 0123456789abcdef0123456789abcdef
+R2_ACCESS_KEY_ID=
+
+# Fungsi: Secret Access Key token S3 API R2 (secret)
+# Wajib: ya | Sisi: server | Contoh format: 64 karakter hex
+R2_SECRET_ACCESS_KEY=
+
+# Fungsi: Nama bucket R2 privat untuk file pengguna
+# Wajib: ya | Sisi: server | Contoh format: bermula-files
+R2_BUCKET_NAME=
+
 # Fungsi: Level log minimum (debug | info | warn | error)
 # Wajib: tidak (default: info) | Sisi: server | Contoh format: info
 LOG_LEVEL=debug

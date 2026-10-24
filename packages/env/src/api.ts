@@ -20,6 +20,12 @@ const EMAIL_FROM_PATTERN =
 // API key Resend selalu berawalan `re_`; menangkap salah tempel lebih awal.
 const RESEND_API_KEY_PATTERN = /^re_\S+$/u;
 
+// Account ID Cloudflare & kredensial S3 API R2 berupa hex; menangkap salah tempel
+// (mis. URL endpoint lengkap) lebih awal.
+const R2_ACCOUNT_ID_PATTERN = /^[a-f0-9]{32}$/u;
+// Aturan nama bucket R2: 3–63 karakter, huruf kecil, angka, dan `-`.
+const R2_BUCKET_NAME_PATTERN = /^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/u;
+
 // better-auth menolak secret yang lebih pendek di production.
 const AUTH_SECRET_MIN_LENGTH = 32;
 
@@ -45,6 +51,17 @@ const server = {
   LOG_LEVEL: z.enum(LOG_LEVEL_VALUES).default("info"),
   POSTHOG_HOST: originSchema.optional(),
   POSTHOG_PROJECT_TOKEN: z.string().min(1).optional(),
+  R2_ACCESS_KEY_ID: z.string().min(1),
+  R2_ACCOUNT_ID: z
+    .string()
+    .regex(
+      R2_ACCOUNT_ID_PATTERN,
+      "Harus account ID Cloudflare (32 karakter hex)"
+    ),
+  R2_BUCKET_NAME: z
+    .string()
+    .regex(R2_BUCKET_NAME_PATTERN, "Harus nama bucket R2 yang valid"),
+  R2_SECRET_ACCESS_KEY: z.string().min(1),
   RESEND_API_KEY: z
     .string()
     .regex(RESEND_API_KEY_PATTERN, "Harus API key Resend (re_...)"),

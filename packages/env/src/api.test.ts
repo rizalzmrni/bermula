@@ -9,6 +9,10 @@ const VALID_ENV = {
   CORS_ORIGINS: "http://localhost:5173, http://localhost:5174",
   DATABASE_URL: "postgresql://user:pass@ep-test.neon.tech/app?sslmode=require",
   EMAIL_FROM: "Bermula <noreply@example.com>",
+  R2_ACCESS_KEY_ID: "test-access-key",
+  R2_ACCOUNT_ID: "0123456789abcdef0123456789abcdef",
+  R2_BUCKET_NAME: "bermula-test",
+  R2_SECRET_ACCESS_KEY: "test-secret-key",
   RESEND_API_KEY: "re_test_123",
   WEB_URL: "http://localhost:5174",
 };
@@ -121,5 +125,15 @@ describe(createApiEnv, () => {
     expect(
       createApiEnv({ ...VALID_ENV, API_DOCS_ENABLED: "true" }).API_DOCS_ENABLED
     ).toBeTruthy();
+  });
+
+  it("rejects an R2 endpoint URL in place of the account ID", () => {
+    expect(() =>
+      createApiEnv({
+        ...VALID_ENV,
+        R2_ACCOUNT_ID:
+          "https://0123456789abcdef0123456789abcdef.r2.cloudflarestorage.com",
+      })
+    ).toThrow("R2_ACCOUNT_ID");
   });
 });
