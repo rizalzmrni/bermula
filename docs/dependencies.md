@@ -51,7 +51,7 @@ Sebutkan hasil keputusan (lokasi + alasan satu kalimat) di "Catatan" laporan.
 | `api`       | `hono`, `@hono/zod-openapi`, `@scalar/hono-api-reference`, `wrangler`, `@cloudflare/vite-plugin` (+ `@cloudflare/workers-types` hanya bila masih dibutuhkan)            | Runtime & tooling Workers + Hono                      |
 | `db`        | `drizzle-orm`, `drizzle-kit`, `@neondatabase/serverless`                                                                                                                | `drizzle-orm` & `drizzle-kit` wajib cocok             |
 | `services`  | `better-auth`, `resend`, `stripe`, `posthog-js`, `@react-email/*`                                                                                                       | Integrasi layanan pihak ketiga                        |
-| `test`      | `vitest`, `@vitest/ui`, `@cloudflare/vitest-pool-workers`, `@testing-library/react`, `@testing-library/dom`, `happy-dom`                                                | Versi `vitest` & pool-workers harus cocok (semua dev) |
+| `test`      | `vitest`, `@vitest/ui`, `@cloudflare/vitest-plugin`, `@testing-library/react`, `@testing-library/dom`, `happy-dom`                                                      | `vitest` harus masuk peer `@cloudflare/vitest-plugin` |
 | `storybook` | `storybook` dan paket `@storybook/*` yang dipakai                                                                                                                       | Semua paket Storybook wajib berversi sama             |
 
 Paket baru yang jelas termasuk sebuah kelompok langsung masuk catalog itu.

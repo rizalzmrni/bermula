@@ -75,7 +75,7 @@ Satu bahasa (TypeScript) agar tipe dan logika dibagikan antar-paket; satu runtim
 | Observability      | Logger `packages/observability` → Workers Logs + BetterStack; error → PostHog Error Tracking |
 | Lint & format      | Ultracite (Oxlint + Oxfmt)                                                                   |
 | Git hooks          | Husky + lint-staged + commitlint                                                             |
-| Testing            | Vitest (+ `@cloudflare/vitest-pool-workers`)                                                 |
+| Testing            | Vitest (+ `@cloudflare/vitest-plugin`)                                                       |
 
 **Versi:** saat instalasi awal sebuah paket, pakai versi stabil terbaru. Setelah
 itu, ikuti versi di catalog — **jangan upgrade di tengah tugas lain**. Cek API
@@ -255,7 +255,7 @@ bermula/
 - Lingkungan per jenis kode:
   - Fungsi murni & util → Vitest default (Node).
   - Komponen React → Vitest + `happy-dom` + `@testing-library/react`.
-  - Kode Worker (Hono, binding R2/DB) → `@cloudflare/vitest-pool-workers`.
+  - Kode Worker (Hono, binding R2/DB) → `@cloudflare/vitest-plugin` (workerd asli).
 - Konfigurasi Vitest meng-extend `vite.config` app. Jalankan lewat `bun run test`.
 - Wajib diuji: fungsi di `packages/core`, service berlogika bisnis, skema Zod
   penting, util lintas fitur.

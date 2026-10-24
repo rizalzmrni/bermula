@@ -36,7 +36,7 @@ agar bekerja bersama), **type-safe** dari database sampai UI, **modern**, dan **
 | Observability       | Logging + BetterStack + PostHog Error Tracking |
 | Lint & format       | Ultracite (Oxlint + Oxfmt)                     |
 | Git hooks           | Husky + lint-staged + commitlint               |
-| Testing             | Vitest (+ `@cloudflare/vitest-pool-workers`)   |
+| Testing             | Vitest (+ `@cloudflare/vitest-plugin`)         |
 
 ---
 

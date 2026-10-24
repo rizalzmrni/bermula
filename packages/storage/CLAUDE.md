@@ -45,6 +45,6 @@ tanpa menyentuh fitur.
 
 ## Testing
 
-- Jalur binding diuji dengan `@cloudflare/vitest-pool-workers` (R2 lokal).
+- Jalur binding diuji dengan `@cloudflare/vitest-plugin` (R2 lokal).
 - Pembuatan presigned URL diuji secara deterministik: waktu disuntikkan,
   tanpa request jaringan.
