@@ -5,7 +5,7 @@
 
 ## Fase berjalan
 
-**Fase 2–3 — sebagian** (`packages/db` + tabel auth & `packages/auth` selesai; migrasi belum diterapkan ke Neon dev; `apps/api` sengaja ditunda).
+**Fase 2–3 — sebagian** (`packages/db` + tabel auth & `packages/auth` selesai; migrasi auth sudah diterapkan ke Neon dev; `apps/api` sengaja ditunda).
 Arahan developer (2026-10-21): siapkan **semua `packages/*` lebih dulu**, baru
 kemudian `apps/*`.
 
@@ -31,7 +31,7 @@ Status: ⏳ belum · 🚧 sedang · ✅ selesai
 - `packages/core` — `@bermula/core/brand` (`APP_NAME`, dipakai email & issuer TOTP), `@bermula/core/format`: `formatNumber`, `formatCurrency`, `formatDate`, `formatRelativeTime` (default `id-ID`, IDR, `Asia/Jakarta`). Belum ada `src/schemas` (dibuat saat fitur pertama).
 - `packages/env` — skema t3-env: `@bermula/env/api` (`APP_URL`, `WEB_URL`, `CORS_ORIGINS`, `DATABASE_URL`, `LOG_LEVEL`, `BETTER_AUTH_URL`, `BETTER_AUTH_SECRET`, `AUTH_COOKIE_DOMAIN` opsional, pasangan opsional BetterStack, PostHog & Google OAuth), `/app` (`VITE_API_URL`), `/web` (`VITE_APP_URL`). File contoh di `apps/api/.dev.vars.example`, `apps/{app,web}/.env.example`.
 - `packages/observability` — `logger` (JSON ke console/Workers Logs + buffer + `flush`), `better-stack` (transport HTTP), `posthog` (`$exception` ke PostHog Error Tracking). Tanpa dependensi runtime.
-- `packages/db` — Drizzle v1 RC + Neon: `createDb` (neon-http), `createTxDb` (Pool per request + `close`), `relations.ts`, helper kolom `columns.ts`, `drizzle.config.ts`, skrip `db:generate|migrate|studio`. Tabel: `@bermula/db/schema/users` (`auth_users`, termasuk kolom plugin admin & twoFactor) dan `@bermula/db/schema/auth` (7 tabel `auth_*` lain, termasuk `auth_two_factors` dan `auth_organizations.is_personal`), migrasi `migrations/20261024123551_auth` (**belum diterapkan** ke database mana pun).
+- `packages/db` — Drizzle v1 RC + Neon: `createDb` (neon-http), `createTxDb` (Pool per request + `close`), `relations.ts`, helper kolom `columns.ts`, `drizzle.config.ts`, skrip `db:generate|migrate|studio`. Tabel: `@bermula/db/schema/users` (`auth_users`, termasuk kolom plugin admin & twoFactor) dan `@bermula/db/schema/auth` (7 tabel `auth_*` lain, termasuk `auth_two_factors` dan `auth_organizations.is_personal`), migrasi `migrations/20261024123551_auth` (diterapkan ke branch Neon dev 2026-10-24; belum ke produksi).
 - `packages/auth` — better-auth 1.7: `@bermula/auth/server` (`createAuth` per request: email+password wajib verifikasi, Google opsional, plugin admin, organization + organisasi pribadi otomatis, twoFactor (TOTP + backup code), email via `waitUntil`), `@bermula/auth/client` (klien vanilla + `adminClient`, `organizationClient`, `twoFactorClient`).
 - `packages/email` — React Email 1.0 + Resend 6: template `verify-email`, `reset-password`, `organization-invitation` (bahasa Indonesia, gaya inline dari token DESIGN.md dalam hex di `src/brand.ts`), `createEmailSender` (HTML + teks polos, bentuk cocok dengan `AuthEmailSenders`), `createResendTransport`. Env `RESEND_API_KEY` + `EMAIL_FROM` (wajib) di `@bermula/env/api`. `apps/email` (server preview) belum dibuat.
 - Vitest 5 (`catalogs.test`) dipakai `core`, `env`, `observability`, `auth`, `email`.
@@ -79,7 +79,8 @@ Bila tugas menyentuh salah satunya: berhenti dan tanyakan.
 - `wrangler types` vs `@cloudflare/workers-types` untuk versi terpasang (saat `apps/api` dibuat).
 - Kompatibilitas TypeScript 7 dengan tool yang memakai JS API TypeScript / peer `typescript@^5` (mis. `@react-router/dev`, Storybook). Bila bermasalah, opsi: `typescript@^6` di catalog.
 - Ekstensi VS Code untuk TS 7: TS 7 tidak menyertakan `tsserver`, sehingga `js/ts.tsdk.path` di `.vscode/settings.json` mungkin tidak berpengaruh.
-- `createDb`/`createTxDb`, migrasi auth, dan alur organisasi pribadi (`db.batch`) belum diuji ke database nyata (belum ada branch Neon dev).
+
+Sudah terverifikasi (2026-10-24, branch Neon dev): migrasi auth, `createDb` & `createTxDb` (transaksi), organisasi pribadi dibuat sekali/idempoten/aman untuk login bersamaan, default kolom plugin admin & 2FA. Belum: alur HTTP better-auth end-to-end (menunggu `apps/api`).
 
 Sudah terverifikasi (2026-10-21): `ultracite init` menambah blok sendiri ke `AGENTS.md` (tidak menimpa `CLAUDE.md`); blok turbo di `AGENTS.md` dikelola `turbo` (opt-in via `agentGuidance`); `commitlint.config.ts` didukung commitlint 21; format BetterStack HTTP ingest & PostHog `$exception` dicek dari dokumentasi resmi.
 
