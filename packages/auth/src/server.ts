@@ -2,6 +2,7 @@ import type { Db } from "@bermula/db/client";
 import type { Logger } from "@bermula/observability/logger";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
 import { betterAuth } from "better-auth";
+import { APIError } from "better-auth/api";
 import { organization } from "better-auth/plugins/organization";
 
 import {
@@ -12,6 +13,10 @@ import {
   toAuthLogger,
 } from "./config";
 import type { AuthEnv } from "./config";
+import {
+  createPersonalOrganizationStore,
+  resolveActiveOrganizationId,
+} from "./personal-organization";
 
 const SECONDS_PER_DAY = 60 * 60 * 24;
 const SESSION_EXPIRES_IN = 7 * SECONDS_PER_DAY;
@@ -78,6 +83,8 @@ export const createAuth = ({
     return Promise.resolve();
   };
 
+  const personalOrganizations = createPersonalOrganizationStore(db);
+
   return betterAuth({
     account: {
       // Default better-auth sudah aman: penautan otomatis hanya bila email
@@ -94,6 +101,23 @@ export const createAuth = ({
     },
     baseURL: env.BETTER_AUTH_URL,
     database: drizzleAdapter(db, { provider: "pg" }),
+    databaseHooks: {
+      session: {
+        create: {
+          // Setiap sesi selalu punya organisasi aktif, sehingga service di
+          // apps/api bisa langsung men-scope data dengan `activeOrganizationId`.
+          before: async (session) => ({
+            data: {
+              ...session,
+              activeOrganizationId: await resolveActiveOrganizationId({
+                store: personalOrganizations,
+                userId: session.userId,
+              }),
+            },
+          }),
+        },
+      },
+    },
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: true,
@@ -119,7 +143,34 @@ export const createAuth = ({
     plugins: [
       organization({
         invitationExpiresIn: INVITATION_EXPIRES_IN,
+        organizationHooks: {
+          // Organisasi pribadi menjadi tempat data default pengguna; bila
+          // terhapus, sesi berikutnya akan membuat organisasi pribadi kosong.
+          beforeDeleteOrganization: ({ organization: org }) => {
+            if (org.isPersonal === true) {
+              return Promise.reject(
+                new APIError("BAD_REQUEST", {
+                  message: "Personal organization cannot be deleted",
+                })
+              );
+            }
+            return Promise.resolve();
+          },
+        },
         requireEmailVerificationOnInvitation: true,
+        schema: {
+          organization: {
+            additionalFields: {
+              // `input: false`: hanya server yang boleh menandai organisasi pribadi.
+              isPersonal: {
+                defaultValue: false,
+                input: false,
+                required: false,
+                type: "boolean",
+              },
+            },
+          },
+        },
         sendInvitationEmail: ({ email, id, inviter, organization: org }) =>
           sendInBackground("organization-invitation", () =>
             emails.sendOrganizationInvitationEmail({

@@ -62,6 +62,38 @@ describe(createAuth, () => {
     );
   });
 
+  it("marks personal organizations as server-only and undeletable", async () => {
+    const { auth } = setup();
+    const organizationPlugin = auth.options.plugins.find(
+      (plugin) => plugin.id === "organization"
+    );
+    const beforeDelete =
+      organizationPlugin?.options?.organizationHooks?.beforeDeleteOrganization;
+    const organization = {
+      createdAt: new Date("2026-01-01T00:00:00Z"),
+      id: "org-1",
+      name: "Budi",
+      slug: "personal-user-1",
+    };
+
+    expect(
+      organizationPlugin?.options?.schema?.organization?.additionalFields
+        ?.isPersonal
+    ).toMatchObject({ input: false, type: "boolean" });
+    await expect(
+      beforeDelete?.({
+        organization: { ...organization, isPersonal: true },
+        user: USER,
+      })
+    ).rejects.toThrow("Personal organization cannot be deleted");
+    await expect(
+      beforeDelete?.({
+        organization: { ...organization, isPersonal: false },
+        user: USER,
+      })
+    ).resolves.toBeUndefined();
+  });
+
   it("sends the reset password email in the background", async () => {
     const { auth, pending, senders } = setup();
 
