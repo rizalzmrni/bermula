@@ -1,5 +1,6 @@
 import type { Db } from "@bermula/db/client";
-import { member, organization, user } from "@bermula/db/schema/auth";
+import { members, organizations } from "@bermula/db/schema/auth";
+import { users } from "@bermula/db/schema/users";
 import { asc, eq } from "drizzle-orm";
 
 /**
@@ -23,9 +24,9 @@ export const createPersonalOrganizationStore = (
 ): PersonalOrganizationStore => ({
   createPersonalOrganization: async (userId) => {
     const [owner] = await db
-      .select({ name: user.name })
-      .from(user)
-      .where(eq(user.id, userId))
+      .select({ name: users.name })
+      .from(users)
+      .where(eq(users.id, userId))
       .limit(1);
 
     if (!owner) {
@@ -37,23 +38,23 @@ export const createPersonalOrganizationStore = (
     // tanpa owner bila insert kedua gagal.
     const organizationId = crypto.randomUUID();
     await db.batch([
-      db.insert(organization).values({
+      db.insert(organizations).values({
         id: organizationId,
         isPersonal: true,
         name: owner.name,
         slug: toPersonalOrganizationSlug(userId),
       }),
-      db.insert(member).values({ organizationId, role: "owner", userId }),
+      db.insert(members).values({ organizationId, role: "owner", userId }),
     ]);
 
     return organizationId;
   },
   findFirstOrganizationId: async (userId) => {
     const [membership] = await db
-      .select({ organizationId: member.organizationId })
-      .from(member)
-      .where(eq(member.userId, userId))
-      .orderBy(asc(member.createdAt))
+      .select({ organizationId: members.organizationId })
+      .from(members)
+      .where(eq(members.userId, userId))
+      .orderBy(asc(members.createdAt))
       .limit(1);
 
     return membership?.organizationId ?? null;

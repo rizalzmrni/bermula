@@ -1,71 +1,71 @@
 import { defineRelations } from "drizzle-orm";
 
 import {
-  account,
-  invitation,
-  member,
-  organization,
-  session,
-  user,
-  verification,
+  accounts,
+  invitations,
+  members,
+  organizations,
+  sessions,
+  verifications,
 } from "./schema/auth";
+import { users } from "./schema/users";
 
 /**
  * Relasi untuk relational query (`db.query.<table>.findMany({ with })`).
- * Kunci tabel auth wajib sama dengan nama model better-auth; nama relasinya
- * mengikuti generator adapter (`sessions`, `members`, ...) agar join adapter
- * menemukan relasi yang benar. Tabel domain baru diimpor dari
- * `src/schema/<domain>.ts` dan didaftarkan di sini.
+ * Kunci tabel auth wajib bentuk jamak nama model better-auth (adapter memakai
+ * `usePlural: true`); nama relasinya mengikuti generator adapter (`user`,
+ * `sessions`, ...) agar join adapter menemukan relasi yang benar. Tabel domain
+ * baru diimpor dari `src/schema/<domain>.ts` dan didaftarkan di sini.
  */
 export const relations = defineRelations(
   {
-    account,
-    invitation,
-    member,
-    organization,
-    session,
-    user,
-    verification,
+    accounts,
+    invitations,
+    members,
+    organizations,
+    sessions,
+    users,
+    verifications,
   },
   (r) => ({
-    account: {
-      user: r.one.user({ from: r.account.userId, to: r.user.id }),
+    accounts: {
+      user: r.one.users({ from: r.accounts.userId, to: r.users.id }),
     },
-    invitation: {
-      organization: r.one.organization({
-        from: r.invitation.organizationId,
-        to: r.organization.id,
+    invitations: {
+      organization: r.one.organizations({
+        from: r.invitations.organizationId,
+        to: r.organizations.id,
       }),
-      user: r.one.user({ from: r.invitation.inviterId, to: r.user.id }),
+      user: r.one.users({ from: r.invitations.inviterId, to: r.users.id }),
     },
-    member: {
-      organization: r.one.organization({
-        from: r.member.organizationId,
-        to: r.organization.id,
+    members: {
+      organization: r.one.organizations({
+        from: r.members.organizationId,
+        to: r.organizations.id,
       }),
-      user: r.one.user({ from: r.member.userId, to: r.user.id }),
+      user: r.one.users({ from: r.members.userId, to: r.users.id }),
     },
-    organization: {
-      invitations: r.many.invitation({
-        from: r.organization.id,
-        to: r.invitation.organizationId,
+    organizations: {
+      invitations: r.many.invitations({
+        from: r.organizations.id,
+        to: r.invitations.organizationId,
       }),
-      members: r.many.member({
-        from: r.organization.id,
-        to: r.member.organizationId,
+      members: r.many.members({
+        from: r.organizations.id,
+        to: r.members.organizationId,
       }),
     },
-    session: {
-      user: r.one.user({ from: r.session.userId, to: r.user.id }),
+    sessions: {
+      user: r.one.users({ from: r.sessions.userId, to: r.users.id }),
     },
-    user: {
-      accounts: r.many.account({ from: r.user.id, to: r.account.userId }),
-      invitations: r.many.invitation({
-        from: r.user.id,
-        to: r.invitation.inviterId,
+    users: {
+      accounts: r.many.accounts({ from: r.users.id, to: r.accounts.userId }),
+      invitations: r.many.invitations({
+        from: r.users.id,
+        to: r.invitations.inviterId,
       }),
-      members: r.many.member({ from: r.user.id, to: r.member.userId }),
-      sessions: r.many.session({ from: r.user.id, to: r.session.userId }),
+      members: r.many.members({ from: r.users.id, to: r.members.userId }),
+      sessions: r.many.sessions({ from: r.users.id, to: r.sessions.userId }),
     },
   })
 );

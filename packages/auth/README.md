@@ -57,7 +57,8 @@ UI organisasi.
 
 ## Database
 
-Tabel di `@bermula/db/schema/auth`. Adapter:
+Tabel di `@bermula/db/schema/users` dan `@bermula/db/schema/auth` (nama
+`auth_*`, jamak; adapter `usePlural: true`). Adapter:
 `@better-auth/drizzle-adapter/relations-v2` (untuk `defineRelations` Drizzle
 v1), tanpa transaksi karena `createDb` memakai `neon-http`. Operasi
 multi-langkah bawaan better-auth (mis. buat organisasi tim + anggota pertama)

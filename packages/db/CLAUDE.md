@@ -28,7 +28,15 @@ Aturan root `CLAUDE.md` tetap berlaku.
   `snakeCase.table(...)` dari `drizzle-orm/pg-core` (v1 tidak lagi punya opsi
   `casing` di `drizzle()`).
 - Satu file skema per domain di `src/schema/<domain>.ts`; relasi didaftarkan di
-  `src/relations.ts` dengan `defineRelations` (relational query v2).
+  `src/relations.ts` dengan `defineRelations` (relational query v2). Tabel yang
+  akan berkembang sendiri boleh punya file sendiri (mis. `schema/users.ts`).
+- **Nama tabel:** `<kelompok>_<jamak>` dalam `snake_case`, mis. `auth_users`,
+  `auth_organizations`, `billing_subscriptions`. Nama ekspor TypeScript cukup
+  bentuk jamaknya (`users`, `organizations`).
+- **Urutan kolom = urutan properti** (aturan `sort-keys` dimatikan untuk
+  `src/schema/**`): `id` → kolom data utama → foreign key/scoping → kolom
+  opsional → `createdAt`, `updatedAt` paling bawah. Helper `id()`,
+  `createdAt()`, `updatedAt()` ada di `src/columns.ts`.
 - Perubahan skema → `bun run db:generate` (drizzle-kit generate), lalu commit
   file migrasi. **Jangan** `drizzle-kit push` ke database produksi.
 - **Jangan** menjalankan migrasi ke produksi tanpa izin eksplisit.
@@ -37,11 +45,12 @@ Aturan root `CLAUDE.md` tetap berlaku.
 ## Scoping data
 
 - **Per-organisasi** (diputuskan 2026-10-21): setiap tabel data pengguna punya
-  kolom `organization_id` (FK ke tabel `organization` better-auth), dan setiap
+  kolom `organization_id` (FK ke `auth_organizations.id`), dan setiap
   query di service membatasi hasil dengan `activeOrganizationId` dari sesi.
-- Tabel milik better-auth (`user`, `session`, `account`, `verification`,
-  `organization`, `member`, `invitation`) mengikuti skema yang dihasilkan CLI
-  better-auth, bukan aturan scoping ini.
+- Tabel milik better-auth (`auth_users`, `auth_sessions`, `auth_accounts`,
+  `auth_verifications`, `auth_organizations`, `auth_members`,
+  `auth_invitations`) mengikuti field better-auth (adapter `usePlural: true`),
+  bukan aturan scoping ini.
 - Index untuk kolom scoping, timestamp, dan kolom yang sering difilter/diurut.
 
 ## Env & tooling

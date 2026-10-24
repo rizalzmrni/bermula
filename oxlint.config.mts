@@ -18,6 +18,13 @@ export default defineConfig({
       ],
       rules: { "no-console": "off" },
     },
+    {
+      // Urutan properti tabel Drizzle = urutan kolom di Postgres. Kolom
+      // disusun menurut prioritas (id → data → relasi → timestamp) agar mudah
+      // dibaca di Neon/Drizzle Studio, bukan menurut abjad.
+      files: ["packages/db/src/schema/**"],
+      rules: { "sort-keys": "off" },
+    },
   ],
   // Ultracite mematikan aturan ini; CLAUDE.md mewajibkan logger.
   rules: { "no-console": "error" },

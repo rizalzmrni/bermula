@@ -100,7 +100,8 @@ export const createAuth = ({
       ipAddress: { ipAddressHeaders: ["cf-connecting-ip"] },
     },
     baseURL: env.BETTER_AUTH_URL,
-    database: drizzleAdapter(db, { provider: "pg" }),
+    // Tabel memakai nama jamak (`users`, `sessions`, ...) di `packages/db`.
+    database: drizzleAdapter(db, { provider: "pg", usePlural: true }),
     databaseHooks: {
       session: {
         create: {
