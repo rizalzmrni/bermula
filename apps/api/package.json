@@ -1,0 +1,36 @@
+{
+  "name": "@bermula/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typegen": "wrangler types --env-file .dev.vars.example",
+    "check-types": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@bermula/auth": "workspace:*",
+    "@bermula/core": "workspace:*",
+    "@bermula/db": "workspace:*",
+    "@bermula/email": "workspace:*",
+    "@bermula/env": "workspace:*",
+    "@bermula/observability": "workspace:*",
+    "@hono/zod-openapi": "catalog:api",
+    "@scalar/hono-api-reference": "catalog:api",
+    "drizzle-orm": "catalog:db",
+    "hono": "catalog:api",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@bermula/typescript-config": "workspace:*",
+    "@cloudflare/vitest-plugin": "catalog:test",
+    "typescript": "catalog:",
+    "vitest": "catalog:test",
+    "wrangler": "catalog:api"
+  }
+}

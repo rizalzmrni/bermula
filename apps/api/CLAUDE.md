@@ -79,6 +79,15 @@ atau binding R2 langsung.
 
 ## Testing
 
-- Handler dan middleware diuji dengan `@cloudflare/vitest-pool-workers`
-  (workerd asli, binding lokal). Stub layanan eksternal (Stripe, Resend,
-  PostHog); jangan memanggil jaringan nyata.
+- Handler dan middleware diuji dengan `@cloudflare/vitest-plugin` (pengganti
+  `@cloudflare/vitest-pool-workers` yang deprecated; mendukung Vitest 5) di
+  workerd asli dengan binding lokal. Dipasang sebagai plugin Vite
+  `cloudflareTest({ wrangler, miniflare })` di `vitest.config.ts`; test memakai
+  `import { env, exports } from "cloudflare:workers"` dan
+  `exports.default.fetch(...)`.
+- Binding uji (env palsu) ada di `vitest.config.ts`, bukan `.dev.vars`, agar test
+  tidak pernah menyambung ke DB atau layanan nyata. Stub layanan eksternal
+  (Stripe, Resend, PostHog); jangan memanggil jaringan nyata.
+- Request pertama di workerd lambat (±5 detik, Vite mentransformasi modul),
+  jadi file test melakukan request pemanasan di `beforeAll`. Rate limit diuji
+  dengan `cf-connecting-ip` berbeda per test agar hitungan tidak saling bocor.

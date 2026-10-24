@@ -1,0 +1,26 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "bermula-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-19",
+  // better-auth memakai AsyncLocalStorage dari `node:async_hooks`.
+  "compatibility_flags": ["nodejs_compat"],
+  // Workers Logs: log JSON dari logger proyek tampil di dashboard Cloudflare.
+  "observability": { "enabled": true },
+  "dev": { "port": 8787 },
+  // Secret & URL diisi lewat `.dev.vars` (lokal) dan `wrangler secret put` (produksi),
+  // tidak di file ini. Skema: packages/env/src/api.ts.
+  "ratelimits": [
+    {
+      // /api/auth/*: membatasi brute force login & spam email verifikasi.
+      "name": "AUTH_RATE_LIMIT",
+      "namespace_id": "1001",
+      "simple": { "limit": 10, "period": 60 },
+    },
+    {
+      "name": "API_RATE_LIMIT",
+      "namespace_id": "1002",
+      "simple": { "limit": 100, "period": 60 },
+    },
+  ],
+}

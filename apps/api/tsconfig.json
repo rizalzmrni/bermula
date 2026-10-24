@@ -1,0 +1,9 @@
+{
+  "extends": "@bermula/typescript-config/base.json",
+  "compilerOptions": {
+    // Template di @bermula/email berupa .tsx dan ikut di-type-check dari sini.
+    "jsx": "react-jsx",
+    "types": ["@cloudflare/vitest-plugin/types"]
+  },
+  "include": ["src", "worker-configuration.d.ts", "vitest.config.ts"]
+}
