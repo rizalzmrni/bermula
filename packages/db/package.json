@@ -14,6 +14,7 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@bermula/core": "workspace:*",
     "@neondatabase/serverless": "catalog:db",
     "drizzle-orm": "catalog:db"
   },
