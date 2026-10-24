@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./client": "./src/client.ts"
+    "./client": "./src/client.ts",
+    "./schema/*": "./src/schema/*.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit && tsc --noEmit -p tsconfig.node.json",

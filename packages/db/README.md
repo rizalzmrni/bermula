@@ -6,6 +6,7 @@ Drizzle ORM **v1 RC** + Neon. Aturan lengkap: `CLAUDE.md` di folder ini.
 | ----------------------------- | -------------------------------------------------------------------------------- |
 | `createDb({ databaseUrl })`   | Query biasa lewat HTTP (`neon-http`). Tanpa transaksi interaktif.                |
 | `createTxDb({ databaseUrl })` | Transaksi (`neon-serverless` Pool). Buat per request, lalu `waitUntil(close())`. |
+| `@bermula/db/schema/<domain>` | Tabel Drizzle per domain, mis. `schema/auth` (tabel better-auth).                |
 
 ## Perintah
 
@@ -16,5 +17,13 @@ bun run db:migrate    # terapkan migrasi (jangan ke produksi tanpa izin)
 bun run db:studio
 ```
 
-`db:generate` baru berfungsi setelah file skema pertama ada di `src/schema/`
-(saat ini belum ada tabel; menunggu keputusan scoping data di `STATUS.md`).
+Migrasi tersimpan di `migrations/` (hasil `drizzle-kit`, tidak diformat
+Oxfmt). `db:generate` tidak menyambung ke database, tetapi
+`drizzle.config.ts` tetap mewajibkan `DATABASE_URL` terisi.
+
+## Tabel auth
+
+`src/schema/auth.ts` berisi tabel better-auth (`user`, `session`, `account`,
+`verification`, `organization`, `member`, `invitation`). Nama tabel & properti
+wajib sama dengan model better-auth. Bila konfigurasi `packages/auth` berubah
+(plugin/field baru), sesuaikan file ini lalu `db:generate`.
