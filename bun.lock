@@ -26,6 +26,7 @@
         "@bermula/email": "workspace:*",
         "@bermula/env": "workspace:*",
         "@bermula/observability": "workspace:*",
+        "@bermula/storage": "workspace:*",
         "@hono/zod-openapi": "catalog:api",
         "@scalar/hono-api-reference": "catalog:api",
         "drizzle-orm": "catalog:db",
@@ -61,6 +62,9 @@
     "packages/core": {
       "name": "@bermula/core",
       "version": "0.0.0",
+      "dependencies": {
+        "zod": "catalog:",
+      },
       "devDependencies": {
         "@bermula/typescript-config": "workspace:*",
         "typescript": "catalog:",
@@ -71,6 +75,7 @@
       "name": "@bermula/db",
       "version": "0.0.0",
       "dependencies": {
+        "@bermula/core": "workspace:*",
         "@neondatabase/serverless": "catalog:db",
         "drizzle-orm": "catalog:db",
       },

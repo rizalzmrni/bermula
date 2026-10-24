@@ -5,11 +5,15 @@
   "type": "module",
   "exports": {
     "./brand": "./src/brand.ts",
+    "./files": "./src/files.ts",
     "./format": "./src/format.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",
     "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@bermula/typescript-config": "workspace:*",
