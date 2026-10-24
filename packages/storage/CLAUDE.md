@@ -31,8 +31,9 @@ tanpa menyentuh fitur.
   Worker (batas memori/ukuran Worker).
 - Bucket privat; presigned URL berumur pendek (mis. ≤15 menit). Hanya aset yang
   memang publik (mis. logo) yang boleh publik, di bucket/prefix terpisah.
-- Key berawalan pemilik sesuai keputusan scoping, mis.
-  `uploads/<user_id>/<uuid>-<nama-aman>`. Nama file disanitasi.
+- Key berawalan pemilik sesuai keputusan scoping (per-organisasi):
+  `uploads/<organization_id>/<uuid>-<nama-aman>`, dibuat dengan
+  `createObjectKey`. Nama file disanitasi (`sanitizeFileName`).
 - Service memverifikasi kepemilikan (lewat metadata di Postgres) **sebelum**
   memberi URL akses.
 - Metadata file (nama asli, tipe, ukuran, key, pemilik) disimpan di Postgres;
@@ -42,6 +43,22 @@ tanpa menyentuh fitur.
 - Nama bucket dari binding/env; jangan hardcode.
 - Konfigurasi CORS bucket R2 untuk origin `APP_URL` agar upload dari browser
   berhasil; tulis langkahnya di laporan sebagai langkah manual.
+
+## Modul
+
+| Ekspor                            | Isi                                                                                           |
+| --------------------------------- | --------------------------------------------------------------------------------------------- |
+| `@bermula/storage/object-storage` | Tipe `ObjectStorage` (antarmuka netral provider)                                              |
+| `@bermula/storage/r2-storage`     | `createR2Storage({ bucket, presigner })`: binding untuk put/get/head/delete                   |
+| `@bermula/storage/r2-presigner`   | `createR2Presigner(config)`: presigned URL S3 API (`allHeaders` menandatangani tipe & ukuran) |
+| `@bermula/storage/object-key`     | `createObjectKey`, `sanitizeFileName`, `isObjectKeyOwnedBy`                                   |
+| `@bermula/storage/upload-policy`  | `validateUpload` (tipe & ukuran, fungsi murni)                                                |
+
+- `wrangler.jsonc` di paket ini hanya untuk `wrangler types` dan test (R2 lokal),
+  bukan Worker yang di-deploy.
+- Klien wajib mengirim `content-type` dari `SignedUrl.headers` persis saat
+  upload. `content-length` diisi otomatis oleh browser dari ukuran body (header
+  terlarang untuk di-set manual), jadi file dengan ukuran lain ditolak R2.
 
 ## Testing
 

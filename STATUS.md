@@ -36,8 +36,9 @@ Status: ⏳ belum · 🚧 sedang · ✅ selesai
 - `packages/auth` — better-auth 1.7: `@bermula/auth/server` (`createAuth` per request: email+password wajib verifikasi, Google opsional, plugin admin, organization + organisasi pribadi otomatis, twoFactor (TOTP + backup code), email via `waitUntil`), `@bermula/auth/client` (klien vanilla + `adminClient`, `organizationClient`, `twoFactorClient`).
 - `packages/email` — React Email 1.0 + Resend 6: template `verify-email`, `reset-password`, `organization-invitation` (bahasa Indonesia, gaya inline dari token DESIGN.md dalam hex di `src/brand.ts`), `createEmailSender` (HTML + teks polos, bentuk cocok dengan `AuthEmailSenders`), `createResendTransport`. Env `RESEND_API_KEY` + `EMAIL_FROM` (wajib) di `@bermula/env/api`. `apps/email` (server preview) belum dibuat.
 - `apps/api` — Hono 4.13 + `@hono/zod-openapi` 1.6 + Scalar di Workers (`nodejs_compat`). Middleware per request (env, logger, db, auth, PostHog), CORS dari `CORS_ORIGINS`, rate limit binding (`AUTH_RATE_LIMIT` 10/60 dtk, `API_RATE_LIMIT` 100/60 dtk per IP), `requireAuth` (sesi + organisasi aktif), error seragam (`onError`, `defaultHook`, 404). Endpoint: `GET /health`, `GET|POST /api/auth/*`, `GET /api/me`; `/openapi.json` + `/docs` bila `API_DOCS_ENABLED=true`. Ekspor `AppType`. Lihat README-nya.
-- Vitest 5 (`catalogs.test`) dipakai `core`, `env`, `observability`, `auth`, `email`, `api` (workerd via `@cloudflare/vitest-plugin`).
-- `apps/{app,web,email,storybook}`, `packages/{storage,payments}` baru berisi `CLAUDE.md` / file contoh env (belum jadi workspace).
+- `packages/storage` — antarmuka `ObjectStorage`, `createR2Storage` (binding R2: put/get/head/delete), `createR2Presigner` (aws4fetch 1.0.20, presigned PUT/GET ≤15 menit, `content-type` & `content-length` ikut ditandatangani), `createObjectKey` (`uploads/<organization_id>/<uuid>-<nama-aman>`), `validateUpload`. Belum dipasang di `apps/api` (binding `BUCKET`, env `R2_*`) dan belum ada tabel metadata file; keduanya menyusul bersama fitur upload pertama.
+- Vitest 5 (`catalogs.test`) dipakai `core`, `env`, `observability`, `auth`, `email`, `api`, `storage` (workerd via `@cloudflare/vitest-plugin`).
+- `apps/{app,web,email,storybook}`, `packages/payments` baru berisi `CLAUDE.md` / file contoh env (belum jadi workspace).
 
 ## Keputusan tertunda
 
@@ -78,10 +79,12 @@ Bila tugas menyentuh salah satunya: berhenti dan tanyakan.
 - 2026-10-24 — `apps/api` memakai `nodejs_compat` (better-auth memuat `AsyncLocalStorage` dari `node:async_hooks`). Bundle produksi ±4,9 MB / 911 KB gzip (`wrangler deploy --dry-run`), di bawah batas 3 MB paket gratis.
 - 2026-10-24 — `/docs` & `/openapi.json` dikendalikan `API_DOCS_ENABLED` (default `false`, `true` di `.dev.vars.example`); dimatikan → 404 seragam.
 - 2026-10-24 — Rate limit: `/api/auth/*` 10 req/60 dtk, `/api/*` lain 100 req/60 dtk, kunci `cf-connecting-ip`; melebihi → 429 `RATE_LIMITED`.
+- 2026-10-24 — `packages/storage` memakai tipe global `R2Bucket` dari `wrangler types`; paket punya `wrangler.jsonc` khusus typegen/test (bukan Worker). Semua test storage berjalan di workerd.
 - 2026-10-21 — `drizzle.config.ts` membaca `.env` dengan `process.loadEnvFile()` bawaan Node (tanpa `dotenv`), type-check terpisah lewat `tsconfig.node.json`.
 
 ## Hal yang perlu diverifikasi
 
+- Presigned URL `packages/storage` baru diuji secara deterministik (format & parameter SigV4), belum terhadap bucket R2 nyata; khususnya penegakan `content-length` yang ditandatangani. Uji saat token S3 API R2 tersedia.
 - Kompatibilitas TypeScript 7 dengan tool yang memakai JS API TypeScript / peer `typescript@^5` (mis. `@react-router/dev`, Storybook). Bila bermasalah, opsi: `typescript@^6` di catalog.
 - Ekstensi VS Code untuk TS 7: TS 7 tidak menyertakan `tsserver`, sehingga `js/ts.tsdk.path` di `.vscode/settings.json` mungkin tidak berpengaruh.
 

@@ -1,0 +1,12 @@
+// Bukan Worker yang di-deploy. Konfigurasi ini hanya dipakai `wrangler types`
+// (tipe runtime + binding untuk type-check) dan @cloudflare/vitest-plugin (R2
+// lokal saat test). Binding R2 produksi dideklarasikan di wrangler.jsonc app
+// pemakainya, mis. apps/api.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "bermula-storage-test",
+  "compatibility_date": "2026-10-19",
+  "r2_buckets": [
+    { "binding": "BUCKET", "bucket_name": "bermula-storage-test" },
+  ],
+}
