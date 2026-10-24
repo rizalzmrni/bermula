@@ -32,14 +32,17 @@ tanpa menyentuh fitur.
 - Bucket privat; presigned URL berumur pendek (mis. ≤15 menit). Hanya aset yang
   memang publik (mis. logo) yang boleh publik, di bucket/prefix terpisah.
 - Key berawalan pemilik sesuai keputusan scoping (per-organisasi):
-  `uploads/<organization_id>/<uuid>-<nama-aman>`, dibuat dengan
-  `createObjectKey`. Nama file disanitasi (`sanitizeFileName`).
+  `<kelompok>/<organization_id>/<uuid>-<nama-aman>` (mis. `images/...`,
+  `documents/...`), dibuat dengan `createObjectKey`. Nama file disanitasi
+  (`sanitizeFileName`).
 - Service memverifikasi kepemilikan (lewat metadata di Postgres) **sebelum**
   memberi URL akses.
 - Metadata file (nama asli, tipe, ukuran, key, pemilik) disimpan di Postgres;
   R2 hanya menyimpan byte-nya.
 - Validasi tipe & ukuran file di server sebelum membuat presigned URL upload
-  (sertakan batas ukuran/tipe di URL bila didukung).
+  (`validateUpload` + `UPLOAD_POLICIES` di `@bermula/core/files`, dipakai juga
+  oleh klien). Tipe & ukuran ikut ditandatangani di URL; R2 menolak yang beda
+  (terverifikasi ke bucket asli 2026-10-24).
 - Nama bucket dari binding/env; jangan hardcode.
 - Konfigurasi CORS bucket R2 untuk origin `APP_URL` agar upload dari browser
   berhasil; tulis langkahnya di laporan sebagai langkah manual.
@@ -50,10 +53,14 @@ tanpa menyentuh fitur.
 | --------------------------------- | --------------------------------------------------------------------------------------------- |
 | `@bermula/storage/object-storage` | Tipe `ObjectStorage` (antarmuka netral provider)                                              |
 | `@bermula/storage/r2-storage`     | `createR2Storage({ bucket, presigner })`: binding untuk put/get/head/delete                   |
+| `@bermula/storage/r2-s3-storage`  | `createR2S3Storage(config)`: semua operasi lewat S3 API (dipakai `apps/api`)                  |
 | `@bermula/storage/r2-presigner`   | `createR2Presigner(config)`: presigned URL S3 API (`allHeaders` menandatangani tipe & ukuran) |
 | `@bermula/storage/object-key`     | `createObjectKey`, `sanitizeFileName`, `isObjectKeyOwnedBy`                                   |
-| `@bermula/storage/upload-policy`  | `validateUpload` (tipe & ukuran, fungsi murni)                                                |
 
+- **Binding vs S3 API:** di `wrangler dev` binding R2 memakai bucket simulasi
+  lokal, sedangkan presigned URL selalu ke bucket asli. Operasi yang harus
+  melihat file hasil upload presigned (cek `complete`, hapus) memakai
+  `createR2S3Storage`. Binding cocok untuk objek yang seluruhnya dikelola server.
 - `wrangler.jsonc` di paket ini hanya untuk `wrangler types` dan test (R2 lokal),
   bukan Worker yang di-deploy.
 - Klien wajib mengirim `content-type` dari `SignedUrl.headers` persis saat
@@ -64,4 +71,5 @@ tanpa menyentuh fitur.
 
 - Jalur binding diuji dengan `@cloudflare/vitest-plugin` (R2 lokal).
 - Pembuatan presigned URL diuji secara deterministik: waktu disuntikkan,
-  tanpa request jaringan.
+  tanpa request jaringan. Jalur S3 API diuji dengan `fetch` palsu
+  (`vi.stubGlobal`, dipulihkan otomatis lewat `unstubGlobals`).

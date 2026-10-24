@@ -5,4 +5,6 @@ import { defineConfig } from "vitest/config";
 // yang sama dengan produksi untuk penandatanganan presigned URL.
 export default defineConfig({
   plugins: [cloudflareTest({ wrangler: { configPath: "./wrangler.jsonc" } })],
+  // `fetch` palsu (vi.stubGlobal) dipulihkan otomatis setelah tiap test.
+  test: { unstubGlobals: true },
 });

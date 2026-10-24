@@ -41,54 +41,59 @@ describe(sanitizeFileName, () => {
 });
 
 describe(createObjectKey, () => {
-  it("builds uploads/<organization>/<id>-<safe-name>", () => {
+  it("builds <category>/<organization>/<id>-<safe-name>", () => {
     expect(
       createObjectKey({
+        category: "images",
         fileName: "Foto Profil.JPG",
         id: OBJECT_ID,
         organizationId: ORGANIZATION_ID,
       })
-    ).toBe(`uploads/${ORGANIZATION_ID}/${OBJECT_ID}-foto-profil.jpg`);
+    ).toBe(`images/${ORGANIZATION_ID}/${OBJECT_ID}-foto-profil.jpg`);
   });
 
-  it("rejects owner ids that could change the prefix", () => {
+  it("rejects scopes that could change the prefix", () => {
+    const base = { category: "images", fileName: "a.txt" };
+
     expect(() =>
-      createObjectKey({ fileName: "a.txt", organizationId: "../other" })
+      createObjectKey({ ...base, organizationId: "../other" })
     ).toThrow(/organizationId/u);
+    expect(() => createObjectKey({ ...base, organizationId: "" })).toThrow(
+      /organizationId/u
+    );
     expect(() =>
-      createObjectKey({ fileName: "a.txt", organizationId: "" })
-    ).toThrow(/organizationId/u);
+      createObjectKey({
+        ...base,
+        category: "images/../documents",
+        organizationId: ORGANIZATION_ID,
+      })
+    ).toThrow(/category/u);
   });
 });
 
 describe(isObjectKeyOwnedBy, () => {
-  const key = createObjectKey({
-    fileName: "a.txt",
-    id: OBJECT_ID,
-    organizationId: ORGANIZATION_ID,
+  const scope = { category: "documents", organizationId: ORGANIZATION_ID };
+  const key = createObjectKey({ ...scope, fileName: "a.txt", id: OBJECT_ID });
+
+  it("accepts keys directly under the category and organization prefix", () => {
+    expect(isObjectKeyOwnedBy({ ...scope, key })).toBeTruthy();
   });
 
-  it("accepts keys directly under the organization prefix", () => {
+  it("rejects keys of another organization, category, or nested paths", () => {
     expect(
-      isObjectKeyOwnedBy({ key, organizationId: ORGANIZATION_ID })
-    ).toBeTruthy();
-  });
-
-  it("rejects keys of another organization or nested paths", () => {
+      isObjectKeyOwnedBy({ ...scope, key, organizationId: "another-org" })
+    ).toBeFalsy();
     expect(
-      isObjectKeyOwnedBy({ key, organizationId: "another-organization" })
+      isObjectKeyOwnedBy({ ...scope, category: "images", key })
     ).toBeFalsy();
     expect(
       isObjectKeyOwnedBy({
-        key: `uploads/${ORGANIZATION_ID}/nested/a.txt`,
-        organizationId: ORGANIZATION_ID,
+        ...scope,
+        key: `documents/${ORGANIZATION_ID}/nested/a.txt`,
       })
     ).toBeFalsy();
     expect(
-      isObjectKeyOwnedBy({
-        key: `uploads/${ORGANIZATION_ID}/`,
-        organizationId: ORGANIZATION_ID,
-      })
+      isObjectKeyOwnedBy({ ...scope, key: `documents/${ORGANIZATION_ID}/` })
     ).toBeFalsy();
   });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createR2Presigner } from "./r2-presigner";
+import { createR2Presigner, toContentDispositionHeader } from "./r2-presigner";
 
 const presigner = createR2Presigner({
   accessKeyId: "test-access-key",
@@ -87,6 +87,39 @@ describe("getSignedDownloadUrl", () => {
     expect(signed.headers).toStrictEqual({});
     expect(signed.expiresAt).toStrictEqual(
       new Date("2026-10-24T13:05:00.000Z")
+    );
+  });
+});
+
+describe(toContentDispositionHeader, () => {
+  it("keeps the UTF-8 name and an ASCII fallback", () => {
+    expect(
+      toContentDispositionHeader({
+        fileName: 'Laporan "Q3" – Résumé.pdf',
+        type: "attachment",
+      })
+    ).toBe(
+      `attachment; filename="Laporan _Q3_ _ R_sum_.pdf"; filename*=UTF-8''Laporan%20%22Q3%22%20%E2%80%93%20R%C3%A9sum%C3%A9.pdf`
+    );
+  });
+
+  it("is signed into download URLs so clients cannot change it", async () => {
+    const signed = await presigner.getSignedDownloadUrl({
+      contentDisposition: { fileName: "foto.png", type: "inline" },
+      key: KEY,
+      now: NOW,
+    });
+    const url = new URL(signed.url);
+    const unsigned = await presigner.getSignedDownloadUrl({
+      key: KEY,
+      now: NOW,
+    });
+
+    expect(url.searchParams.get("response-content-disposition")).toBe(
+      `inline; filename="foto.png"; filename*=UTF-8''foto.png`
+    );
+    expect(url.searchParams.get("X-Amz-Signature")).not.toBe(
+      new URL(unsigned.url).searchParams.get("X-Amz-Signature")
     );
   });
 });

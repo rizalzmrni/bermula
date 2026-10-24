@@ -32,8 +32,16 @@ export interface SignedUploadInput {
   now?: Date;
 }
 
+export interface ContentDisposition {
+  /** `inline` untuk ditampilkan (mis. `<img>`), `attachment` untuk diunduh. */
+  type: "inline" | "attachment";
+  /** Nama asli file yang dilihat pengguna saat mengunduh. */
+  fileName: string;
+}
+
 export interface SignedDownloadInput {
   key: string;
+  contentDisposition?: ContentDisposition;
   expiresIn?: number;
   now?: Date;
 }
