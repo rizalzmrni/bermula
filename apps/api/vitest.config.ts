@@ -12,6 +12,10 @@ const TEST_BINDINGS = {
   DATABASE_URL: "postgresql://test:test@db.invalid/test",
   EMAIL_FROM: "Bermula <noreply@example.com>",
   LOG_LEVEL: "error",
+  R2_ACCESS_KEY_ID: "test-access-key",
+  R2_ACCOUNT_ID: "0123456789abcdef0123456789abcdef",
+  R2_BUCKET_NAME: "bermula-test",
+  R2_SECRET_ACCESS_KEY: "test-secret-key",
   RESEND_API_KEY: "re_test",
   WEB_URL: "http://localhost:5174",
 };

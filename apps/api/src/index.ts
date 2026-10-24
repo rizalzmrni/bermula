@@ -5,6 +5,7 @@ import { contextMiddleware } from "./middleware/context";
 import { corsMiddleware } from "./middleware/cors";
 import { rateLimit } from "./middleware/rate-limit";
 import { registerDocs } from "./openapi";
+import { documentRoutes, imageRoutes } from "./routes/files";
 import { healthRoutes } from "./routes/health";
 import { meRoutes } from "./routes/me";
 import type { AppEnv } from "./types";
@@ -25,7 +26,11 @@ app.onError(errorHandler);
 app.notFound(notFoundHandler);
 
 // Dirangkai berantai agar `AppType` memuat semua route untuk klien `hc`.
-const routes = app.route("/", healthRoutes).route("/", meRoutes);
+const routes = app
+  .route("/", healthRoutes)
+  .route("/", meRoutes)
+  .route("/", imageRoutes)
+  .route("/", documentRoutes);
 
 export type AppType = typeof routes;
 export type { Bindings } from "./types";

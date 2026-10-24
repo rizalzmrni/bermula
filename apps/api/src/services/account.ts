@@ -47,3 +47,5 @@ export const getActiveMembership = async ({
 
   return membership;
 };
+
+export type ActiveMembership = Awaited<ReturnType<typeof getActiveMembership>>;

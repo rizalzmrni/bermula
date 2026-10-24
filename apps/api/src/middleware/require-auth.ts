@@ -1,12 +1,13 @@
 import { createMiddleware } from "hono/factory";
 
 import { ApiError } from "../lib/errors";
+import { getActiveMembership } from "../services/account";
 import type { AuthenticatedEnv } from "../types";
 
 /**
- * Wajib login. Menaruh `user`, `session`, dan `organizationId` (organisasi
- * aktif) di context; service menerima keduanya sebagai parameter eksplisit
- * untuk men-scope data.
+ * Wajib login dan masih anggota organisasi aktif. Menaruh `user`, `session`,
+ * `organizationId`, dan `membership` (termasuk role) di context; service
+ * menerima nilainya sebagai parameter eksplisit untuk men-scope data.
  */
 export const requireAuth = createMiddleware<AuthenticatedEnv>(
   async (c, next) => {
@@ -33,9 +34,17 @@ export const requireAuth = createMiddleware<AuthenticatedEnv>(
       });
     }
 
+    // Dicek ulang ke DB: pengguna bisa dikeluarkan setelah sesinya dibuat.
+    const membership = await getActiveMembership({
+      db: c.var.db,
+      organizationId,
+      userId: result.user.id,
+    });
+
     c.set("user", result.user);
     c.set("session", result.session);
     c.set("organizationId", organizationId);
+    c.set("membership", membership);
     return next();
   }
 );

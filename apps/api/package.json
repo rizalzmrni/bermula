@@ -20,6 +20,7 @@
     "@bermula/email": "workspace:*",
     "@bermula/env": "workspace:*",
     "@bermula/observability": "workspace:*",
+    "@bermula/storage": "workspace:*",
     "@hono/zod-openapi": "catalog:api",
     "@scalar/hono-api-reference": "catalog:api",
     "drizzle-orm": "catalog:db",

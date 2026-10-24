@@ -85,6 +85,44 @@ describe("api worker", () => {
     ]);
   });
 
+  it("documents image and document routes separately", async () => {
+    const response = await request("/openapi.json", { ip: "10.0.0.7" });
+    const document: { paths: Record<string, unknown> } = await response.json();
+
+    expect(Object.keys(document.paths)).toStrictEqual(
+      expect.arrayContaining([
+        "/api/images",
+        "/api/images/{id}/complete",
+        "/api/images/{id}/download",
+        "/api/images/{id}",
+        "/api/documents",
+        "/api/documents/{id}/complete",
+        "/api/documents/{id}/download",
+        "/api/documents/{id}",
+      ])
+    );
+  });
+
+  it("requires a session for file uploads", async () => {
+    const statuses = await Promise.all(
+      ["/api/images", "/api/documents"].map(async (path) => {
+        const response = await request(path, {
+          body: JSON.stringify({
+            contentType: "image/png",
+            fileName: "a.png",
+            size: 10,
+          }),
+          headers: { "content-type": "application/json" },
+          ip: "10.0.0.8",
+          method: "POST",
+        });
+        return response.status;
+      })
+    );
+
+    expect(statuses).toStrictEqual([401, 401]);
+  });
+
   it("rate limits /api/auth/* per IP", async () => {
     const statuses: number[] = [];
     for (let attempt = 0; attempt < 11; attempt += 1) {

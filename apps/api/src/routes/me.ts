@@ -4,7 +4,6 @@ import { errorResponse } from "../lib/errors";
 import { createRouter } from "../lib/router";
 import { requireAuth } from "../middleware/require-auth";
 import { SESSION_SECURITY } from "../openapi";
-import { getActiveMembership } from "../services/account";
 
 const AccountSchema = z
   .object({
@@ -55,13 +54,8 @@ const getMeRoute = createRoute({
   tags: ["Account"],
 });
 
-export const meRoutes = createRouter().openapi(getMeRoute, async (c) => {
-  const { db, organizationId, user } = c.var;
-  const organization = await getActiveMembership({
-    db,
-    organizationId,
-    userId: user.id,
-  });
+export const meRoutes = createRouter().openapi(getMeRoute, (c) => {
+  const { membership: organization, user } = c.var;
 
   return c.json(
     {

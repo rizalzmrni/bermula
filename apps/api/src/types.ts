@@ -3,6 +3,9 @@ import type { Db } from "@bermula/db/client";
 import type { ApiEnv } from "@bermula/env/api";
 import type { Logger } from "@bermula/observability/logger";
 import type { CaptureException } from "@bermula/observability/posthog";
+import type { ObjectStorage } from "@bermula/storage/object-storage";
+
+import type { ActiveMembership } from "./services/account";
 
 /** Binding Worker (`c.env`), dihasilkan `wrangler types` dari `wrangler.jsonc`. */
 export type Bindings = Env;
@@ -13,6 +16,7 @@ export interface AppVariables {
   logger: Logger;
   db: Db;
   auth: Auth;
+  storage: ObjectStorage;
   /** `undefined` bila PostHog belum dikonfigurasi. */
   captureException: CaptureException | undefined;
 }
@@ -29,5 +33,7 @@ export interface AuthenticatedEnv {
     user: Session["user"];
     session: Session["session"];
     organizationId: string;
+    /** Organisasi aktif + role pengguna, sudah dicek ke tabel anggota. */
+    membership: ActiveMembership;
   };
 }

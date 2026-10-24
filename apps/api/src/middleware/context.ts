@@ -8,6 +8,7 @@ import { createBetterStackTransport } from "@bermula/observability/better-stack"
 import { createLogger } from "@bermula/observability/logger";
 import type { LogTransport } from "@bermula/observability/logger";
 import { createPostHogExceptionCapture } from "@bermula/observability/posthog";
+import { createR2S3Storage } from "@bermula/storage/r2-s3-storage";
 import { createMiddleware } from "hono/factory";
 
 import type { AppEnv } from "../types";
@@ -62,6 +63,17 @@ export const contextMiddleware = createMiddleware<AppEnv>(async (c, next) => {
   c.set("db", db);
   c.set("auth", createAuth({ db, emails, env, logger, waitUntil }));
   c.set("captureException", buildCaptureException(env));
+  // Lewat S3 API, bukan binding: presigned URL & operasi server harus melihat
+  // bucket yang sama, juga di `wrangler dev` (binding lokal = bucket simulasi).
+  c.set(
+    "storage",
+    createR2S3Storage({
+      accessKeyId: env.R2_ACCESS_KEY_ID,
+      accountId: env.R2_ACCOUNT_ID,
+      bucketName: env.R2_BUCKET_NAME,
+      secretAccessKey: env.R2_SECRET_ACCESS_KEY,
+    })
+  );
 
   try {
     return await next();
