@@ -115,4 +115,11 @@ describe(createApiEnv, () => {
       createApiEnv({ ...VALID_ENV, RESEND_API_KEY: "sk_live_123" })
     ).toThrow("RESEND_API_KEY");
   });
+
+  it("enables API docs only when API_DOCS_ENABLED is true", () => {
+    expect(createApiEnv(VALID_ENV).API_DOCS_ENABLED).toBeFalsy();
+    expect(
+      createApiEnv({ ...VALID_ENV, API_DOCS_ENABLED: "true" }).API_DOCS_ENABLED
+    ).toBeTruthy();
+  });
 });

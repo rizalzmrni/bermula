@@ -24,6 +24,8 @@ const RESEND_API_KEY_PATTERN = /^re_\S+$/u;
 const AUTH_SECRET_MIN_LENGTH = 32;
 
 const server = {
+  // Dokumentasi API publik membuka peta endpoint; aktif hanya bila diminta.
+  API_DOCS_ENABLED: z.stringbool().default(false),
   APP_URL: originSchema,
   AUTH_COOKIE_DOMAIN: z
     .string()

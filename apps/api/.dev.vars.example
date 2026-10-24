@@ -64,3 +64,7 @@ POSTHOG_PROJECT_TOKEN=
 # Fungsi: Host ingestion PostHog (origin, tanpa path)
 # Wajib: tidak (wajib bersama POSTHOG_PROJECT_TOKEN) | Sisi: server | Contoh format: https://eu.i.posthog.com
 POSTHOG_HOST=
+
+# Fungsi: Aktifkan dokumentasi API (GET /openapi.json & GET /docs)
+# Wajib: tidak (default: nonaktif; jangan aktifkan di produksi kecuali disengaja) | Sisi: server | Contoh format: true
+API_DOCS_ENABLED=true
