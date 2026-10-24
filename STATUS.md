@@ -18,7 +18,7 @@ kemudian `apps/*`.
 | 2    | `apps/api` (Hono + OpenAPI + Scalar), `packages/db`                                                     | 🚧     |
 | 3    | `packages/auth` + better-auth di api, auth gate di `apps/app`                                           | 🚧     |
 | 4    | `packages/design-system`, `apps/storybook`, `apps/app`, `apps/web`                                      | ⏳     |
-| 5    | `packages/email` + `apps/email`, `packages/storage`                                                     | ⏳     |
+| 5    | `packages/email` + `apps/email`, `packages/storage`                                                     | 🚧     |
 | 6    | `packages/payments` (Stripe + webhook), `packages/analytics`, `packages/seo`                            | ⏳     |
 | 7    | CI/CD dan deploy                                                                                        | ⏳     |
 
@@ -33,7 +33,8 @@ Status: ⏳ belum · 🚧 sedang · ✅ selesai
 - `packages/observability` — `logger` (JSON ke console/Workers Logs + buffer + `flush`), `better-stack` (transport HTTP), `posthog` (`$exception` ke PostHog Error Tracking). Tanpa dependensi runtime.
 - `packages/db` — Drizzle v1 RC + Neon: `createDb` (neon-http), `createTxDb` (Pool per request + `close`), ``relations.ts`, `drizzle.config.ts`, skrip `db:generate|migrate|studio`. Tabel: `@bermula/db/schema/auth`(7 tabel better-auth +`organization.is_personal`), migrasi `migrations/20261024115711_auth` (**belum diterapkan** ke database mana pun).
 - `packages/auth` — better-auth 1.7: `@bermula/auth/server` (`createAuth` per request: email+password wajib verifikasi, Google opsional, plugin organization + organisasi pribadi otomatis, email via `waitUntil`), `@bermula/auth/client` (klien vanilla + `organizationClient`).
-- Vitest 5 (`catalogs.test`) dipakai `core`, `env`, `observability`, `auth`.
+- `packages/email` — React Email 1.0 + Resend 6: template `verify-email`, `reset-password`, `organization-invitation` (bahasa Indonesia, gaya inline dari token DESIGN.md dalam hex di `src/brand.ts`), `createEmailSender` (HTML + teks polos, bentuk cocok dengan `AuthEmailSenders`), `createResendTransport`. Env `RESEND_API_KEY` + `EMAIL_FROM` (wajib) di `@bermula/env/api`. `apps/email` (server preview) belum dibuat.
+- Vitest 5 (`catalogs.test`) dipakai `core`, `env`, `observability`, `auth`, `email`.
 - `apps/*`, `packages/{storage,payments}` baru berisi `CLAUDE.md` / file contoh env (belum jadi workspace).
 
 ## Keputusan tertunda
@@ -67,6 +68,8 @@ Bila tugas menyentuh salah satunya: berhenti dan tanyakan.
 - 2026-10-21 — `packages/auth` tidak bergantung pada `packages/email`: fungsi kirim disuntikkan oleh apps/api lewat `createAuth({ emails })`.
 - 2026-10-24 — **Organisasi pribadi otomatis** (opsi A): setiap pengguna punya satu organisasi `is_personal`, dibuat di `session.create.before` (sesi pertama) lewat `db.batch` (atomik di neon-http), lalu `activeOrganizationId` = organisasi pertama pengguna. Tidak bisa dihapus. Aplikasi tanpa fitur tim cukup menyembunyikan UI organisasi.
 - 2026-10-24 — Skema auth ditulis manual dengan `snakeCase.table` (kolom dari `getAuthTables(auth.options)`), bukan CLI better-auth, agar sesuai konvensi `packages/db`; diverifikasi dengan schema check adapter. Timestamp `timestamptz`, ID `uuid` default `gen_random_uuid()`, FK `session.active_organization_id` (`set null`), unik `(organization_id, user_id)` di `member`.
+- 2026-10-24 — `packages/email`: email dirender sendiri (`render` + `toPlainText`), bukan opsi `react` SDK Resend, lalu dikirim lewat `EmailTransport` yang bisa diganti (Resend hanya satu implementasi). Gaya inline, bukan komponen `Tailwind` React Email (compiler Tailwind berat untuk bundle Worker dan token berbasis CSS variable tidak didukung klien email).
+- 2026-10-24 — `RESEND_API_KEY` & `EMAIL_FROM` wajib (tanpa mode "log ke console") agar URL verifikasi/reset tidak pernah tercetak ke log bila env produksi salah konfigurasi.
 - 2026-10-21 — `drizzle.config.ts` membaca `.env` dengan `process.loadEnvFile()` bawaan Node (tanpa `dotenv`), type-check terpisah lewat `tsconfig.node.json`.
 
 ## Hal yang perlu diverifikasi
