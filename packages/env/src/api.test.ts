@@ -8,6 +8,8 @@ const VALID_ENV = {
   BETTER_AUTH_URL: "http://localhost:8787",
   CORS_ORIGINS: "http://localhost:5173, http://localhost:5174",
   DATABASE_URL: "postgresql://user:pass@ep-test.neon.tech/app?sslmode=require",
+  EMAIL_FROM: "Bermula <noreply@example.com>",
+  RESEND_API_KEY: "re_test_123",
   WEB_URL: "http://localhost:5174",
 };
 
@@ -96,5 +98,21 @@ describe(createApiEnv, () => {
     expect(() =>
       createApiEnv({ ...VALID_ENV, AUTH_COOKIE_DOMAIN: "https://example.com" })
     ).toThrow("AUTH_COOKIE_DOMAIN");
+  });
+
+  it("accepts a bare or named EMAIL_FROM address", () => {
+    expect(
+      createApiEnv({ ...VALID_ENV, EMAIL_FROM: "noreply@example.com" })
+        .EMAIL_FROM
+    ).toBe("noreply@example.com");
+    expect(() => createApiEnv({ ...VALID_ENV, EMAIL_FROM: "Bermula" })).toThrow(
+      "EMAIL_FROM"
+    );
+  });
+
+  it("rejects a RESEND_API_KEY without the re_ prefix", () => {
+    expect(() =>
+      createApiEnv({ ...VALID_ENV, RESEND_API_KEY: "sk_live_123" })
+    ).toThrow("RESEND_API_KEY");
   });
 });

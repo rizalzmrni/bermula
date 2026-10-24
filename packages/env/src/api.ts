@@ -13,6 +13,13 @@ const LOG_LEVEL_VALUES = ["debug", "info", "warn", "error"] as const;
 // Domain cookie tanpa skema/port, mis. `example.com`; titik di depan opsional.
 const COOKIE_DOMAIN_PATTERN = /^\.?[a-z0-9-]+(?:\.[a-z0-9-]+)+$/u;
 
+// `noreply@example.com` atau `Nama <noreply@example.com>`, format yang diterima Resend.
+const EMAIL_FROM_PATTERN =
+  /^(?:[^<>]+<[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+>|[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+)$/u;
+
+// API key Resend selalu berawalan `re_`; menangkap salah tempel lebih awal.
+const RESEND_API_KEY_PATTERN = /^re_\S+$/u;
+
 // better-auth menolak secret yang lebih pendek di production.
 const AUTH_SECRET_MIN_LENGTH = 32;
 
@@ -28,11 +35,17 @@ const server = {
   BETTER_STACK_SOURCE_TOKEN: z.string().min(1).optional(),
   CORS_ORIGINS: originListSchema,
   DATABASE_URL: z.url().regex(POSTGRES_URL_PATTERN, "Harus URL postgresql://"),
+  EMAIL_FROM: z
+    .string()
+    .regex(EMAIL_FROM_PATTERN, "Harus email, mis. Nama <noreply@example.com>"),
   GOOGLE_CLIENT_ID: z.string().min(1).optional(),
   GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
   LOG_LEVEL: z.enum(LOG_LEVEL_VALUES).default("info"),
   POSTHOG_HOST: originSchema.optional(),
   POSTHOG_PROJECT_TOKEN: z.string().min(1).optional(),
+  RESEND_API_KEY: z
+    .string()
+    .regex(RESEND_API_KEY_PATTERN, "Harus API key Resend (re_...)"),
   WEB_URL: originSchema,
 };
 
