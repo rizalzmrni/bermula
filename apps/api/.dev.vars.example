@@ -1,0 +1,86 @@
+# Salin ke .dev.vars untuk development lokal. Produksi: `wrangler secret put` / vars di dashboard.
+# Skema: packages/env/src/api.ts
+
+# Fungsi: Origin apps/app (redirect & trusted origin)
+# Wajib: ya | Sisi: server | Contoh format: http://localhost:5173
+APP_URL=http://localhost:5173
+
+# Fungsi: Origin apps/web (situs marketing)
+# Wajib: ya | Sisi: server | Contoh format: http://localhost:5174
+WEB_URL=http://localhost:5174
+
+# Fungsi: Origin yang diizinkan CORS (credentials: true), dipisah koma, tanpa `*`
+# Wajib: ya | Sisi: server | Contoh format: http://localhost:5173,http://localhost:5174
+CORS_ORIGINS=http://localhost:5173,http://localhost:5174
+
+# Fungsi: Origin publik apps/api tempat handler better-auth (/api/auth/*) berjalan
+# Wajib: ya | Sisi: server | Contoh format: http://localhost:8787
+BETTER_AUTH_URL=http://localhost:8787
+
+# Fungsi: Kunci rahasia better-auth untuk menandatangani cookie & token (secret, min. 32 karakter)
+# Wajib: ya | Sisi: server | Contoh format: hasil `openssl rand -base64 32`
+BETTER_AUTH_SECRET=
+
+# Fungsi: Domain induk cookie sesi agar terbaca lintas subdomain (app.<domain> & api.<domain>)
+# Wajib: tidak (kosongkan di localhost) | Sisi: server | Contoh format: example.com
+AUTH_COOKIE_DOMAIN=
+
+# Fungsi: OAuth client ID Google untuk login dengan Google
+# Wajib: tidak (wajib bersama GOOGLE_CLIENT_SECRET) | Sisi: server | Contoh format: 1234-abc.apps.googleusercontent.com
+GOOGLE_CLIENT_ID=
+
+# Fungsi: OAuth client secret Google (secret)
+# Wajib: tidak (wajib bersama GOOGLE_CLIENT_ID) | Sisi: server | Contoh format: GOCSPX-xxx
+GOOGLE_CLIENT_SECRET=
+
+# Fungsi: URL koneksi database Neon untuk query runtime (diteruskan ke createDb/createTxDb)
+# Wajib: ya | Sisi: server | Contoh format: postgresql://user:pass@host/db?sslmode=require
+DATABASE_URL=
+
+# Fungsi: API key Resend untuk mengirim email transaksional (verifikasi, reset password, undangan) (secret)
+# Wajib: ya | Sisi: server | Contoh format: re_xxxxxxxx (dev: key akun Resend sendiri)
+RESEND_API_KEY=
+
+# Fungsi: Alamat pengirim email; domainnya harus terverifikasi di Resend
+# Wajib: ya | Sisi: server | Contoh format: Bermula <noreply@example.com> (dev tanpa domain: onboarding@resend.dev, hanya bisa mengirim ke email pemilik akun Resend)
+EMAIL_FROM=
+
+# Fungsi: Account ID Cloudflare pemilik bucket R2 (dashboard R2 → Account Details)
+# Wajib: ya | Sisi: server | Contoh format: 0123456789abcdef0123456789abcdef
+R2_ACCOUNT_ID=
+
+# Fungsi: Access Key ID token S3 API R2 (izin Object Read & Write, hanya bucket ini)
+# Wajib: ya | Sisi: server | Contoh format: 0123456789abcdef0123456789abcdef
+R2_ACCESS_KEY_ID=
+
+# Fungsi: Secret Access Key token S3 API R2 (secret)
+# Wajib: ya | Sisi: server | Contoh format: 64 karakter hex
+R2_SECRET_ACCESS_KEY=
+
+# Fungsi: Nama bucket R2 privat untuk file pengguna
+# Wajib: ya | Sisi: server | Contoh format: bermula-files
+R2_BUCKET_NAME=
+
+# Fungsi: Level log minimum (debug | info | warn | error)
+# Wajib: tidak (default: info) | Sisi: server | Contoh format: info
+LOG_LEVEL=debug
+
+# Fungsi: Source token BetterStack Telemetry untuk pengiriman log (secret)
+# Wajib: tidak (wajib bersama BETTER_STACK_INGESTING_URL) | Sisi: server | Contoh format: abc123...
+BETTER_STACK_SOURCE_TOKEN=
+
+# Fungsi: Ingesting host milik source BetterStack
+# Wajib: tidak (wajib bersama BETTER_STACK_SOURCE_TOKEN) | Sisi: server | Contoh format: https://s1234.eu-nbg-2.betterstackdata.com
+BETTER_STACK_INGESTING_URL=
+
+# Fungsi: Project token PostHog untuk Error Tracking dari server
+# Wajib: tidak (wajib bersama POSTHOG_HOST) | Sisi: server | Contoh format: phc_xxx
+POSTHOG_PROJECT_TOKEN=
+
+# Fungsi: Host ingestion PostHog (origin, tanpa path)
+# Wajib: tidak (wajib bersama POSTHOG_PROJECT_TOKEN) | Sisi: server | Contoh format: https://eu.i.posthog.com
+POSTHOG_HOST=
+
+# Fungsi: Aktifkan dokumentasi API (GET /openapi.json & GET /docs)
+# Wajib: tidak (default: nonaktif; jangan aktifkan di produksi kecuali disengaja) | Sisi: server | Contoh format: true
+API_DOCS_ENABLED=true

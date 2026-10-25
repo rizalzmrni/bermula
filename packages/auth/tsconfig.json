@@ -1,0 +1,7 @@
+{
+  "extends": "@bermula/typescript-config/base.json",
+  "compilerOptions": {
+    "lib": ["ES2024", "WebWorker"]
+  },
+  "include": ["src"]
+}

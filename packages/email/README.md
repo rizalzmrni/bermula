@@ -1,0 +1,52 @@
+# @bermula/email
+
+Template React Email + fungsi kirim. `apps/api` yang memanggil fungsi kirim;
+`apps/email` (belum dibuat) hanya server preview yang mengimpor template dari sini.
+
+| Entry                                 | Isi                                                                        |
+| ------------------------------------- | -------------------------------------------------------------------------- |
+| `@bermula/email/sender`               | `createEmailSender({ from, transport })` → fungsi kirim per jenis email    |
+| `@bermula/email/resend-transport`     | `createResendTransport({ apiKey })` → transport Resend                     |
+| `@bermula/email/transport`            | Tipe `EmailTransport` & `EmailMessage` (untuk transport lain/test)         |
+| `@bermula/email/templates/<template>` | Komponen template + subjek + `PreviewProps` (default export untuk preview) |
+
+## Template
+
+| Template                  | Fungsi kirim                      | Dipicu oleh                 |
+| ------------------------- | --------------------------------- | --------------------------- |
+| `verify-email`            | `sendVerificationEmail`           | Sign-up email + password    |
+| `reset-password`          | `sendResetPasswordEmail`          | Lupa kata sandi             |
+| `organization-invitation` | `sendOrganizationInvitationEmail` | Undangan anggota organisasi |
+
+Bentuk fungsi kirim cocok dengan `AuthEmailSenders` di `packages/auth`.
+
+## Pemakaian di apps/api
+
+```ts
+const emails = createEmailSender({
+  from: env.EMAIL_FROM,
+  transport: createResendTransport({ apiKey: env.RESEND_API_KEY }),
+});
+
+const auth = createAuth({ db, emails, env, logger, waitUntil });
+```
+
+## Aturan
+
+- **Teks UI berbahasa Indonesia**; nama produk dari `APP_NAME` di `@bermula/core/brand`.
+- **Gaya inline**, bukan Tailwind: klien email tidak mendukung CSS variable,
+  `oklch`, flexbox, maupun media query. Warna diambil dari token
+  `DESIGN.md` yang dikonversi ke hex di `src/brand.ts` (satu-satunya tempat
+  hex boleh ditulis); perbarui bila token berubah. Hanya mode terang.
+- Setiap email punya tombol **dan** URL teks sebagai cadangan, plus versi teks
+  polos (`toPlainText`).
+- Template menerima data yang sudah jadi (nama, URL); tidak membaca env atau DB.
+- Render berjalan di Workers lewat kondisi ekspor `workerd` milik
+  `@react-email/render`. Kegagalan kirim dilempar sebagai `Error`; `packages/auth`
+  yang mencatatnya ke logger.
+
+## Env (di apps/api)
+
+`RESEND_API_KEY` dan `EMAIL_FROM` (lihat `apps/api/.dev.vars.example`). Untuk dev
+tanpa domain terverifikasi, `EMAIL_FROM=onboarding@resend.dev` hanya bisa
+mengirim ke email pemilik akun Resend.
