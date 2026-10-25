@@ -1,0 +1,16 @@
+{
+  "extends": "@bermula/typescript-config/react.json",
+  "compilerOptions": {
+    // Tipe `+types/<route>` hasil `react-router typegen` dipetakan ke folder route.
+    "rootDirs": [".", "./.react-router/types"],
+    "types": ["vite/client"]
+  },
+  "include": [
+    ".react-router/types/**/*",
+    "src",
+    "worker-configuration.d.ts",
+    "vite.config.ts",
+    "vitest.config.ts",
+    "react-router.config.ts"
+  ]
+}

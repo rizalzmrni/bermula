@@ -52,4 +52,14 @@ describe(ThemeProvider, () => {
 
     expect(root.classList.contains("dark")).toBeFalsy();
   });
+
+  it("ignores keydown events without a key, like Chrome autofill", async () => {
+    render(<ThemeProvider defaultTheme="light">content</ThemeProvider>);
+    await waitForThemeClass("light");
+
+    expect(() =>
+      document.dispatchEvent(new Event("keydown", { bubbles: true }))
+    ).not.toThrow();
+    expect(root.classList.contains("dark")).toBeFalsy();
+  });
 });

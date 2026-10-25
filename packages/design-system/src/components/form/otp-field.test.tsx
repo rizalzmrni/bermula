@@ -17,4 +17,17 @@ describe(OtpField, () => {
       slots[3]
     );
   });
+
+  it("submits the whole code under its name in native form data", () => {
+    const { container } = render(
+      <form>
+        <OtpField defaultValue="123456" label="Kode" name="code" />
+      </form>
+    );
+    const form = container.querySelector("form");
+    if (!form) {
+      throw new Error("form not rendered");
+    }
+    expect(new FormData(form).get("code")).toBe("123456");
+  });
 });

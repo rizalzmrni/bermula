@@ -8,13 +8,17 @@
     "typegen": {
       "outputs": [".react-router/types/**", "worker-configuration.d.ts"]
     },
+    "build:types": {
+      "dependsOn": ["transit", "typegen"],
+      "outputs": ["dist/types/**"]
+    },
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": ["build/**", "dist/**"]
     },
     "check-types": {
-      "dependsOn": ["transit", "typegen"]
+      "dependsOn": ["transit", "typegen", "^build:types"]
     },
     "test": {
       "dependsOn": ["transit", "typegen"]

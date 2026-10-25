@@ -10,5 +10,5 @@ Aturan root `CLAUDE.md` tetap berlaku.
 - Setiap halaman punya metadata (`meta`) lewat `packages/seo`; sitemap dan
   JSON-LD juga dari paket itu.
 - Google Analytics dari `packages/analytics`; hormati persetujuan cookie.
-- Section marketing di `app/features/<section>/`.
+- Section marketing di `src/features/<section>/` (`appDirectory: "src"`).
 - Baca `DESIGN.md` sebelum tugas UI.
