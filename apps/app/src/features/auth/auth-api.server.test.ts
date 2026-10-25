@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import { getSetCookieHeaders } from "../../lib/api-client";
 import type { ApiBinding } from "../../lib/api-client";
 import {
+  getResetPasswordError,
+  getResetPasswordRedirectUrl,
   getSignInErrorMessage,
   getSignUpErrorMessage,
   getTwoFactorError,
@@ -10,11 +12,13 @@ import {
   getVerifyEmailErrorMessage,
   hasTwoFactorChallenge,
   isTwoFactorRedirect,
+  requestPasswordReset,
   resendVerificationEmail,
+  resetPassword,
   signUpWithEmail,
   verifyTwoFactor,
 } from "./auth-api.server";
-import { signUpSchema, twoFactorSchema } from "./schemas";
+import { resetPasswordSchema, signUpSchema, twoFactorSchema } from "./schemas";
 
 const APP_REQUEST = new Request("http://localhost:5173/sign-up", {
   headers: { origin: "http://localhost:5173" },
@@ -305,6 +309,93 @@ describe(getTwoFactorError, () => {
     await expect(getTwoFactorError(response)).resolves.toStrictEqual({
       message: "Terlalu banyak percobaan. Coba lagi dalam satu menit.",
       restart: false,
+    });
+  });
+});
+
+describe(getResetPasswordRedirectUrl, () => {
+  it("points to the reset page on the app origin, not the api", () => {
+    expect(getResetPasswordRedirectUrl(APP_REQUEST)).toBe(
+      "http://localhost:5173/reset-password"
+    );
+  });
+});
+
+describe(requestPasswordReset, () => {
+  it("asks the api to email a link back to the app reset page", async () => {
+    const { api, requests } = createFakeApi();
+
+    await requestPasswordReset({
+      api,
+      input: { email: "budi@example.com" },
+      request: APP_REQUEST,
+    });
+
+    const [sent] = requests;
+    expect(new URL(sent?.url ?? "").pathname).toBe(
+      "/api/auth/request-password-reset"
+    );
+    expect(sent?.headers.get("origin")).toBe("http://localhost:5173");
+    await expect(sent?.json()).resolves.toStrictEqual({
+      email: "budi@example.com",
+      redirectTo: "http://localhost:5173/reset-password",
+    });
+  });
+});
+
+describe(resetPassword, () => {
+  it("sends the token and the new password", async () => {
+    const { api, requests } = createFakeApi();
+
+    await resetPassword({
+      api,
+      input: { password: "rahasia-baru-123", token: "abc" },
+      request: APP_REQUEST,
+    });
+
+    const [sent] = requests;
+    expect(new URL(sent?.url ?? "").pathname).toBe("/api/auth/reset-password");
+    await expect(sent?.json()).resolves.toStrictEqual({
+      newPassword: "rahasia-baru-123",
+      token: "abc",
+    });
+  });
+});
+
+describe("reset password schema", () => {
+  it.each([
+    { password: "1234567", token: "abc" },
+    { password: "12345678", token: "" },
+    { password: "12345678" },
+  ])("rejects %j", (input) => {
+    expect(resetPasswordSchema.safeParse(input).success).toBeFalsy();
+  });
+});
+
+describe(getResetPasswordError, () => {
+  it("asks for a new link when the token is invalid or used", async () => {
+    const response = Response.json({ code: "INVALID_TOKEN" }, { status: 400 });
+    await expect(getResetPasswordError(response)).resolves.toMatchObject({
+      invalidLink: true,
+    });
+  });
+
+  it("keeps the form for a password that is too short", async () => {
+    const response = Response.json(
+      { code: "PASSWORD_TOO_SHORT" },
+      { status: 400 }
+    );
+    await expect(getResetPasswordError(response)).resolves.toStrictEqual({
+      invalidLink: false,
+      message: "Kata sandi minimal 8 karakter.",
+    });
+  });
+
+  it("reports rate limiting", async () => {
+    const response = new Response(null, { status: 429 });
+    await expect(getResetPasswordError(response)).resolves.toMatchObject({
+      invalidLink: false,
+      message: expect.stringContaining("Terlalu banyak percobaan"),
     });
   });
 });

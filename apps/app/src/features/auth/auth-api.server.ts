@@ -12,7 +12,13 @@ import {
   PASSWORD_MIN_LENGTH,
   TWO_FACTOR_METHOD,
 } from "./schemas";
-import type { SignInInput, SignUpInput, TwoFactorInput } from "./schemas";
+import type {
+  ForgotPasswordInput,
+  ResetPasswordInput,
+  SignInInput,
+  SignUpInput,
+  TwoFactorInput,
+} from "./schemas";
 
 /** Route app yang dituju tautan verifikasi email (lihat `routes/verify-email.tsx`). */
 export const VERIFY_EMAIL_PATH = "/verify-email";
@@ -29,6 +35,13 @@ interface AuthRequestArgs {
  */
 export const getVerifyEmailCallbackUrl = (request: Request) =>
   `${new URL(request.url).origin}${VERIFY_EMAIL_PATH}`;
+
+/** Route app yang dituju tautan reset kata sandi (lihat `routes/reset-password.tsx`). */
+export const RESET_PASSWORD_PATH = "/reset-password";
+
+/** Sama seperti tautan verifikasi: absolut ke origin app, dicek `trustedOrigins`. */
+export const getResetPasswordRedirectUrl = (request: Request) =>
+  `${new URL(request.url).origin}${RESET_PASSWORD_PATH}`;
 
 export const signInWithEmail = ({
   api,
@@ -58,6 +71,38 @@ export const resendVerificationEmail = ({
     api,
     body: { callbackURL: getVerifyEmailCallbackUrl(request), email },
     path: "/api/auth/send-verification-email",
+    request,
+  });
+
+/**
+ * Minta tautan reset. Api selalu membalas sukses generik, termasuk untuk
+ * email yang tidak terdaftar (anti-enumerasi akun).
+ */
+export const requestPasswordReset = ({
+  api,
+  request,
+  input,
+}: AuthRequestArgs & { input: ForgotPasswordInput }) =>
+  postApiJson({
+    api,
+    body: {
+      email: input.email,
+      redirectTo: getResetPasswordRedirectUrl(request),
+    },
+    path: "/api/auth/request-password-reset",
+    request,
+  });
+
+/** Set kata sandi baru; api juga mencabut semua sesi pengguna itu. */
+export const resetPassword = ({
+  api,
+  request,
+  input,
+}: AuthRequestArgs & { input: ResetPasswordInput }) =>
+  postApiJson({
+    api,
+    body: { newPassword: input.password, token: input.token },
+    path: "/api/auth/reset-password",
     request,
   });
 
@@ -193,6 +238,46 @@ export const getTwoFactorError = async (
   return {
     message: "Gagal memverifikasi kode. Silakan coba lagi.",
     restart: false,
+  };
+};
+
+export interface ResetPasswordError {
+  message: string;
+  /** Token tidak bisa dipakai lagi; pengguna harus meminta tautan baru. */
+  invalidLink: boolean;
+}
+
+/** Pesan reset kata sandi gagal, dari status + `code` better-auth. */
+export const getResetPasswordError = async (
+  response: Response
+): Promise<ResetPasswordError> => {
+  if (response.status === HTTP_TOO_MANY_REQUESTS) {
+    return { invalidLink: false, message: RATE_LIMITED_MESSAGE };
+  }
+
+  const code = await readErrorCode(response);
+  if (code === "INVALID_TOKEN" || code === "USER_NOT_FOUND") {
+    return {
+      invalidLink: true,
+      message:
+        "Tautan reset tidak valid, kedaluwarsa, atau sudah dipakai. Minta tautan baru.",
+    };
+  }
+  if (code === "PASSWORD_TOO_SHORT") {
+    return {
+      invalidLink: false,
+      message: `Kata sandi minimal ${PASSWORD_MIN_LENGTH} karakter.`,
+    };
+  }
+  if (code === "PASSWORD_TOO_LONG") {
+    return {
+      invalidLink: false,
+      message: `Kata sandi maksimal ${PASSWORD_MAX_LENGTH} karakter.`,
+    };
+  }
+  return {
+    invalidLink: false,
+    message: "Gagal mengganti kata sandi. Silakan coba lagi.",
   };
 };
 

@@ -48,3 +48,10 @@ export const getLoginUrl = (request: Request) => {
     ? "/sign-in"
     : `/sign-in?${new URLSearchParams({ redirectTo: target })}`;
 };
+
+/** Pesan satu kali di halaman login, dipilih lewat `?notice=`. */
+export const SIGN_IN_NOTICE = {
+  passwordReset: "password-reset",
+} as const;
+
+export const RESET_PASSWORD_SUCCESS_URL = `/sign-in?notice=${SIGN_IN_NOTICE.passwordReset}`;

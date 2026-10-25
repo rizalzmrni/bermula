@@ -7,6 +7,8 @@ export default [
   route("sign-up", "routes/sign-up.tsx"),
   route("sign-out", "routes/sign-out.tsx"),
   route("verify-email", "routes/verify-email.tsx"),
+  route("forgot-password", "routes/forgot-password.tsx"),
+  route("reset-password", "routes/reset-password.tsx"),
   // Semua halaman di dalam layout ini terproteksi (`requireSession` di loader).
   layout("routes/app-layout.tsx", [
     index("routes/dashboard.tsx"),

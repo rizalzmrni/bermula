@@ -2,7 +2,7 @@ import { Form } from "@bermula/design-system/components/form/form";
 import { PasswordField } from "@bermula/design-system/components/form/password-field";
 import { SubmitButton } from "@bermula/design-system/components/form/submit-button";
 import { TextField } from "@bermula/design-system/components/form/text-field";
-import { Form as RouterForm, useNavigation } from "react-router";
+import { Link, Form as RouterForm, useNavigation } from "react-router";
 
 import { FormErrorAlert } from "./form-error-alert";
 
@@ -32,12 +32,20 @@ export const LoginForm = ({ redirectTo, formError }: LoginFormProps) => {
         required
         type="email"
       />
-      <PasswordField
-        autoComplete="current-password"
-        label="Kata sandi"
-        name="password"
-        required
-      />
+      <div className="flex flex-col gap-2">
+        <PasswordField
+          autoComplete="current-password"
+          label="Kata sandi"
+          name="password"
+          required
+        />
+        <Link
+          className="text-muted-foreground self-end text-sm underline underline-offset-4 hover:no-underline"
+          to="/forgot-password"
+        >
+          Lupa kata sandi?
+        </Link>
+      </div>
       <SubmitButton
         className="w-full"
         pending={pending}

@@ -1,4 +1,9 @@
 import { APP_NAME } from "@bermula/core/brand";
+import {
+  Alert,
+  AlertDescription,
+} from "@bermula/design-system/components/ui/alert";
+import { IconCircleCheck } from "@tabler/icons-react";
 import { data, Link, redirect } from "react-router";
 
 import {
@@ -11,7 +16,11 @@ import { LoginForm } from "../features/auth/login-form";
 import { signInSchema } from "../features/auth/schemas";
 import { getSetCookieHeaders } from "../lib/api-client";
 import { getCloudflare } from "../lib/cloudflare";
-import { getSafeRedirect, getTwoFactorUrl } from "../lib/redirect";
+import {
+  getSafeRedirect,
+  getTwoFactorUrl,
+  SIGN_IN_NOTICE,
+} from "../lib/redirect";
 import { getAccount } from "../lib/session.server";
 import type { Route } from "./+types/sign-in";
 
@@ -20,12 +29,16 @@ const HTTP_BAD_REQUEST = 400;
 export const meta = () => [{ title: `Masuk — ${APP_NAME}` }];
 
 export const loader = async ({ request, context }: Route.LoaderArgs) => {
-  const redirectTo = new URL(request.url).searchParams.get("redirectTo");
+  const params = new URL(request.url).searchParams;
+  const redirectTo = params.get("redirectTo");
   // Sudah login: langsung ke tujuan, jangan tampilkan form lagi.
   if (await getAccount({ context, request })) {
     throw redirect(getSafeRedirect(redirectTo));
   }
-  return { redirectTo };
+  return {
+    passwordReset: params.get("notice") === SIGN_IN_NOTICE.passwordReset,
+    redirectTo,
+  };
 };
 
 export const action = async ({ request, context }: Route.ActionArgs) => {
@@ -76,6 +89,15 @@ const LoginPage = ({ loaderData, actionData }: Route.ComponentProps) => (
     }
     title="Masuk ke akun Anda"
   >
+    {loaderData.passwordReset && !actionData ? (
+      <Alert className="mb-4">
+        <IconCircleCheck aria-hidden="true" />
+        <AlertDescription>
+          Kata sandi berhasil diganti dan semua perangkat sudah dikeluarkan.
+          Masuk dengan kata sandi baru.
+        </AlertDescription>
+      </Alert>
+    ) : null}
     <LoginForm
       formError={actionData?.formError}
       redirectTo={loaderData.redirectTo}

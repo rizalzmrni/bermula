@@ -24,6 +24,18 @@ export type SignUpInput = z.infer<typeof signUpSchema>;
 
 export const resendVerificationSchema = z.object({ email: z.email() });
 
+export const forgotPasswordSchema = z.object({ email: z.email() });
+
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+
+export const resetPasswordSchema = z.object({
+  password: z.string().min(PASSWORD_MIN_LENGTH).max(PASSWORD_MAX_LENGTH),
+  // Token 24 karakter dari better-auth; keabsahannya dicek api.
+  token: z.string().min(1),
+});
+
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+
 /** Cara verifikasi langkah kedua; nilai juga dipakai di query `?method=`. */
 export const TWO_FACTOR_METHOD = {
   backupCode: "backup-code",
