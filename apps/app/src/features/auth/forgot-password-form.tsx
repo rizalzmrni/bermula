@@ -1,9 +1,8 @@
-import { Form } from "@bermula/design-system/components/form/form";
-import { SubmitButton } from "@bermula/design-system/components/form/submit-button";
-import { TextField } from "@bermula/design-system/components/form/text-field";
-import { Form as RouterForm, useNavigation } from "react-router";
+import { formElementSubmit, useAppForm } from "@bermula/data/form";
+import { Form as RouterForm, useSubmit } from "react-router";
 
 import { FormErrorAlert } from "./form-error-alert";
+import { forgotPasswordSchema } from "./schemas";
 
 interface ForgotPasswordFormProps {
   defaultEmail?: string;
@@ -12,30 +11,36 @@ interface ForgotPasswordFormProps {
 
 /** Form permintaan tautan reset kata sandi (action `/forgot-password`). */
 export const ForgotPasswordForm = ({
-  defaultEmail,
+  defaultEmail = "",
   formError,
 }: ForgotPasswordFormProps) => {
-  const navigation = useNavigation();
-  const pending = navigation.state === "submitting";
+  const submit = useSubmit();
+  const form = useAppForm({
+    defaultValues: { email: defaultEmail },
+    validators: { onDynamic: forgotPasswordSchema },
+    ...formElementSubmit((element) => submit(element)),
+  });
 
   return (
-    <Form render={<RouterForm action="/forgot-password" method="post" />}>
-      <FormErrorAlert message={formError} />
-      <TextField
-        autoComplete="email"
-        defaultValue={defaultEmail}
-        label="Email"
-        name="email"
-        required
-        type="email"
-      />
-      <SubmitButton
-        className="w-full"
-        pending={pending}
-        pendingLabel="Mengirim…"
+    <form.AppForm>
+      <form.Form
+        render={<RouterForm action="/forgot-password" method="post" />}
       >
-        Kirim tautan reset
-      </SubmitButton>
-    </Form>
+        <FormErrorAlert message={formError} />
+        <form.AppField name="email">
+          {(field) => (
+            <field.TextField
+              autoComplete="email"
+              label="Email"
+              required
+              type="email"
+            />
+          )}
+        </form.AppField>
+        <form.SubmitButton className="w-full" pendingLabel="Mengirim…">
+          Kirim tautan reset
+        </form.SubmitButton>
+      </form.Form>
+    </form.AppForm>
   );
 };

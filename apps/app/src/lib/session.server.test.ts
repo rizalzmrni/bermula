@@ -1,7 +1,10 @@
+import { createQueryClient } from "@bermula/data/query-client";
 import { describe, expect, it, vi } from "vitest";
 
+import { accountKeys } from "../features/account/query-keys";
+import { createApiClient } from "./api-client";
 import type { ApiBinding } from "./api-client";
-import { fetchAccount } from "./session.server";
+import { loadAccount } from "./session.server";
 
 const ACCOUNT = {
   organization: {
@@ -35,13 +38,17 @@ const request = new Request("http://localhost/proyek", {
   },
 });
 
-describe(fetchAccount, () => {
+const load = (api: ApiBinding, queryClient = createQueryClient()) =>
+  loadAccount({
+    client: createApiClient({ api, mode: "server", request }),
+    queryClient,
+  });
+
+describe(loadAccount, () => {
   it("returns the account and forwards the session cookie and client IP", async () => {
     const { api, fetch } = createApi(Response.json(ACCOUNT));
 
-    await expect(fetchAccount({ api, request })).resolves.toStrictEqual(
-      ACCOUNT
-    );
+    await expect(load(api)).resolves.toStrictEqual(ACCOUNT);
 
     const [input, init] = fetch.mock.calls[0] ?? [];
     expect(String(input)).toMatch(/\/api\/me$/u);
@@ -51,14 +58,27 @@ describe(fetchAccount, () => {
     expect(headers.get("x-unrelated")).toBeNull();
   });
 
+  it("caches the account for dehydrate and reuses it within the request", async () => {
+    const { api, fetch } = createApi(Response.json(ACCOUNT));
+    const queryClient = createQueryClient();
+
+    await load(api, queryClient);
+    await load(api, queryClient);
+
+    expect(fetch).toHaveBeenCalledOnce();
+    expect(queryClient.getQueryData(accountKeys.current())).toStrictEqual(
+      ACCOUNT
+    );
+  });
+
   it("returns null when the user is not signed in", async () => {
     const { api } = createApi(Response.json({ error: {} }, { status: 401 }));
-    await expect(fetchAccount({ api, request })).resolves.toBeNull();
+    await expect(load(api)).resolves.toBeNull();
   });
 
   it("throws other API failures to the error boundary", async () => {
     const { api } = createApi(Response.json({ error: {} }, { status: 403 }));
-    await expect(fetchAccount({ api, request })).rejects.toMatchObject({
+    await expect(load(api)).rejects.toMatchObject({
       init: { status: 403 },
     });
   });

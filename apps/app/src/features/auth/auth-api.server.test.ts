@@ -18,7 +18,13 @@ import {
   signUpWithEmail,
   verifyTwoFactor,
 } from "./auth-api.server";
-import { resetPasswordSchema, signUpSchema, twoFactorSchema } from "./schemas";
+import {
+  resetPasswordSchema,
+  signUpSchema,
+  TWO_FACTOR_METHOD,
+  twoFactorFieldsSchemas,
+  twoFactorSchema,
+} from "./schemas";
 
 const APP_REQUEST = new Request("http://localhost:5173/sign-up", {
   headers: { origin: "http://localhost:5173" },
@@ -397,5 +403,22 @@ describe(getResetPasswordError, () => {
       invalidLink: false,
       message: expect.stringContaining("Terlalu banyak percobaan"),
     });
+  });
+});
+
+describe("two-factor form schemas", () => {
+  it("validates the TOTP code like the action, with the checkbox as boolean", () => {
+    const schema = twoFactorFieldsSchemas[TWO_FACTOR_METHOD.totp];
+
+    expect(
+      schema.safeParse({ code: "123456", trustDevice: true }).success
+    ).toBeTruthy();
+    expect(
+      schema.safeParse({ code: "12345", trustDevice: false }).error?.issues[0]
+        ?.message
+    ).toBe("Masukkan 6 digit kode.");
+    expect(
+      twoFactorSchema.safeParse({ code: "12345", method: "totp" }).success
+    ).toBeFalsy();
   });
 });

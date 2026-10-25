@@ -1,10 +1,8 @@
-import { Form } from "@bermula/design-system/components/form/form";
-import { PasswordField } from "@bermula/design-system/components/form/password-field";
-import { SubmitButton } from "@bermula/design-system/components/form/submit-button";
-import { TextField } from "@bermula/design-system/components/form/text-field";
-import { Link, Form as RouterForm, useNavigation } from "react-router";
+import { formElementSubmit, useAppForm } from "@bermula/data/form";
+import { Link, Form as RouterForm, useSubmit } from "react-router";
 
 import { FormErrorAlert } from "./form-error-alert";
+import { signInSchema } from "./schemas";
 
 interface LoginFormProps {
   redirectTo: string | null;
@@ -12,47 +10,56 @@ interface LoginFormProps {
 }
 
 /**
- * Form login. `Form` design-system memvalidasi atribut browser dulu; bila lolos,
- * `RouterForm` mengirimnya ke action route (tetap jalan tanpa JavaScript).
+ * Form login. Atribut browser dan `signInSchema` divalidasi di klien; bila
+ * lolos, elemen form dikirim ke action route. Tanpa JavaScript, `RouterForm`
+ * tetap mengirim POST biasa ke action yang sama.
  */
 export const LoginForm = ({ redirectTo, formError }: LoginFormProps) => {
-  const navigation = useNavigation();
-  const pending = navigation.state === "submitting";
+  const submit = useSubmit();
+  const form = useAppForm({
+    defaultValues: { email: "", password: "" },
+    validators: { onDynamic: signInSchema },
+    ...formElementSubmit((element) => submit(element)),
+  });
 
   return (
-    <Form render={<RouterForm method="post" />}>
-      <FormErrorAlert message={formError} />
-      {redirectTo ? (
-        <input name="redirectTo" type="hidden" value={redirectTo} />
-      ) : null}
-      <TextField
-        autoComplete="email"
-        label="Email"
-        name="email"
-        required
-        type="email"
-      />
-      <div className="flex flex-col gap-2">
-        <PasswordField
-          autoComplete="current-password"
-          label="Kata sandi"
-          name="password"
-          required
-        />
-        <Link
-          className="text-muted-foreground self-end text-sm underline underline-offset-4 hover:no-underline"
-          to="/forgot-password"
-        >
-          Lupa kata sandi?
-        </Link>
-      </div>
-      <SubmitButton
-        className="w-full"
-        pending={pending}
-        pendingLabel="Memproses…"
-      >
-        Masuk
-      </SubmitButton>
-    </Form>
+    <form.AppForm>
+      <form.Form render={<RouterForm method="post" />}>
+        <FormErrorAlert message={formError} />
+        {redirectTo ? (
+          <input name="redirectTo" type="hidden" value={redirectTo} />
+        ) : null}
+        <form.AppField name="email">
+          {(field) => (
+            <field.TextField
+              autoComplete="email"
+              label="Email"
+              required
+              type="email"
+            />
+          )}
+        </form.AppField>
+        <div className="flex flex-col gap-2">
+          <form.AppField name="password">
+            {(field) => (
+              <field.PasswordField
+                autoComplete="current-password"
+                label="Kata sandi"
+                required
+              />
+            )}
+          </form.AppField>
+          <Link
+            className="text-muted-foreground self-end text-sm underline underline-offset-4 hover:no-underline"
+            to="/forgot-password"
+          >
+            Lupa kata sandi?
+          </Link>
+        </div>
+        <form.SubmitButton className="w-full" pendingLabel="Memproses…">
+          Masuk
+        </form.SubmitButton>
+      </form.Form>
+    </form.AppForm>
   );
 };

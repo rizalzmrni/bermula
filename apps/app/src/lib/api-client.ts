@@ -60,6 +60,17 @@ export const createApiClient = (options: ApiClientOptions) => {
 
 export type ApiClient = ReturnType<typeof createApiClient>;
 
+let browserApiClient: ApiClient | undefined;
+
+/**
+ * Klien browser bersama untuk `queryFn` TanStack Query. Tanpa state per
+ * pengguna (cookie dikirim browser), jadi aman dibuat sekali per modul.
+ */
+export const getBrowserApiClient = () => {
+  browserApiClient ??= createApiClient({ mode: "browser" });
+  return browserApiClient;
+};
+
 interface FetchApiOptions {
   api: ApiBinding;
   request: Request;

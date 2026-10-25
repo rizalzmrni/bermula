@@ -1,7 +1,5 @@
+import { formElementSubmit, useAppForm } from "@bermula/data/form";
 import { ConfirmDialog } from "@bermula/design-system/components/feedback/confirm-dialog";
-import { Form } from "@bermula/design-system/components/form/form";
-import { OtpField } from "@bermula/design-system/components/form/otp-field";
-import { SubmitButton } from "@bermula/design-system/components/form/submit-button";
 import { Badge } from "@bermula/design-system/components/ui/badge";
 import { Button } from "@bermula/design-system/components/ui/button";
 import {
@@ -26,7 +24,7 @@ import type {
 import { BackupCodes } from "./backup-codes";
 import { PasswordActionForm } from "./password-action-form";
 import { QrCode } from "./qr-code";
-import { SECURITY_INTENT } from "./schemas";
+import { SECURITY_INTENT, verifyTwoFactorFieldsSchema } from "./schemas";
 
 const SECRET_GROUP = /.{1,4}/gu;
 
@@ -61,6 +59,11 @@ const ScanStep = ({ enrollment, attempt, onCancel }: EnrollmentStepProps) => {
   const verify = useFetcher<SecurityActionResult>({
     key: `two-factor-verify-${attempt}`,
   });
+  const form = useAppForm({
+    defaultValues: { code: "" },
+    validators: { onDynamic: verifyTwoFactorFieldsSchema },
+    ...formElementSubmit((element) => verify.submit(element)),
+  });
 
   if (verify.data && "success" in verify.data) {
     return <BackupCodesStep codes={enrollment.backupCodes} onDone={onCancel} />;
@@ -88,34 +91,38 @@ const ScanStep = ({ enrollment, attempt, onCancel }: EnrollmentStepProps) => {
           </code>
         </div>
       </div>
-      <Form render={<verify.Form method="post" />}>
-        <FormErrorAlert
-          message={isFormError(verify.data) ? verify.data.formError : undefined}
-        />
-        <input
-          name="intent"
-          type="hidden"
-          value={SECURITY_INTENT.verifyTwoFactor}
-        />
-        <OtpField
-          label="Kode verifikasi"
-          length={TOTP_CODE_LENGTH}
-          name="code"
-          required
-          validationType="numeric"
-        />
-        <div className="flex flex-wrap gap-2">
-          <SubmitButton
-            pending={verify.state === "submitting"}
-            pendingLabel="Memverifikasi…"
-          >
-            Aktifkan 2FA
-          </SubmitButton>
-          <Button onClick={onCancel} type="button" variant="ghost">
-            Batal
-          </Button>
-        </div>
-      </Form>
+      <form.AppForm>
+        <form.Form render={<verify.Form method="post" />}>
+          <FormErrorAlert
+            message={
+              isFormError(verify.data) ? verify.data.formError : undefined
+            }
+          />
+          <input
+            name="intent"
+            type="hidden"
+            value={SECURITY_INTENT.verifyTwoFactor}
+          />
+          <form.AppField name="code">
+            {(field) => (
+              <field.OtpField
+                label="Kode verifikasi"
+                length={TOTP_CODE_LENGTH}
+                required
+                validationType="numeric"
+              />
+            )}
+          </form.AppField>
+          <div className="flex flex-wrap gap-2">
+            <form.SubmitButton pendingLabel="Memverifikasi…">
+              Aktifkan 2FA
+            </form.SubmitButton>
+            <Button onClick={onCancel} type="button" variant="ghost">
+              Batal
+            </Button>
+          </div>
+        </form.Form>
+      </form.AppForm>
     </div>
   );
 };
@@ -129,7 +136,9 @@ const ManageTwoFactor = () => {
   const disable = useFetcher<SecurityActionResult>({
     key: "two-factor-disable",
   });
-  const disableForm = useRef<HTMLFormElement>(null);
+  // Diisi form "Matikan 2FA" setelah kata sandi lolos validasi, lalu
+  // dikirim dari dialog konfirmasi.
+  const disableForm = useRef<HTMLFormElement | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   return (
@@ -167,9 +176,11 @@ const ManageTwoFactor = () => {
         </div>
         <PasswordActionForm
           fetcher={disable}
-          formRef={disableForm}
           intent={SECURITY_INTENT.disableTwoFactor}
-          onRequestSubmit={() => setConfirmOpen(true)}
+          onRequestSubmit={(element) => {
+            disableForm.current = element;
+            setConfirmOpen(true);
+          }}
           pendingLabel="Mematikan…"
           submitLabel="Matikan 2FA"
           variant="destructive"

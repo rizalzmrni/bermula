@@ -1,23 +1,18 @@
 import { APP_NAME } from "@bermula/core/brand";
 import { EmptyState } from "@bermula/design-system/components/feedback/empty-state";
 import { IconLayoutDashboard } from "@tabler/icons-react";
-import { useRouteLoaderData } from "react-router";
 
-import type { loader as appLayoutLoader } from "./app-layout";
+import { useAccount } from "../features/account/queries";
 
 export const meta = () => [{ title: `Beranda — ${APP_NAME}` }];
 
 const DashboardPage = () => {
-  const layoutData =
-    useRouteLoaderData<typeof appLayoutLoader>("routes/app-layout");
-  const name = layoutData?.account.user.name;
+  const { name } = useAccount().user;
 
   return (
     <>
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {name ? `Halo, ${name}` : "Beranda"}
-        </h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Halo, {name}</h1>
         <p className="text-muted-foreground text-sm">
           Ringkasan aktivitas organisasi Anda.
         </p>
