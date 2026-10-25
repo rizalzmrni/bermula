@@ -90,11 +90,24 @@ Aturan:
   komponen hasil CLI mengimpornya langsung.
 - **Ikon:** `@tabler/icons-react` (`iconLibrary: "tabler"`). Ukuran konsisten
   (mis. `size-4` dalam tombol), warnai dengan `currentColor` agar ikut token teks.
-- **Toast/notifikasi:** `sonner`.
-- **Tabel:** TanStack Table dengan pembungkus tabel dari `packages/design-system` agar gaya
-  header/baris/зебра seragam dan memakai token `border`/`muted`.
-- **Form:** TanStack Form + Zod; tampilkan pesan error dengan `text-destructive`
-  dan beri `aria-invalid` pada input bermasalah.
+- **Toast/notifikasi:** Toast Base UI (`components/ui/toast`); `<Toaster />`
+  sudah dipasang oleh `DesignSystemProvider`.
+- **Tabel:** tampilan tabel (header/baris/zebra dengan token `border`/`muted`) di
+  `packages/design-system`; integrasi `useReactTable` TanStack di `packages/data`.
+- **Form:** field presentasional (label, kontrol, deskripsi, error dengan
+  `text-destructive` + `aria-invalid`) di `packages/design-system`; `createFormHook`
+  TanStack Form yang mendaftarkan field itu di `packages/data`. Validasi Zod.
+  Bungkus field dengan `Form` (`components/form/form`) dan pasang atribut
+  validasi browser (`required`, `minLength`, `type="email"`, dll.) di field agar
+  kesalahan dasar tertangkap sebelum JavaScript validasi berjalan. Pilihan:
+  `select` (≤10 opsi), `combobox` (daftar panjang, bisa dicari), `radio-group`
+  (2–5 opsi yang perlu terlihat semua).
+- **Komponen reusable** (presentasional: data lewat props, tanpa fetch/sesi) di
+  `src/components/{layout,navigation,form,feedback}/`. Menu didefinisikan sekali
+  per app sebagai `NavItem[]` (`lib/navigation`) dan dipakai header, nav mobile,
+  footer, serta sidebar. Komponen yang membaca sesi/API tetap di app.
+  Halaman terproteksi `apps/app` memakai `AppShell`; setiap item sidebar level
+  atas wajib punya ikon agar tetap terbaca saat sidebar dilipat.
 
 ## State Wajib per Komponen Data
 
@@ -105,6 +118,10 @@ Setiap komponen yang memuat data menampilkan empat state:
 2. **Error** — pesan ringkas + aksi coba lagi; warna `destructive`.
 3. **Empty** — keadaan kosong yang menjelaskan apa yang biasanya ada + aksi berikutnya.
 4. **Success** — konten sebenarnya.
+
+Pakai komponen `components/feedback/`: `LoadingSkeleton` (pilih varian yang mirip
+konten), `ErrorState`, `EmptyState`. Aksi merusak/tak bisa dibatalkan selalu
+lewat `ConfirmDialog` dengan `destructive` dan deskripsi akibatnya.
 
 ## Format Angka, Tanggal, Mata Uang
 
