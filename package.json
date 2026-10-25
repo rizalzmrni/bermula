@@ -30,8 +30,10 @@
       "services": {
         "@better-auth/drizzle-adapter": "^1.7.12",
         "@react-email/components": "^1.0.12",
-        "@react-email/render": "^2.0.6",
+        "@react-email/render": "2.0.6",
+        "@react-email/ui": "6.11.3",
         "better-auth": "^1.7.12",
+        "react-email": "6.11.3",
         "resend": "^6.34.1"
       },
       "react": {

@@ -124,6 +124,13 @@ paket yang harus di-upgrade bersamaan.
   `packages/design-system/package.json`; pindahkan ke catalog `ui` setelahnya.
   `recharts` sengaja dipin persis (`3.8.0`) mengikuti registry shadcn, karena
   komponen `chart` ditulis untuk versi itu.
+- `react-email` dan `@react-email/ui` (catalog `services`, dipakai `apps/email`)
+  dipin persis ke versi yang sama, karena CLI mewajibkan versi UI preview sama
+  dengan versi CLI. `@react-email/render` dipin `2.0.6` agar `packages/email`
+  berbagi satu salinan dengan `@react-email/components` (syarat fix
+  `render2 is not a function`, lihat `STATUS.md`); CLI preview yang butuh
+  `>=2.1.1` mendapat salinan bersarang sendiri. Saat upgrade components, naikkan
+  render ke versi yang sama dengan dependensi components.
 - Rentang caret (`^x.y.z`) secara default; versi persis hanya bila diwajibkan
   dokumentasi library, dengan alasan di commit.
 - **Versi:** saat instalasi awal pakai versi stabil terbaru. Setelah itu ikuti

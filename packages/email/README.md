@@ -1,7 +1,8 @@
 # @bermula/email
 
 Template React Email + fungsi kirim. `apps/api` yang memanggil fungsi kirim;
-`apps/email` (belum dibuat) hanya server preview yang mengimpor template dari sini.
+`apps/email` hanya server preview yang membaca template dari sini (`bun run dev`
+di sana, http://localhost:3000).
 
 | Entry                                 | Isi                                                                        |
 | ------------------------------------- | -------------------------------------------------------------------------- |
