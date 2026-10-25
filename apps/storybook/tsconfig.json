@@ -1,0 +1,7 @@
+{
+  "extends": "@bermula/typescript-config/react.json",
+  "compilerOptions": {
+    "types": ["vite/client"]
+  },
+  "include": [".storybook", "src", "vite.config.ts"]
+}

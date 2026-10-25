@@ -1,0 +1,33 @@
+{
+  "name": "@bermula/storybook",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "storybook dev --port 6006 --no-open",
+    "build": "storybook build --output-dir dist",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@bermula/core": "workspace:*",
+    "@bermula/design-system": "workspace:*",
+    "@tabler/icons-react": "catalog:ui",
+    "react": "catalog:react",
+    "react-dom": "catalog:react",
+    "react-router": "catalog:react"
+  },
+  "devDependencies": {
+    "@bermula/typescript-config": "workspace:*",
+    "@storybook/addon-a11y": "catalog:storybook",
+    "@storybook/addon-docs": "catalog:storybook",
+    "@storybook/addon-themes": "catalog:storybook",
+    "@storybook/react-vite": "catalog:storybook",
+    "@tailwindcss/vite": "catalog:ui",
+    "@types/react": "catalog:react",
+    "@types/react-dom": "catalog:react",
+    "storybook": "catalog:storybook",
+    "tailwindcss": "catalog:ui",
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  }
+}
