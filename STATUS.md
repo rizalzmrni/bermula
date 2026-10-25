@@ -112,6 +112,8 @@ Bila tugas menyentuh salah satunya: berhenti dan tanyakan.
 
 Sudah terverifikasi (2026-10-24, branch Neon dev): migrasi auth, `createDb` & `createTxDb` (transaksi), organisasi pribadi dibuat sekali/idempoten/aman untuk login bersamaan, default kolom plugin admin & 2FA. Alur HTTP end-to-end via `wrangler dev` (2026-10-24): sign-up → login ditolak sebelum verifikasi (403) → login → `/api/me` 200 dengan organisasi pribadi (owner), satu organisasi saja setelah beberapa request, origin asing ditolak (403), `/docs` & OpenAPI 3.1 tampil. `wrangler types` cukup (tanpa `@cloudflare/workers-types`).
 
+CORS bucket R2 dev (2026-10-25, diterapkan developer dari `r2-cors.dev.json`, dicek lewat preflight): `localhost:5173` + `PUT`/`content-type` dan `GET` → 204; `DELETE`, `POST`, `HEAD`, header lain, dan origin asing → 403.
+
 Cron pembersihan storage end-to-end (2026-10-25, `wrangler dev --test-scheduled` + Neon dev + R2 dev): baris `pending` 2 hari dihapus beserta objeknya, objek yatim di organisasi fiktif dihapus, file `uploaded` lama tetap utuh, jalan kedua idempoten (0/0). Data uji sudah dibersihkan.
 
 Upload file end-to-end (2026-10-24, R2 asli + Neon dev, 36 cek): kebijakan per jenis, CORS bucket (preflight PUT + `content-type` dari localhost:5173), R2 menolak PUT dengan `content-type` atau ukuran berbeda (403), complete idempoten, paginasi keyset, unduh inline/attachment dengan nama UTF-8, isolasi image vs dokumen, hapus objek + baris.
@@ -123,7 +125,7 @@ Sudah terverifikasi (2026-10-21): `ultracite init` menambah blok sendiri ke `AGE
 - Preset base tanpa DOM/`types` berarti global Web seperti `URL`/`fetch` tidak tersedia di paket murni; paket yang butuh harus menambah lib/tipe runtime-nya secara eksplisit.
 - `db:generate` mewajibkan `DATABASE_URL` terisi walau tidak menyambung ke DB (validasi di `drizzle.config.ts`).
 - Frame stack PostHog dari server berupa lokasi bundle; source map belum di-upload ke PostHog.
-- Aturan CORS bucket R2 dev yang aktif masih mengizinkan `POST`, `DELETE`, `HEAD`, dan semua header. Versi yang dipersempit (`GET` & `PUT` + `content-type`) ada di `packages/storage/r2-cors.dev.json`, tetapi belum diterapkan ke bucket (langkah manual, lihat `packages/storage/CLAUDE.md`). Origin produksi ditambahkan setelah domain diputuskan.
+- Bucket R2 produksi belum punya aturan CORS; buat file aturan terpisah (pola `packages/storage/r2-cors.dev.json`) setelah domain diputuskan.
 - Test `packages/email` kini di workerd, tetapi bundling esbuild `wrangler dev`/`deploy` (sumber bug `render2 is not a function`, keputusan 2026-10-25) tetap tidak tercakup Vitest; perlu smoke test terhadap bundle wrangler bila ingin otomatis.
 - Dev lokal: setelah me-restart `apps/api`, restart juga `apps/app`. Kalau tidak, Service Binding app tetap memegang alamat Worker lama ("Network connection lost", semua loader 500).
 - Form kirim ulang verifikasi butuh JavaScript (fetcher); tanpa JS, POST dokumen ke `/verify-email` diakhiri redirect loader ke `/`.
