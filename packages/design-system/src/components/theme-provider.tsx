@@ -10,7 +10,10 @@ const isTypingTarget = (target: EventTarget | null) =>
   target instanceof HTMLTextAreaElement ||
   target instanceof HTMLSelectElement;
 
-const isToggleShortcut = (event: KeyboardEvent) =>
+// Autofill Chrome mengirim `keydown` berupa `Event` biasa tanpa `key`, jadi
+// tipe event dipersempit dulu, bukan diasumsikan `KeyboardEvent`.
+const isToggleShortcut = (event: Event): event is KeyboardEvent =>
+  event instanceof KeyboardEvent &&
   event.key.toLowerCase() === TOGGLE_THEME_KEY &&
   !event.metaKey &&
   !event.ctrlKey &&
@@ -22,7 +25,7 @@ const ThemeShortcut = () => {
   const { setTheme, resolvedTheme } = useTheme();
 
   useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
+    const onKeyDown = (event: Event) => {
       if (!isToggleShortcut(event)) {
         return;
       }
