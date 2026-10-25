@@ -43,16 +43,16 @@ Sebutkan hasil keputusan (lokasi + alasan satu kalimat) di "Catatan" laporan.
 
 **`catalogs`:**
 
-| Nama        | Isi                                                                                                                                                                     | Alasan                                                |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| `react`     | `react`, `react-dom`, `@types/react`, `@types/react-dom`, `react-router`, `@react-router/dev`                                                                           | Versi React, tipenya, dan React Router harus cocok    |
-| `ui`        | `tailwindcss`, `@tailwindcss/vite`, dependensi shadcn (`class-variance-authority`, `clsx`, `tailwind-merge`, `lucide-react`, `@radix-ui/*`, `tw-animate-css`, `sonner`) | Satu sistem desain                                    |
-| `tanstack`  | `@tanstack/react-query`, `@tanstack/react-table`, `@tanstack/react-form` + devtools                                                                                     | Satu ekosistem                                        |
-| `api`       | `hono`, `@hono/zod-openapi`, `@scalar/hono-api-reference`, `wrangler`, `@cloudflare/vite-plugin` (+ `@cloudflare/workers-types` hanya bila masih dibutuhkan)            | Runtime & tooling Workers + Hono                      |
-| `db`        | `drizzle-orm`, `drizzle-kit`, `@neondatabase/serverless`                                                                                                                | `drizzle-orm` & `drizzle-kit` wajib cocok             |
-| `services`  | `better-auth`, `resend`, `stripe`, `posthog-js`, `@react-email/*`                                                                                                       | Integrasi layanan pihak ketiga                        |
-| `test`      | `vitest`, `@vitest/ui`, `@cloudflare/vitest-plugin`, `@testing-library/react`, `@testing-library/dom`, `happy-dom`                                                      | `vitest` harus masuk peer `@cloudflare/vitest-plugin` |
-| `storybook` | `storybook` dan paket `@storybook/*` yang dipakai                                                                                                                       | Semua paket Storybook wajib berversi sama             |
+| Nama        | Isi                                                                                                                                                                                                                                  | Alasan                                                |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------- |
+| `react`     | `react`, `react-dom`, `@types/react`, `@types/react-dom`, `react-router`, `@react-router/dev`                                                                                                                                        | Versi React, tipenya, dan React Router harus cocok    |
+| `ui`        | `tailwindcss`, `@tailwindcss/vite`, `shadcn`, dan semua dependensi komponen shadcn (`@base-ui/react`, `@shadcn/react`, `cn`, `class-variance-authority`, `@tabler/icons-react`, `tw-animate-css`, `cmdk`, `recharts`, `shiki`, dll.) | Satu sistem desain                                    |
+| `tanstack`  | `@tanstack/react-query`, `@tanstack/react-table`, `@tanstack/react-form` + devtools                                                                                                                                                  | Satu ekosistem                                        |
+| `api`       | `hono`, `@hono/zod-openapi`, `@scalar/hono-api-reference`, `wrangler`, `@cloudflare/vite-plugin` (+ `@cloudflare/workers-types` hanya bila masih dibutuhkan)                                                                         | Runtime & tooling Workers + Hono                      |
+| `db`        | `drizzle-orm`, `drizzle-kit`, `@neondatabase/serverless`                                                                                                                                                                             | `drizzle-orm` & `drizzle-kit` wajib cocok             |
+| `services`  | `better-auth`, `resend`, `stripe`, `posthog-js`, `@react-email/*`                                                                                                                                                                    | Integrasi layanan pihak ketiga                        |
+| `test`      | `vitest`, `@vitest/ui`, `@cloudflare/vitest-plugin`, `@testing-library/react`, `@testing-library/dom`, `happy-dom`                                                                                                                   | `vitest` harus masuk peer `@cloudflare/vitest-plugin` |
+| `storybook` | `storybook` dan paket `@storybook/*` yang dipakai                                                                                                                                                                                    | Semua paket Storybook wajib berversi sama             |
 
 Paket baru yang jelas termasuk sebuah kelompok langsung masuk catalog itu.
 Catalog bernama **baru** harus diusulkan dulu dan hanya layak bila berisi ≥2
@@ -120,6 +120,10 @@ paket yang harus di-upgrade bersamaan.
 - `dependencies`: dibutuhkan saat runtime (`zod`, `hono`, `drizzle-orm`, `react`).
   `devDependencies`: build, tipe, test, CLI (`typescript`, `@types/*`,
   `drizzle-kit`, `wrangler`, `tailwindcss`).
+- `shadcn add` memasang dependensi komponen dengan versi langsung di
+  `packages/design-system/package.json`; pindahkan ke catalog `ui` setelahnya.
+  `recharts` sengaja dipin persis (`3.8.0`) mengikuti registry shadcn, karena
+  komponen `chart` ditulis untuk versi itu.
 - Rentang caret (`^x.y.z`) secara default; versi persis hanya bila diwajibkan
   dokumentasi library, dengan alasan di commit.
 - **Versi:** saat instalasi awal pakai versi stabil terbaru. Setelah itu ikuti

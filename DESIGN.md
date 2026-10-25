@@ -67,21 +67,29 @@ Aturan:
 
 - Mekanisme: berbasis **class** `.dark` (varian `@custom-variant dark (&:is(.dark *))`).
   Token di blok `.dark` menimpa nilai `:root`.
-- Karena stack memakai React Router (bukan next-themes), kelola tema lewat **cookie**
-  yang dibaca di root loader, lalu set class `.dark` pada `<html>` saat render awal
-  (SSR) agar tidak ada "flash" tema salah. Sediakan toggle yang menulis cookie dan
-  memperbarui class. (Implementasi helper ini ditaruh di `packages/design-system`.)
+- Tema dikelola **next-themes** lewat `ThemeProvider` di `packages/design-system`
+  (dipasang oleh `DesignSystemProvider`): class `.dark` di `<html>`, pilihan
+  disimpan di localStorage, default `system`, pintasan tombol `d`. Skrip
+  anti-kedip disisipkan next-themes saat SSR, sehingga `<html>` di root layout
+  app wajib memakai `suppressHydrationWarning`. Toggle memakai `useTheme()` dari
+  `next-themes`.
 - Semua komponen wajib terlihat benar di terang **dan** gelap. Karena token sudah
   menangani keduanya, cukup pakai token — jangan menulis `dark:` dengan warna mentah.
 
 ## Komponen
 
 - Komponen shadcn/ui ditambahkan lewat CLI (`bunx shadcn@latest add <komponen>`),
-  jangan disalin manual. Komponen mendarat di `components/ui` app (atau `packages/design-system`
-  bila dipakai lintas app) dan otomatis memakai token di atas.
-- Util `cn()` (clsx + tailwind-merge) dipakai untuk menggabung kelas; ada di `packages/design-system`.
-- **Ikon:** `lucide-react`. Ukuran konsisten (mis. `size-4` dalam tombol), warnai
-  dengan `currentColor` agar ikut token teks.
+  jangan disalin manual. Style `base-nova` (primitif Base UI, `@base-ui/react`).
+  Komponen mendarat di `packages/design-system/src/components/ui` dan otomatis
+  memakai token di atas. Folder itu dikecualikan dari Oxlint/Oxfmt agar tetap
+  sama dengan output CLI.
+- `shadcn init`/`apply` tidak bisa dijalankan di `packages/design-system` (paket
+  library, tanpa framework yang dikenali CLI); `components.json` ditulis manual
+  dan `shadcn add` berjalan normal.
+- Util `cn()` dari paket `cn` (milik shadcn, pengganti clsx + tailwind-merge);
+  komponen hasil CLI mengimpornya langsung.
+- **Ikon:** `@tabler/icons-react` (`iconLibrary: "tabler"`). Ukuran konsisten
+  (mis. `size-4` dalam tombol), warnai dengan `currentColor` agar ikut token teks.
 - **Toast/notifikasi:** `sonner`.
 - **Tabel:** TanStack Table dengan pembungkus tabel dari `packages/design-system` agar gaya
   header/baris/зебра seragam dan memakai token `border`/`muted`.
@@ -130,6 +138,12 @@ tempat token didefinisikan. Jangan mengubah nilai token tanpa memperbarui dokume
 
 ```css
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* Deteksi otomatis Tailwind hanya memindai folder app yang mengimpor file ini;
+   komponen di paket ini perlu didaftarkan agar kelasnya ikut ter-generate. */
+@source "../";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -322,9 +336,10 @@ tempat token didefinisikan. Jangan mengubah nilai token tanpa memperbarui dokume
 }
 ```
 
-> **Font Outfit:** token `--font-sans` memakai `Outfit`. Muat font-nya (mis. dari
-> Google Fonts atau self-host) di root layout tiap app agar token benar-benar
-> ter-render. Tanpa itu, teks jatuh ke `sans-serif` default.
+> **Font Outfit:** token `--font-sans` memakai `Outfit`. Muat font-nya di root
+> layout tiap app lewat `fontLinks` dari `@bermula/design-system/lib/font`
+> (`export const links = () => [...fontLinks]`) dan pasang `fontVariables` di
+> `<body>`. Tanpa itu, teks jatuh ke `sans-serif` default.
 
 ---
 
