@@ -19,6 +19,22 @@ describe("checkbox and switch fields", () => {
     expect(onCheckedChange).toHaveBeenCalledWith(true, expect.anything());
   });
 
+  it("submits a checked checkbox under its name in native form data", () => {
+    const { container } = render(
+      <form>
+        <CheckboxField defaultChecked label="Ingat saya" name="remember" />
+        <CheckboxField label="Langganan" name="newsletter" />
+      </form>
+    );
+    const form = container.querySelector("form");
+    if (!form) {
+      throw new Error("form not rendered");
+    }
+    const formData = new FormData(form);
+    expect(formData.get("remember")).toBe("on");
+    expect(formData.has("newsletter")).toBeFalsy();
+  });
+
   it("shows checkbox errors", () => {
     render(
       <CheckboxField
