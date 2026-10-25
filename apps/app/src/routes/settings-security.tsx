@@ -1,7 +1,8 @@
 import { APP_NAME } from "@bermula/core/brand";
-import { data, useRouteLoaderData } from "react-router";
+import { data } from "react-router";
 import type { z } from "zod";
 
+import { useAccount } from "../features/account/queries";
 import type { SecurityActionResult } from "../features/security/action-result";
 import { ChangePasswordSection } from "../features/security/change-password-section";
 import {
@@ -22,9 +23,8 @@ import {
 import { TwoFactorSection } from "../features/security/two-factor-section";
 import { getSetCookieHeaders } from "../lib/api-client";
 import { getCloudflare } from "../lib/cloudflare";
-import { requireSession } from "../lib/session.server";
+import { forgetAccount, requireSession } from "../lib/session.server";
 import type { Route } from "./+types/settings-security";
-import type { loader as appLayoutLoader } from "./app-layout";
 
 const HTTP_BAD_REQUEST = 400;
 const HTTP_BAD_GATEWAY = 502;
@@ -71,6 +71,9 @@ const UNEXPECTED_RESPONSE = "Respons server tidak terduga. Silakan coba lagi.";
 export const action = async ({ request, context }: Route.ActionArgs) => {
   // Fetcher POST tidak melewati loader layout; sesi dicek ulang di sini.
   await requireSession({ context, request });
+  // Aksi di bawah bisa mengubah akun (status 2FA); loader yang berjalan
+  // setelah action ini harus mengambil akun baru, bukan versi cache di atas.
+  forgetAccount(context);
 
   const parsed = securityActionSchema.safeParse(
     Object.fromEntries(await request.formData())
@@ -164,8 +167,7 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
 };
 
 const SecuritySettingsPage = () => {
-  const layoutData =
-    useRouteLoaderData<typeof appLayoutLoader>("routes/app-layout");
+  const { twoFactorEnabled } = useAccount().user;
 
   return (
     <div className="flex max-w-2xl flex-col gap-6">
@@ -175,9 +177,7 @@ const SecuritySettingsPage = () => {
           Kelola kata sandi dan verifikasi dua langkah akun Anda.
         </p>
       </div>
-      <TwoFactorSection
-        enabled={layoutData?.account.user.twoFactorEnabled ?? false}
-      />
+      <TwoFactorSection enabled={twoFactorEnabled} />
       <ChangePasswordSection />
     </div>
   );

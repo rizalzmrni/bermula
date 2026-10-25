@@ -15,10 +15,12 @@
   "dependencies": {
     "@bermula/auth": "workspace:*",
     "@bermula/core": "workspace:*",
+    "@bermula/data": "workspace:*",
     "@bermula/design-system": "workspace:*",
     "@bermula/env": "workspace:*",
     "@bermula/observability": "workspace:*",
     "@tabler/icons-react": "catalog:ui",
+    "@tanstack/react-query": "catalog:tanstack",
     "hono": "catalog:api",
     "react": "catalog:react",
     "react-dom": "catalog:react",

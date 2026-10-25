@@ -1,4 +1,5 @@
 import { APP_NAME } from "@bermula/core/brand";
+import { DataProvider } from "@bermula/data/provider";
 import { DesignSystemProvider } from "@bermula/design-system";
 import { Button } from "@bermula/design-system/components/ui/button";
 import { fontLinks, fontVariables } from "@bermula/design-system/lib/font";
@@ -35,7 +36,7 @@ export const Layout = ({ children }: { children: ReactNode }) => (
     </head>
     <body className={fontVariables}>
       <DesignSystemProvider showTailwindIndicator={import.meta.env.DEV}>
-        {children}
+        <DataProvider devtools={import.meta.env.DEV}>{children}</DataProvider>
       </DesignSystemProvider>
       <ScrollRestoration />
       <Scripts />
