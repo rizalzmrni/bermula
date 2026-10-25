@@ -79,6 +79,22 @@ export const fetchApi = ({ api, request, path, init }: FetchApiOptions) => {
   return api.fetch(`${SERVICE_BINDING_ORIGIN}${path}`, { ...init, headers });
 };
 
+const JSON_HEADERS = { "content-type": "application/json" };
+
+/** POST JSON lewat Service Binding (endpoint better-auth `/api/auth/*`). */
+export const postApiJson = ({
+  api,
+  request,
+  path,
+  body,
+}: Omit<FetchApiOptions, "init"> & { body: unknown }) =>
+  fetchApi({
+    api,
+    init: { body: JSON.stringify(body), headers: JSON_HEADERS, method: "POST" },
+    path,
+    request,
+  });
+
 /** Header `Set-Cookie` dari api, untuk diteruskan ke browser lewat respons app. */
 export const getSetCookieHeaders = (response: Response) => {
   const headers = new Headers();

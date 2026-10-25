@@ -1,7 +1,12 @@
 import { z } from "zod";
 
-import { fetchApi } from "../../lib/api-client";
+import { postApiJson } from "../../lib/api-client";
 import type { ApiBinding } from "../../lib/api-client";
+import {
+  HTTP_TOO_MANY_REQUESTS,
+  RATE_LIMITED_MESSAGE,
+  readErrorCode,
+} from "../../lib/api-error";
 import {
   PASSWORD_MAX_LENGTH,
   PASSWORD_MIN_LENGTH,
@@ -17,21 +22,6 @@ interface AuthRequestArgs {
   request: Request;
 }
 
-const JSON_HEADERS = { "content-type": "application/json" };
-
-const postJson = ({
-  api,
-  request,
-  path,
-  body,
-}: AuthRequestArgs & { path: `/${string}`; body: unknown }) =>
-  fetchApi({
-    api,
-    init: { body: JSON.stringify(body), headers: JSON_HEADERS, method: "POST" },
-    path,
-    request,
-  });
-
 /**
  * URL absolut halaman verifikasi di app ini. Harus absolut: tautan email
  * dibuka di host api, dan URL relatif akan diarahkan ke host api. Origin
@@ -45,14 +35,14 @@ export const signInWithEmail = ({
   request,
   input,
 }: AuthRequestArgs & { input: SignInInput }) =>
-  postJson({ api, body: input, path: "/api/auth/sign-in/email", request });
+  postApiJson({ api, body: input, path: "/api/auth/sign-in/email", request });
 
 export const signUpWithEmail = ({
   api,
   request,
   input,
 }: AuthRequestArgs & { input: SignUpInput }) =>
-  postJson({
+  postApiJson({
     api,
     body: { ...input, callbackURL: getVerifyEmailCallbackUrl(request) },
     path: "/api/auth/sign-up/email",
@@ -64,7 +54,7 @@ export const resendVerificationEmail = ({
   request,
   email,
 }: AuthRequestArgs & { email: string }) =>
-  postJson({
+  postApiJson({
     api,
     body: { callbackURL: getVerifyEmailCallbackUrl(request), email },
     path: "/api/auth/send-verification-email",
@@ -85,7 +75,7 @@ export const verifyTwoFactor = ({
   request,
   input,
 }: AuthRequestArgs & { input: TwoFactorInput }) =>
-  postJson({
+  postApiJson({
     api,
     body: { code: input.code, trustDevice: input.trustDevice },
     path: TWO_FACTOR_VERIFY_PATHS[input.method],
@@ -122,22 +112,7 @@ export const hasTwoFactorChallenge = (request: Request) =>
 
 export const signOut = ({ api, request }: AuthRequestArgs) =>
   // better-auth menolak body kosong pada POST JSON.
-  postJson({ api, body: {}, path: "/api/auth/sign-out", request });
-
-const errorBodySchema = z.object({ code: z.string().optional() });
-
-const HTTP_TOO_MANY_REQUESTS = 429;
-
-const RATE_LIMITED_MESSAGE =
-  "Terlalu banyak percobaan. Coba lagi dalam satu menit.";
-
-/** `code` error better-auth dari body respons, bila ada. */
-const readErrorCode = async (response: Response) => {
-  const body = errorBodySchema.safeParse(
-    await response.json().catch(() => null)
-  );
-  return body.success ? body.data.code : undefined;
-};
+  postApiJson({ api, body: {}, path: "/api/auth/sign-out", request });
 
 /** Pesan login gagal untuk pengguna, dari status + `code` better-auth. */
 export const getSignInErrorMessage = async (response: Response) => {

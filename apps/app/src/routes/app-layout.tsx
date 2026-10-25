@@ -1,7 +1,7 @@
 import { AppShell } from "@bermula/design-system/components/layout/app-shell";
 import type { NavGroup } from "@bermula/design-system/lib/navigation";
 import { readSidebarOpen } from "@bermula/design-system/lib/sidebar-state";
-import { IconHome } from "@tabler/icons-react";
+import { IconHome, IconShieldLock } from "@tabler/icons-react";
 import { Outlet } from "react-router";
 
 import { UserMenu } from "../features/auth/user-menu";
@@ -10,6 +10,12 @@ import type { Route } from "./+types/app-layout";
 
 const NAVIGATION: NavGroup[] = [
   { items: [{ href: "/", icon: IconHome, title: "Beranda" }], title: "Menu" },
+  {
+    items: [
+      { href: "/settings/security", icon: IconShieldLock, title: "Keamanan" },
+    ],
+    title: "Pengaturan",
+  },
 ];
 
 export const loader = async ({ request, context }: Route.LoaderArgs) => {

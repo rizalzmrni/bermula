@@ -146,6 +146,12 @@ lewat `ConfirmDialog` dengan `destructive` dan deskripsi akibatnya.
 - Bayangan, radius, atau font ad-hoc yang tidak memakai token.
 - Menyandikan makna hanya lewat warna (selalu sertakan teks/ikon pendamping).
 
+**Pengecualian tercatat:** QR code (mis. aktivasi 2FA,
+`apps/app/src/features/security/qr-code.tsx`) adalah gambar SVG hitam (`#000`)
+di atas putih (`#fff`) di kedua tema. Pemindai butuh modul gelap di atas latar
+terang; QR terbalik di mode gelap tidak terbaca oleh semua aplikasi
+authenticator.
+
 ---
 
 ## CSS Kanonik

@@ -8,5 +8,8 @@ export default [
   route("sign-out", "routes/sign-out.tsx"),
   route("verify-email", "routes/verify-email.tsx"),
   // Semua halaman di dalam layout ini terproteksi (`requireSession` di loader).
-  layout("routes/app-layout.tsx", [index("routes/dashboard.tsx")]),
+  layout("routes/app-layout.tsx", [
+    index("routes/dashboard.tsx"),
+    route("settings/security", "routes/settings-security.tsx"),
+  ]),
 ] satisfies RouteConfig;

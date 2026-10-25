@@ -40,22 +40,25 @@ export const BACKUP_CODE_MAX_LENGTH = 32;
 
 const TOTP_CODE_PATTERN = /^\d{6}$/u;
 
-// Checkbox HTML hanya terkirim ("on") bila dicentang.
-const trustDeviceSchema = z
+/** Kode 6 digit dari aplikasi authenticator (login & aktivasi 2FA). */
+export const totpCodeSchema = z.string().regex(TOTP_CODE_PATTERN);
+
+/** Checkbox HTML hanya terkirim ("on") bila dicentang. */
+export const checkboxSchema = z
   .literal("on")
   .optional()
   .transform((value) => value === "on");
 
 export const twoFactorSchema = z.discriminatedUnion("method", [
   z.object({
-    code: z.string().regex(TOTP_CODE_PATTERN),
+    code: totpCodeSchema,
     method: z.literal(TWO_FACTOR_METHOD.totp),
-    trustDevice: trustDeviceSchema,
+    trustDevice: checkboxSchema,
   }),
   z.object({
     code: z.string().trim().min(1).max(BACKUP_CODE_MAX_LENGTH),
     method: z.literal(TWO_FACTOR_METHOD.backupCode),
-    trustDevice: trustDeviceSchema,
+    trustDevice: checkboxSchema,
   }),
 ]);
 
