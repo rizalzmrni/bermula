@@ -34,6 +34,30 @@ export const FORM_SUBMIT_META: FormSubmitMeta = { form: null };
  */
 export const formValidationLogic = revalidateLogic();
 
+/**
+ * Opsi `useAppForm` untuk form yang dikirim sebagai elemen `<form>` (mis.
+ * ke action React Router lewat `useSubmit` atau `fetcher.submit`). Tombol
+ * submit tetap sibuk sampai Promise dari `submit` selesai.
+ *
+ * @example
+ * const form = useAppForm({
+ *   defaultValues: { email: "" },
+ *   validators: { onDynamic: schema },
+ *   ...formElementSubmit((element) => submit(element)),
+ * });
+ */
+export const formElementSubmit = (
+  submit: (form: HTMLFormElement) => Promise<unknown>
+) => ({
+  onSubmit: async ({ meta }: { meta: FormSubmitMeta }) => {
+    if (meta.form) {
+      await submit(meta.form);
+    }
+  },
+  onSubmitMeta: FORM_SUBMIT_META,
+  validationLogic: formValidationLogic,
+});
+
 // Props kontrol yang diisi dari field TanStack; sisanya tetap dari pemanggil.
 type BoundProps<TProps> = Omit<
   TProps,
