@@ -1,0 +1,50 @@
+{
+  "name": "@bermula/design-system",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.tsx",
+    "./globals.css": "./src/styles/globals.css",
+    "./components/*": "./src/components/*.tsx",
+    "./hooks/*": "./src/hooks/*.ts",
+    "./lib/highlighter": "./src/lib/highlighter.tsx",
+    "./lib/*": "./src/lib/*.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@base-ui/react": "catalog:ui",
+    "@shadcn/react": "catalog:ui",
+    "@tabler/icons-react": "catalog:ui",
+    "class-variance-authority": "catalog:ui",
+    "cmdk": "catalog:ui",
+    "cn": "catalog:ui",
+    "embla-carousel-react": "catalog:ui",
+    "input-otp": "catalog:ui",
+    "next-themes": "^0.4.6",
+    "nuqs": "^2.10.2",
+    "react": "catalog:react",
+    "react-day-picker": "catalog:ui",
+    "react-dom": "catalog:react",
+    "react-resizable-panels": "catalog:ui",
+    "react-router": "catalog:react",
+    "recharts": "catalog:ui",
+    "shiki": "catalog:ui"
+  },
+  "devDependencies": {
+    "@bermula/typescript-config": "workspace:*",
+    "@testing-library/dom": "catalog:test",
+    "@testing-library/react": "catalog:test",
+    "@types/react": "catalog:react",
+    "@types/react-dom": "catalog:react",
+    "happy-dom": "catalog:test",
+    "shadcn": "catalog:ui",
+    "tailwindcss": "catalog:ui",
+    "tw-animate-css": "catalog:ui",
+    "typescript": "catalog:",
+    "vitest": "catalog:test"
+  }
+}

@@ -15,6 +15,9 @@
     "catalogs": {
       "test": {
         "@cloudflare/vitest-plugin": "^1.4.7",
+        "@testing-library/dom": "^10.4.2",
+        "@testing-library/react": "^16.3.3",
+        "happy-dom": "^21.0.4",
         "vitest": "^5.0.5"
       },
       "db": {
@@ -30,14 +33,33 @@
       },
       "react": {
         "@types/react": "^19.3.0",
+        "@types/react-dom": "^19.3.0",
         "react": "^19.3.1",
-        "react-dom": "^19.3.1"
+        "react-dom": "^19.3.1",
+        "react-router": "^8.5.0"
       },
       "api": {
         "@hono/zod-openapi": "^1.6.3",
         "@scalar/hono-api-reference": "^0.12.14",
         "hono": "^4.13.13",
         "wrangler": "^4.152.0"
+      },
+      "ui": {
+        "@base-ui/react": "^1.9.0",
+        "@shadcn/react": "^0.3.1",
+        "@tabler/icons-react": "^3.49.0",
+        "class-variance-authority": "^0.7.1",
+        "cmdk": "^1.1.1",
+        "cn": "^0.5.0",
+        "embla-carousel-react": "^8.6.0",
+        "input-otp": "^1.5.0",
+        "react-day-picker": "^10.0.2",
+        "react-resizable-panels": "^4.15.0",
+        "recharts": "3.8.0",
+        "shadcn": "^4.22.1",
+        "shiki": "^4.5.0",
+        "tailwindcss": "^4.3.3",
+        "tw-animate-css": "^1.4.0"
       }
     }
   },
