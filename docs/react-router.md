@@ -45,7 +45,7 @@ Diimpor oleh `apps/app/CLAUDE.md` dan `apps/web/CLAUDE.md`.
 
 - Loader halaman terproteksi memanggil `GET /api/me` lewat Service Binding
   (sesi + organisasi aktif + role dalam satu panggilan; lebih lengkap dari
-  `/api/auth/get-session`). 401 → `redirect` ke `/masuk?redirectTo=…`; status
+  `/api/auth/get-session`). 401 → `redirect` ke `/sign-in?redirectTo=…`; status
   error lain dilempar ke ErrorBoundary. `redirectTo` selalu disaring
   `getSafeRedirect` (hanya path internal) untuk mencegah open redirect.
 - `apps/app`/`apps/web` **tidak** mengakses DB dan tidak mengimpor konfigurasi

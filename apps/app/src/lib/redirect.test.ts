@@ -4,7 +4,9 @@ import { getLoginUrl, getSafeRedirect } from "./redirect";
 
 describe(getSafeRedirect, () => {
   it("keeps internal paths with their query", () => {
-    expect(getSafeRedirect("/proyek?tab=aktif")).toBe("/proyek?tab=aktif");
+    expect(getSafeRedirect("/projects?tab=active")).toBe(
+      "/projects?tab=active"
+    );
   });
 
   it.each([
@@ -13,7 +15,7 @@ describe(getSafeRedirect, () => {
     "https://evil.example",
     "//evil.example",
     "/\\evil.example",
-    "proyek",
+    "projects",
   ])("falls back to home for %j", (target) => {
     expect(getSafeRedirect(target)).toBe("/");
   });
@@ -21,13 +23,13 @@ describe(getSafeRedirect, () => {
 
 describe(getLoginUrl, () => {
   it("carries the current path and query as redirectTo", () => {
-    const request = new Request("http://localhost/proyek/1?tab=file");
+    const request = new Request("http://localhost/projects/1?tab=files");
     expect(getLoginUrl(request)).toBe(
-      "/masuk?redirectTo=%2Fproyek%2F1%3Ftab%3Dfile"
+      "/sign-in?redirectTo=%2Fprojects%2F1%3Ftab%3Dfiles"
     );
   });
 
   it("omits redirectTo for the home page", () => {
-    expect(getLoginUrl(new Request("http://localhost/"))).toBe("/masuk");
+    expect(getLoginUrl(new Request("http://localhost/"))).toBe("/sign-in");
   });
 });

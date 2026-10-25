@@ -19,7 +19,7 @@ import { getSetCookieHeaders } from "../lib/api-client";
 import { getCloudflare } from "../lib/cloudflare";
 import { getSafeRedirect } from "../lib/redirect";
 import { getAccount } from "../lib/session.server";
-import type { Route } from "./+types/masuk";
+import type { Route } from "./+types/sign-in";
 
 const HTTP_BAD_REQUEST = 400;
 

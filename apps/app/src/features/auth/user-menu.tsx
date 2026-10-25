@@ -55,7 +55,7 @@ export const UserMenu = ({ user }: UserMenuProps) => {
           <DropdownMenuContent align="end" className="min-w-56" side="top">
             <DropdownMenuItem
               onClick={() =>
-                submit(null, { action: "/keluar", method: "post" })
+                submit(null, { action: "/sign-out", method: "post" })
               }
             >
               <IconLogout />

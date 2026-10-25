@@ -20,6 +20,6 @@ export const getLoginUrl = (request: Request) => {
   const { pathname, search } = new URL(request.url);
   const target = `${pathname}${search}`;
   return target === DEFAULT_REDIRECT
-    ? "/masuk"
-    : `/masuk?${new URLSearchParams({ redirectTo: target })}`;
+    ? "/sign-in"
+    : `/sign-in?${new URLSearchParams({ redirectTo: target })}`;
 };
