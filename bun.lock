@@ -162,6 +162,7 @@
       "dependencies": {
         "@bermula/core": "workspace:*",
         "@react-email/components": "catalog:services",
+        "@react-email/render": "catalog:services",
         "react": "catalog:react",
         "react-dom": "catalog:react",
         "resend": "catalog:services",
@@ -245,6 +246,7 @@
     "services": {
       "@better-auth/drizzle-adapter": "^1.7.12",
       "@react-email/components": "^1.0.12",
+      "@react-email/render": "^2.0.6",
       "better-auth": "^1.7.12",
       "resend": "^6.34.1",
     },

@@ -1,4 +1,8 @@
-import { render, toPlainText } from "@react-email/components";
+// Langsung dari `@react-email/render`, bukan re-export `@react-email/components`:
+// SDK `resend` meng-`import()` paket ini secara dinamis, sehingga esbuild
+// (wrangler) membungkusnya dengan init malas yang tidak dipanggil lewat
+// `export *` milik components (`render` jadi `undefined` di Worker).
+import { render, toPlainText } from "@react-email/render";
 import type { ReactElement } from "react";
 
 import {
