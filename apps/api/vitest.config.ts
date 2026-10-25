@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
+
 import { cloudflareTest } from "@cloudflare/vitest-plugin";
 import { defineConfig } from "vitest/config";
 
@@ -20,10 +23,24 @@ const TEST_BINDINGS = {
   WEB_URL: "http://localhost:5174",
 };
 
+// wrangler tetap memuat `.dev.vars`; nilai uji hanya menimpa variabel wajib.
+// Semua variabel di file contoh dikosongkan dulu (`emptyStringAsUndefined` di
+// t3-env), agar variabel opsional yang diisi lokal (mis. PostHog, BetterStack,
+// Google OAuth) tidak ikut aktif di test.
+const EXAMPLE_KEYS =
+  readFileSync(
+    path.join(import.meta.dirname, ".dev.vars.example"),
+    "utf-8"
+  ).match(/^[A-Z0-9_]+(?==)/gmu) ?? [];
+const BINDINGS = {
+  ...Object.fromEntries(EXAMPLE_KEYS.map((key) => [key, ""])),
+  ...TEST_BINDINGS,
+};
+
 export default defineConfig({
   plugins: [
     cloudflareTest({
-      miniflare: { bindings: TEST_BINDINGS },
+      miniflare: { bindings: BINDINGS },
       wrangler: { configPath: "./wrangler.jsonc" },
     }),
   ],
