@@ -5,7 +5,7 @@
 
 ## Fase berjalan
 
-**Fase 3–4 — sebagian** (`packages/db`, `packages/auth`, `apps/api` selesai serta teruji end-to-end di Neon dev; alur auth `apps/app` lengkap: daftar, verifikasi email, login + 2FA, keamanan akun, lupa/reset kata sandi — teruji lewat HTTP, tampilan di browser belum dicek).
+**Fase 4 — sebagian** (Fase 3 auth selesai: alur `apps/app` daftar, verifikasi email, login + 2FA, keamanan akun, lupa/reset kata sandi teruji lewat HTTP dan dicek developer di browser 2026-10-25). Berikutnya: `packages/data` (TanStack Query + Form).
 Arahan developer (2026-10-21): siapkan **semua `packages/*` lebih dulu**, baru
 kemudian `apps/*`. Pengecualian (2026-10-24): `apps/api` dibuat lebih dulu
 sebelum `packages/storage`.
@@ -17,7 +17,7 @@ sebelum `packages/storage`.
 | 0    | Root `package.json` + catalog, `turbo.json`, `packages/typescript-config`, Ultracite, Husky, commitlint | ✅     |
 | 1    | `packages/env`, `packages/core`, `packages/observability`                                               | ✅     |
 | 2    | `apps/api` (Hono + OpenAPI + Scalar), `packages/db`                                                     | ✅     |
-| 3    | `packages/auth` + better-auth di api, auth gate di `apps/app`                                           | 🚧     |
+| 3    | `packages/auth` + better-auth di api, auth gate di `apps/app`                                           | ✅     |
 | 4    | `packages/design-system`, `apps/storybook`, `apps/app`, `apps/web`                                      | 🚧     |
 | 5    | `packages/email` + `apps/email`, `packages/storage`                                                     | 🚧     |
 | 6    | `packages/payments` (Stripe + webhook), `packages/analytics`, `packages/seo`                            | ⏳     |
@@ -123,7 +123,7 @@ Sudah terverifikasi (2026-10-21): `ultracite init` menambah blok sendiri ke `AGE
 - Dev lokal: setelah me-restart `apps/api`, restart juga `apps/app`. Kalau tidak, Service Binding app tetap memegang alamat Worker lama ("Network connection lost", semua loader 500).
 - Form kirim ulang verifikasi butuh JavaScript (fetcher); tanpa JS, POST dokumen ke `/verify-email` diakhiri redirect loader ke `/`.
 - Dev `apps/app`: setelah banyak file diedit saat server berjalan, action/loader bisa gagal dengan "No value found for context" (entry Worker dan route memegang instance `src/lib/cloudflare.ts` berbeda setelah HMR). Restart `bun run dev` memulihkannya; perlu dicari solusi permanen bila sering terjadi.
-- Database Neon dev berisi akun uji `delivered@resend.dev` (email ditandai terverifikasi langsung di DB, TOTP aktif) untuk menguji 2FA; aman dihapus. Halaman keamanan teruji e2e lewat endpoint `.data` (2026-10-25): kata sandi/kode salah, buat ulang kode cadangan, matikan → aktifkan ulang 2FA, ganti kata sandi + sesi lain dicabut. Tampilan UI di browser belum dicek.
+- Database Neon dev berisi akun uji `delivered@resend.dev` (email ditandai terverifikasi langsung di DB, TOTP aktif) untuk menguji 2FA; aman dihapus. Halaman keamanan teruji e2e lewat endpoint `.data` (2026-10-25): kata sandi/kode salah, buat ulang kode cadangan, matikan → aktifkan ulang 2FA, ganti kata sandi + sesi lain dicabut. Tampilan dan alur seluruh halaman auth dicek developer di browser (2026-10-25).
 - Reset kata sandi teruji e2e (2026-10-25, `wrangler dev` + Neon dev, 16 cek): respons generik untuk email tak terdaftar, token tersimpan & tautan email → `?token`, tautan salah → `?error=INVALID_TOKEN`, header no-referrer/no-store, kata sandi pendek ditolak tanpa membuang token, token sekali pakai, semua sesi dicabut, login dengan kata sandi baru → langkah 2FA. Kata sandi akun uji `delivered@resend.dev` kini `Reset-e2e-2026!`.
 - React Router hanya meneruskan `Set-Cookie` dari `data()`/`redirect()`; header lain (mis. `Cache-Control`) wajib lewat export `headers` route.
 - `wrangler types` di `apps/app` menyarankan memasang `@types/node` ("Node.js compatibility enabled") walau `wrangler.jsonc` tidak memakai `nodejs_compat`; diabaikan, perlu dicek.
