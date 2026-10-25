@@ -106,6 +106,8 @@ Aturan:
   `src/components/{layout,navigation,form,feedback}/`. Menu didefinisikan sekali
   per app sebagai `NavItem[]` (`lib/navigation`) dan dipakai header, nav mobile,
   footer, serta sidebar. Komponen yang membaca sesi/API tetap di app.
+  Halaman terproteksi `apps/app` memakai `AppShell`; setiap item sidebar level
+  atas wajib punya ikon agar tetap terbaca saat sidebar dilipat.
 
 ## State Wajib per Komponen Data
 
