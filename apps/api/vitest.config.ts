@@ -20,6 +20,12 @@ const TEST_BINDINGS = {
   R2_BUCKET_NAME: "bermula-test",
   R2_SECRET_ACCESS_KEY: "test-secret-key",
   RESEND_API_KEY: "re_test",
+  // Klien Stripe dibuat tanpa memanggil jaringan; test hanya mencapai
+  // verifikasi signature, yang berjalan lokal dengan secret ini.
+  STRIPE_SECRET_KEY: "sk_test_fake",
+  // Sama dengan `TEST_WEBHOOK_SECRET` di `@bermula/payments/testing`; config
+  // dimuat Node tanpa resolusi TS workspace, jadi ditulis ulang di sini.
+  STRIPE_WEBHOOK_SECRET: "whsec_test_secret",
   WEB_URL: "http://localhost:5174",
 };
 

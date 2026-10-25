@@ -9,6 +9,7 @@ import {
   createApiLogger,
   createCaptureException,
   createStorage,
+  createPayments,
 } from "../lib/runtime";
 import type { AppEnv } from "../types";
 
@@ -39,6 +40,7 @@ export const contextMiddleware = createMiddleware<AppEnv>(async (c, next) => {
   c.set("auth", createAuth({ db, emails, env, logger, waitUntil }));
   c.set("captureException", createCaptureException(env));
   c.set("storage", createStorage(env));
+  c.set("payments", createPayments(env));
 
   try {
     return await next();

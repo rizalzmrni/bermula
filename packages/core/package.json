@@ -6,7 +6,8 @@
   "exports": {
     "./brand": "./src/brand.ts",
     "./files": "./src/files.ts",
-    "./format": "./src/format.ts"
+    "./format": "./src/format.ts",
+    "./plans": "./src/plans.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

@@ -1,7 +1,7 @@
 import { AppShell } from "@bermula/design-system/components/layout/app-shell";
 import type { NavGroup } from "@bermula/design-system/lib/navigation";
 import { readSidebarOpen } from "@bermula/design-system/lib/sidebar-state";
-import { IconHome, IconShieldLock } from "@tabler/icons-react";
+import { IconCreditCard, IconHome, IconShieldLock } from "@tabler/icons-react";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { Outlet } from "react-router";
 
@@ -16,6 +16,7 @@ const NAVIGATION: NavGroup[] = [
   {
     items: [
       { href: "/settings/security", icon: IconShieldLock, title: "Keamanan" },
+      { href: "/settings/billing", icon: IconCreditCard, title: "Tagihan" },
     ],
     title: "Pengaturan",
   },

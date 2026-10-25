@@ -1,3 +1,4 @@
+import { signWebhookPayload } from "@bermula/payments/testing";
 import { env, exports } from "cloudflare:workers";
 import { beforeAll, describe, expect, it } from "vitest";
 
@@ -171,5 +172,86 @@ describe("api worker", () => {
       statuses.slice(0, 10).every((status) => status === 200)
     ).toBeTruthy();
     expect(statuses[10]).toBe(429);
+  });
+
+  it("requires a session for billing endpoints", async () => {
+    const responses = await Promise.all([
+      request("/api/billing/subscription", { ip: "10.0.0.11" }),
+      request("/api/billing/checkout-sessions", {
+        body: JSON.stringify({ plan: "pro" }),
+        headers: { "content-type": "application/json" },
+        ip: "10.0.0.11",
+        method: "POST",
+      }),
+      request("/api/billing/portal-sessions", {
+        ip: "10.0.0.11",
+        method: "POST",
+      }),
+    ]);
+
+    expect(responses.map((response) => response.status)).toStrictEqual([
+      401, 401, 401,
+    ]);
+  });
+
+  it("rejects a Stripe webhook with a forged or missing signature", async () => {
+    const payload = JSON.stringify({ id: "evt_forged", object: "event" });
+    const forged = await request("/api/webhooks/stripe", {
+      body: payload,
+      headers: {
+        "stripe-signature": await signWebhookPayload(
+          payload,
+          "whsec_attacker_secret"
+        ),
+      },
+      ip: "10.0.0.12",
+      method: "POST",
+    });
+    const missing = await request("/api/webhooks/stripe", {
+      body: payload,
+      ip: "10.0.0.12",
+      method: "POST",
+    });
+    const forgedBody: ErrorBody = await forged.json();
+
+    expect(forged.status).toBe(400);
+    expect(forgedBody.error.code).toBe("INVALID_SIGNATURE");
+    expect(missing.status).toBe(400);
+  });
+
+  it("does not rate limit Stripe webhooks per IP", async () => {
+    const statuses: number[] = [];
+    // Satu lebih banyak dari batas API_RATE_LIMIT (100/menit).
+    for (let attempt = 0; attempt < 101; attempt += 1) {
+      // oxlint-disable-next-line no-await-in-loop
+      const response = await request("/api/webhooks/stripe", {
+        body: "{}",
+        headers: { "stripe-signature": "t=1,v1=invalid" },
+        ip: "10.0.0.13",
+        method: "POST",
+      });
+      statuses.push(response.status);
+    }
+
+    expect(statuses).not.toContain(429);
+  });
+
+  it("documents the billing and webhook routes", async () => {
+    const response = await request("/openapi.json", { ip: "10.0.0.14" });
+    const document: {
+      paths: Record<string, { post?: { security?: unknown } }>;
+    } = await response.json();
+
+    expect(Object.keys(document.paths)).toStrictEqual(
+      expect.arrayContaining([
+        "/api/billing/subscription",
+        "/api/billing/checkout-sessions",
+        "/api/billing/portal-sessions",
+        "/api/webhooks/stripe",
+      ])
+    );
+    expect(
+      document.paths["/api/webhooks/stripe"]?.post?.security
+    ).toBeUndefined();
   });
 });

@@ -1,3 +1,5 @@
+import { formatPlanPrice, PLANS } from "@bermula/core/plans";
+import type { PlanDefinition } from "@bermula/core/plans";
 import { Badge } from "@bermula/design-system/components/ui/badge";
 import { buttonVariants } from "@bermula/design-system/components/ui/button";
 import {
@@ -13,10 +15,8 @@ import { cn } from "cn";
 
 import { APP_PATHS } from "../../lib/paths";
 import { appLink } from "../../lib/site";
-import { formatPlanPrice, PLANS } from "./plans";
-import type { Plan } from "./plans";
 
-const PlanCard = ({ plan }: { plan: Plan }) => (
+const PlanCard = ({ plan }: { plan: PlanDefinition }) => (
   <Card className={cn("h-full", plan.highlighted && "ring-primary ring-2")}>
     <CardHeader>
       <div className="flex items-center justify-between gap-2">

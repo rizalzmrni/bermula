@@ -5,20 +5,29 @@ import { contextMiddleware } from "./middleware/context";
 import { corsMiddleware } from "./middleware/cors";
 import { rateLimit } from "./middleware/rate-limit";
 import { registerDocs } from "./openapi";
+import { billingRoutes } from "./routes/billing";
 import { documentRoutes, imageRoutes } from "./routes/files";
 import { healthRoutes } from "./routes/health";
 import { meRoutes } from "./routes/me";
+import { webhookRoutes } from "./routes/webhooks";
 import { scheduled } from "./scheduled";
 import type { AppEnv, Bindings } from "./types";
+
+const WEBHOOK_PATH_PREFIX = "/api/webhooks/";
 
 const app = new OpenAPIHono<AppEnv>({ defaultHook: validationHook });
 
 // Urutan penting: context (env, logger, auth) → CORS (butuh env) → rate limit.
 // Preflight OPTIONS dijawab CORS sebelum rate limit, jadi tidak ikut terhitung.
+// Webhook datang dari sedikit IP milik Stripe dan dijaga signature, jadi tidak
+// ikut dibatasi per IP.
 app.use("*", contextMiddleware);
 app.use("*", corsMiddleware);
 app.use("/api/auth/*", rateLimit("AUTH_RATE_LIMIT"));
-app.use("/api/*", rateLimit("API_RATE_LIMIT"));
+app.use(
+  "/api/*",
+  rateLimit("API_RATE_LIMIT", { exceptPrefixes: [WEBHOOK_PATH_PREFIX] })
+);
 
 // Sebelum handler auth: guard `/api/auth/open-api/*` harus jalan lebih dulu.
 registerDocs(app);
@@ -33,7 +42,9 @@ const routes = app
   .route("/", healthRoutes)
   .route("/", meRoutes)
   .route("/", imageRoutes)
-  .route("/", documentRoutes);
+  .route("/", documentRoutes)
+  .route("/", billingRoutes)
+  .route("/", webhookRoutes);
 
 export type AppType = typeof routes;
 export type { Bindings } from "./types";

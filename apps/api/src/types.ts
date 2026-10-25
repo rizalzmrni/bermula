@@ -3,6 +3,7 @@ import type { Db } from "@bermula/db/client";
 import type { ApiEnv } from "@bermula/env/api";
 import type { Logger } from "@bermula/observability/logger";
 import type { CaptureException } from "@bermula/observability/posthog";
+import type { PaymentGateway } from "@bermula/payments/gateway";
 import type { ObjectStorage } from "@bermula/storage/object-storage";
 
 import type { ActiveMembership } from "./services/account";
@@ -19,6 +20,8 @@ export interface AppVariables {
   storage: ObjectStorage;
   /** `undefined` bila PostHog belum dikonfigurasi. */
   captureException: CaptureException | undefined;
+  /** `undefined` bila Stripe belum dikonfigurasi; endpoint billing membalas 503. */
+  payments: PaymentGateway | undefined;
 }
 
 export interface AppEnv {
