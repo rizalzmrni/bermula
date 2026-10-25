@@ -1,4 +1,4 @@
-import type { Db } from "@bermula/db/client";
+import type { QueryDb } from "@bermula/db/client";
 import { members, organizations } from "@bermula/db/schema/auth";
 import { and, eq } from "drizzle-orm";
 
@@ -14,7 +14,7 @@ export const getActiveMembership = async ({
   organizationId,
   userId,
 }: {
-  db: Db;
+  db: QueryDb;
   organizationId: string;
   userId: string;
 }) => {

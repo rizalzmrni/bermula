@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     "./client": "./src/client.ts",
-    "./schema/*": "./src/schema/*.ts"
+    "./schema/*": "./src/schema/*.ts",
+    "./testing": "./src/testing.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit && tsc --noEmit -p tsconfig.node.json",
@@ -20,6 +21,7 @@
   },
   "devDependencies": {
     "@bermula/typescript-config": "workspace:*",
+    "@electric-sql/pglite": "catalog:db",
     "@types/node": "catalog:",
     "drizzle-kit": "catalog:db",
     "typescript": "catalog:"

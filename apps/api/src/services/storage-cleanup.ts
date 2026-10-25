@@ -1,5 +1,5 @@
 import { FILE_STATUS } from "@bermula/core/files";
-import type { Db } from "@bermula/db/client";
+import type { QueryDb } from "@bermula/db/client";
 import { files } from "@bermula/db/schema/storage";
 import type {
   ListedObject,
@@ -44,7 +44,7 @@ export const findOrphanObjects = ({
   );
 
 interface CleanupDeps {
-  db: Db;
+  db: QueryDb;
   storage: ObjectStorage;
   now: Date;
 }
@@ -80,7 +80,7 @@ export const deleteStalePendingFiles = async ({
   return deleted.length;
 };
 
-const findKnownKeys = async (db: Db, keys: readonly string[]) => {
+const findKnownKeys = async (db: QueryDb, keys: readonly string[]) => {
   if (keys.length === 0) {
     return new Set<string>();
   }

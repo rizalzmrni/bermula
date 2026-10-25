@@ -37,11 +37,36 @@ const BINDINGS = {
   ...TEST_BINDINGS,
 };
 
+// Test service berbasis DB (`*.db.test.ts`) berjalan di Node dengan PGlite
+// (`@bermula/db/testing`), karena Postgres WASM tidak dimuat di workerd.
+// Sisanya berjalan di workerd dengan binding uji.
+const DB_TESTS = "src/**/*.db.test.ts";
+
 export default defineConfig({
-  plugins: [
-    cloudflareTest({
-      miniflare: { bindings: BINDINGS },
-      wrangler: { configPath: "./wrangler.jsonc" },
-    }),
-  ],
+  test: {
+    projects: [
+      {
+        plugins: [
+          cloudflareTest({
+            miniflare: { bindings: BINDINGS },
+            wrangler: { configPath: "./wrangler.jsonc" },
+          }),
+        ],
+        test: {
+          exclude: [DB_TESTS],
+          include: ["src/**/*.test.ts"],
+          name: "worker",
+        },
+      },
+      {
+        test: {
+          environment: "node",
+          // Membuat PGlite + menerapkan migrasi butuh beberapa detik.
+          hookTimeout: 30_000,
+          include: [DB_TESTS],
+          name: "db",
+        },
+      },
+    ],
+  },
 });

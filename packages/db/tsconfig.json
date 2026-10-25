@@ -1,4 +1,5 @@
 {
   "extends": "@bermula/typescript-config/base.json",
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["src/testing.ts"]
 }
