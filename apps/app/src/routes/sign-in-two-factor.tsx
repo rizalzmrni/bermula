@@ -93,6 +93,8 @@ const TwoFactorPage = ({ loaderData, actionData }: Route.ComponentProps) => (
     ) : (
       <TwoFactorForm
         formError={actionData?.formError}
+        // Ganti cara verifikasi = form baru (isian & skema validasi berbeda).
+        key={loaderData.method}
         method={loaderData.method}
         redirectTo={loaderData.redirectTo}
       />

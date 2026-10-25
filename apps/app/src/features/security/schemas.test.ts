@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { SECURITY_INTENT, securityActionSchema } from "./schemas";
+import {
+  changePasswordFieldsSchema,
+  SECURITY_INTENT,
+  securityActionSchema,
+} from "./schemas";
 
 const CHANGE_PASSWORD = {
   confirmPassword: "kata-sandi-baru",
@@ -71,5 +75,40 @@ describe("security action schema", () => {
     expect(
       securityActionSchema.safeParse({ intent: "delete-account" }).success
     ).toBeFalsy();
+  });
+});
+
+describe("change password form schema", () => {
+  const FIELDS = {
+    confirmPassword: "kata-sandi-baru",
+    currentPassword: "kata-sandi-lama",
+    newPassword: "kata-sandi-baru",
+    revokeOtherSessions: true,
+  };
+
+  it("applies the same confirmation rule as the action, in Indonesian", () => {
+    const result = changePasswordFieldsSchema.safeParse({
+      ...FIELDS,
+      confirmPassword: "lain",
+    });
+
+    expect(result.error?.issues).toStrictEqual([
+      expect.objectContaining({
+        message: "Konfirmasi kata sandi tidak sama.",
+        path: ["confirmPassword"],
+      }),
+    ]);
+  });
+
+  it("rejects a short new password with the configured message", () => {
+    const result = changePasswordFieldsSchema.safeParse({
+      ...FIELDS,
+      confirmPassword: "pendek",
+      newPassword: "pendek",
+    });
+
+    expect(result.error?.issues[0]?.message).toBe(
+      "Kata sandi minimal 8 karakter."
+    );
   });
 });

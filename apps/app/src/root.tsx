@@ -15,6 +15,7 @@ import {
 } from "react-router";
 
 import type { Route } from "./+types/root";
+import "./lib/zod-locale";
 
 import appCss from "./app.css?url";
 

@@ -2,8 +2,8 @@ import { z } from "zod";
 
 import {
   checkboxSchema,
-  PASSWORD_MAX_LENGTH,
-  PASSWORD_MIN_LENGTH,
+  currentPasswordSchema,
+  newPasswordSchema,
   totpCodeSchema,
 } from "../auth/schemas";
 
@@ -19,38 +19,55 @@ export const SECURITY_INTENT = {
 export type SecurityIntent =
   (typeof SECURITY_INTENT)[keyof typeof SECURITY_INTENT];
 
-// Kata sandi saat ini hanya dicek tidak kosong; kecocokannya dicek api.
-const currentPasswordSchema = z.string().min(1);
+/** Form yang hanya meminta kata sandi saat ini (aktifkan/matikan 2FA, kode cadangan). */
+export const currentPasswordFieldsSchema = z.object({
+  password: currentPasswordSchema,
+});
 
-const changePasswordSchema = z
-  .object({
-    confirmPassword: z.string(),
-    currentPassword: currentPasswordSchema,
+/** Kode pertama dari aplikasi authenticator saat aktivasi 2FA. */
+export const verifyTwoFactorFieldsSchema = z.object({ code: totpCodeSchema });
+
+const passwordFieldsSchema = z.object({
+  confirmPassword: z.string(),
+  currentPassword: currentPasswordSchema,
+  newPassword: newPasswordSchema,
+});
+
+const confirmPasswordMatches = (input: {
+  confirmPassword: string;
+  newPassword: string;
+}) => input.confirmPassword === input.newPassword;
+
+const CONFIRM_PASSWORD_ISSUE = {
+  message: "Konfirmasi kata sandi tidak sama.",
+  path: ["confirmPassword"],
+};
+
+/** Field ganti kata sandi yang diisi pengguna (TanStack Form di klien). */
+export const changePasswordFieldsSchema = passwordFieldsSchema
+  .extend({ revokeOtherSessions: z.boolean() })
+  .refine(confirmPasswordMatches, CONFIRM_PASSWORD_ISSUE);
+
+const changePasswordSchema = passwordFieldsSchema
+  .extend({
     intent: z.literal(SECURITY_INTENT.changePassword),
-    newPassword: z.string().min(PASSWORD_MIN_LENGTH).max(PASSWORD_MAX_LENGTH),
     revokeOtherSessions: checkboxSchema,
   })
-  .refine((input) => input.confirmPassword === input.newPassword, {
-    message: "Konfirmasi kata sandi tidak sama.",
-    path: ["confirmPassword"],
-  });
+  .refine(confirmPasswordMatches, CONFIRM_PASSWORD_ISSUE);
 
+/** Skema action: field klien + `intent` & checkbox dari `FormData`. */
 export const securityActionSchema = z.discriminatedUnion("intent", [
-  z.object({
+  currentPasswordFieldsSchema.extend({
     intent: z.literal(SECURITY_INTENT.enableTwoFactor),
-    password: currentPasswordSchema,
   }),
-  z.object({
-    code: totpCodeSchema,
+  verifyTwoFactorFieldsSchema.extend({
     intent: z.literal(SECURITY_INTENT.verifyTwoFactor),
   }),
-  z.object({
+  currentPasswordFieldsSchema.extend({
     intent: z.literal(SECURITY_INTENT.disableTwoFactor),
-    password: currentPasswordSchema,
   }),
-  z.object({
+  currentPasswordFieldsSchema.extend({
     intent: z.literal(SECURITY_INTENT.regenerateBackupCodes),
-    password: currentPasswordSchema,
   }),
   changePasswordSchema,
 ]);

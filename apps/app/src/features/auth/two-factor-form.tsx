@@ -1,9 +1,5 @@
-import { CheckboxField } from "@bermula/design-system/components/form/checkbox-field";
-import { Form } from "@bermula/design-system/components/form/form";
-import { OtpField } from "@bermula/design-system/components/form/otp-field";
-import { SubmitButton } from "@bermula/design-system/components/form/submit-button";
-import { TextField } from "@bermula/design-system/components/form/text-field";
-import { Form as RouterForm, Link, useNavigation } from "react-router";
+import { formElementSubmit, useAppForm } from "@bermula/data/form";
+import { Form as RouterForm, Link, useSubmit } from "react-router";
 
 import { getTwoFactorUrl } from "../../lib/redirect";
 import { AUTH_LINK_CLASS } from "./auth-layout";
@@ -12,6 +8,7 @@ import {
   BACKUP_CODE_MAX_LENGTH,
   TOTP_CODE_LENGTH,
   TWO_FACTOR_METHOD,
+  twoFactorFieldsSchemas,
 } from "./schemas";
 import type { TwoFactorMethod } from "./schemas";
 
@@ -30,61 +27,66 @@ export const TwoFactorForm = ({
   redirectTo,
   formError,
 }: TwoFactorFormProps) => {
-  const navigation = useNavigation();
-  const pending = navigation.state === "submitting";
+  const submit = useSubmit();
+  const form = useAppForm({
+    defaultValues: { code: "", trustDevice: false },
+    validators: { onDynamic: twoFactorFieldsSchemas[method] },
+    ...formElementSubmit((element) => submit(element)),
+  });
   const isTotp = method === TWO_FACTOR_METHOD.totp;
 
   return (
-    <Form render={<RouterForm method="post" />}>
-      <FormErrorAlert message={formError} />
-      <input name="method" type="hidden" value={method} />
-      {redirectTo ? (
-        <input name="redirectTo" type="hidden" value={redirectTo} />
-      ) : null}
-      {isTotp ? (
-        <OtpField
-          description="Buka aplikasi authenticator Anda dan masukkan 6 digit kodenya."
-          label="Kode verifikasi"
-          length={TOTP_CODE_LENGTH}
-          name="code"
-          required
-          validationType="numeric"
-        />
-      ) : (
-        <TextField
-          autoCapitalize="none"
-          autoComplete="one-time-code"
-          description="Gunakan salah satu kode cadangan yang Anda simpan saat mengaktifkan 2FA. Setiap kode hanya berlaku sekali."
-          label="Kode cadangan"
-          maxLength={BACKUP_CODE_MAX_LENGTH}
-          name="code"
-          required
-          spellCheck={false}
-        />
-      )}
-      <CheckboxField
-        label="Percayai perangkat ini selama 30 hari"
-        name="trustDevice"
-      />
-      <SubmitButton
-        className="w-full"
-        pending={pending}
-        pendingLabel="Memverifikasi…"
-      >
-        Verifikasi
-      </SubmitButton>
-      <p className="text-muted-foreground text-center text-sm">
-        <Link
-          className={AUTH_LINK_CLASS}
-          replace
-          to={getTwoFactorUrl({
-            method: isTotp ? TWO_FACTOR_METHOD.backupCode : undefined,
-            redirectTo,
-          })}
-        >
-          {isTotp ? "Pakai kode cadangan" : "Pakai aplikasi authenticator"}
-        </Link>
-      </p>
-    </Form>
+    <form.AppForm>
+      <form.Form render={<RouterForm method="post" />}>
+        <FormErrorAlert message={formError} />
+        <input name="method" type="hidden" value={method} />
+        {redirectTo ? (
+          <input name="redirectTo" type="hidden" value={redirectTo} />
+        ) : null}
+        <form.AppField name="code">
+          {(field) =>
+            isTotp ? (
+              <field.OtpField
+                description="Buka aplikasi authenticator Anda dan masukkan 6 digit kodenya."
+                label="Kode verifikasi"
+                length={TOTP_CODE_LENGTH}
+                required
+                validationType="numeric"
+              />
+            ) : (
+              <field.TextField
+                autoCapitalize="none"
+                autoComplete="one-time-code"
+                description="Gunakan salah satu kode cadangan yang Anda simpan saat mengaktifkan 2FA. Setiap kode hanya berlaku sekali."
+                label="Kode cadangan"
+                maxLength={BACKUP_CODE_MAX_LENGTH}
+                required
+                spellCheck={false}
+              />
+            )
+          }
+        </form.AppField>
+        <form.AppField name="trustDevice">
+          {(field) => (
+            <field.CheckboxField label="Percayai perangkat ini selama 30 hari" />
+          )}
+        </form.AppField>
+        <form.SubmitButton className="w-full" pendingLabel="Memverifikasi…">
+          Verifikasi
+        </form.SubmitButton>
+        <p className="text-muted-foreground text-center text-sm">
+          <Link
+            className={AUTH_LINK_CLASS}
+            replace
+            to={getTwoFactorUrl({
+              method: isTotp ? TWO_FACTOR_METHOD.backupCode : undefined,
+              redirectTo,
+            })}
+          >
+            {isTotp ? "Pakai kode cadangan" : "Pakai aplikasi authenticator"}
+          </Link>
+        </p>
+      </form.Form>
+    </form.AppForm>
   );
 };
