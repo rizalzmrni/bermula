@@ -55,7 +55,7 @@ tanpa menyentuh fitur.
 
 | Ekspor                            | Isi                                                                                           |
 | --------------------------------- | --------------------------------------------------------------------------------------------- |
-| `@bermula/storage/object-storage` | Tipe `ObjectStorage` (antarmuka netral provider)                                              |
+| `@bermula/storage/object-storage` | Tipe `ObjectStorage` (antarmuka netral provider, termasuk `listObjects` berhalaman cursor)    |
 | `@bermula/storage/r2-storage`     | `createR2Storage({ bucket, presigner })`: binding untuk put/get/head/delete                   |
 | `@bermula/storage/r2-s3-storage`  | `createR2S3Storage(config)`: semua operasi lewat S3 API (dipakai `apps/api`)                  |
 | `@bermula/storage/r2-presigner`   | `createR2Presigner(config)`: presigned URL S3 API (`allHeaders` menandatangani tipe & ukuran) |

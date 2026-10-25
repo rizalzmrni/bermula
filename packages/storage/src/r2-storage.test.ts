@@ -41,4 +41,24 @@ describe("createR2Storage (local R2 binding)", () => {
     await expect(storage.getObject(key)).resolves.toBeNull();
     await expect(storage.deleteObject(key)).resolves.toBeUndefined();
   });
+
+  it("lists objects by prefix across pages", async () => {
+    const keys = ["list/org-1/a.txt", "list/org-1/b.txt", "list/org-1/c.txt"];
+    await Promise.all(keys.map((key) => storage.putObject({ body: "x", key })));
+    await storage.putObject({ body: "x", key: "other/org-1/d.txt" });
+
+    const first = await storage.listObjects({ limit: 2, prefix: "list/" });
+    const second = await storage.listObjects({
+      cursor: first.cursor,
+      limit: 2,
+      prefix: "list/",
+    });
+
+    expect(first.cursor).toBeDefined();
+    expect(second.cursor).toBeUndefined();
+    expect(
+      [...first.objects, ...second.objects].map((object) => object.key)
+    ).toStrictEqual(keys);
+    expect(first.objects[0]).toMatchObject({ size: 1 });
+  });
 });

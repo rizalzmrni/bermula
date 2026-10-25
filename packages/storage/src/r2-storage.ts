@@ -34,6 +34,17 @@ export const createR2Storage = ({
     const object = await bucket.head(key);
     return object ? toStoredObject(object) : null;
   },
+  listObjects: async ({ cursor, limit, prefix }) => {
+    const page = await bucket.list({ cursor, limit, prefix });
+    return {
+      cursor: page.truncated ? page.cursor : undefined,
+      objects: page.objects.map((object) => ({
+        key: object.key,
+        size: object.size,
+        uploadedAt: object.uploaded,
+      })),
+    };
+  },
   putObject: async ({ body, contentType, key }) => {
     const object = await bucket.put(key, body, {
       httpMetadata: contentType ? { contentType } : undefined,

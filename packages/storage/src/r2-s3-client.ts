@@ -27,6 +27,7 @@ export const createR2S3Client = (config: R2S3Config) => {
   const endpoint = `https://${config.accountId}.r2.cloudflarestorage.com/${encodeURIComponent(config.bucketName)}`;
 
   return {
+    bucketUrl: () => new URL(endpoint),
     client,
     objectUrl: (key: string) => new URL(`${endpoint}/${encodeKey(key)}`),
   };

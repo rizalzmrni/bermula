@@ -53,11 +53,33 @@ export interface SignedUrl {
   expiresAt: Date;
 }
 
+/** Objek hasil listing; listing S3 & binding tidak memuat `content-type`. */
+export interface ListedObject {
+  key: string;
+  size: number;
+  uploadedAt: Date;
+}
+
+export interface ListObjectsInput {
+  prefix: string;
+  /** Dari `ObjectPage.cursor` halaman sebelumnya. */
+  cursor?: string;
+  /** Maksimum objek per halaman (1–1000, default 1000). */
+  limit?: number;
+}
+
+export interface ObjectPage {
+  objects: ListedObject[];
+  /** `undefined` bila sudah halaman terakhir. */
+  cursor: string | undefined;
+}
+
 export interface ObjectStorage {
   putObject: (input: PutObjectInput) => Promise<StoredObject>;
   getObject: (key: string) => Promise<StoredObjectBody | null>;
   headObject: (key: string) => Promise<StoredObject | null>;
   deleteObject: (key: string) => Promise<void>;
+  listObjects: (input: ListObjectsInput) => Promise<ObjectPage>;
   getSignedUploadUrl: (input: SignedUploadInput) => Promise<SignedUrl>;
   getSignedDownloadUrl: (input: SignedDownloadInput) => Promise<SignedUrl>;
 }

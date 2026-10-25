@@ -43,14 +43,31 @@ Worker. Image dan dokumen punya endpoint, kebijakan (`UPLOAD_POLICIES` di
 Bucket R2 harus privat dan punya aturan CORS untuk origin app (`PUT`, `GET`,
 header `content-type`).
 
+## Cron (pembersihan storage)
+
+`src/scheduled.ts` dijalankan Cron Trigger harian (`0 20 * * *` UTC = 03.00 WIB,
+`triggers.crons` di `wrangler.jsonc`) dan memanggil
+`services/storage-cleanup.ts`:
+
+- baris `storage_files` `pending` berumur >24 jam dihapus beserta objeknya;
+- objek di prefix `images/` & `documents/` tanpa baris dan berumur >24 jam
+  dihapus (mis. sisa organisasi yang dihapus).
+
+Maksimal 500 baris + 500 objek per jalan; sisanya dibereskan jalan berikutnya.
+Uji lokal: `bunx wrangler dev --test-scheduled`, lalu
+`curl "http://localhost:8787/cdn-cgi/handler/scheduled?cron=0+20+*+*+*&time=<epoch ms>"`
+(`time` dalam **milidetik**; geser ke masa depan agar objek baru ikut terhitung).
+Perintah ini menghapus data sungguhan di bucket & database yang dipakai `.dev.vars`.
+
 ## Struktur
 
 ```
 src/
-├── index.ts          # Rangkaian middleware + route, ekspor AppType
+├── index.ts          # Rangkaian middleware + route, ekspor AppType, handler fetch & scheduled
+├── scheduled.ts      # Cron Trigger: pembersihan storage
 ├── openapi.ts        # Security scheme sesi, /openapi.json, /docs
 ├── types.ts          # Bindings & variabel context
-├── lib/              # errors (bentuk error seragam), router (OpenAPIHono)
+├── lib/              # errors, router (OpenAPIHono), runtime (logger/storage/PostHog bersama), auth-openapi
 ├── middleware/       # context per request, cors, rate-limit, require-auth
 ├── routes/           # HTTP + validasi + dokumentasi
 └── services/         # logika bisnis & otorisasi

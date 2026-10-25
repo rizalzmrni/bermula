@@ -8,7 +8,8 @@ import { registerDocs } from "./openapi";
 import { documentRoutes, imageRoutes } from "./routes/files";
 import { healthRoutes } from "./routes/health";
 import { meRoutes } from "./routes/me";
-import type { AppEnv } from "./types";
+import { scheduled } from "./scheduled";
+import type { AppEnv, Bindings } from "./types";
 
 const app = new OpenAPIHono<AppEnv>({ defaultHook: validationHook });
 
@@ -37,4 +38,7 @@ const routes = app
 export type AppType = typeof routes;
 export type { Bindings } from "./types";
 
-export default app;
+export default {
+  fetch: app.fetch,
+  scheduled,
+} satisfies ExportedHandler<Bindings>;

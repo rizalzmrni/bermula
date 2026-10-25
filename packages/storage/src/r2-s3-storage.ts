@@ -2,6 +2,7 @@ import type { ObjectStorage, StoredObject } from "./object-storage";
 import { createR2Presigner } from "./r2-presigner";
 import type { R2PresignerConfig } from "./r2-presigner";
 import { createR2S3Client } from "./r2-s3-client";
+import { parseListObjectsResponse } from "./s3-list-objects";
 
 const NOT_FOUND = 404;
 // ETag S3 dikirim berkutip (`"abc"`); bentuk binding R2 tanpa kutip.
@@ -30,7 +31,7 @@ const assertOk = (response: Response, operation: string) => {
  * URL selalu menuju bucket asli.
  */
 export const createR2S3Storage = (config: R2PresignerConfig): ObjectStorage => {
-  const { client, objectUrl } = createR2S3Client(config);
+  const { bucketUrl, client, objectUrl } = createR2S3Client(config);
   const presigner = createR2Presigner(config);
 
   const headObject = async (key: string) => {
@@ -67,6 +68,20 @@ export const createR2S3Storage = (config: R2PresignerConfig): ObjectStorage => {
     getSignedDownloadUrl: presigner.getSignedDownloadUrl,
     getSignedUploadUrl: presigner.getSignedUploadUrl,
     headObject,
+    listObjects: async ({ cursor, limit, prefix }) => {
+      const url = bucketUrl();
+      url.searchParams.set("list-type", "2");
+      url.searchParams.set("prefix", prefix);
+      if (limit !== undefined) {
+        url.searchParams.set("max-keys", String(limit));
+      }
+      if (cursor !== undefined) {
+        url.searchParams.set("continuation-token", cursor);
+      }
+      const response = await client.fetch(url, { method: "GET" });
+      assertOk(response, "LIST");
+      return parseListObjectsResponse(await response.text());
+    },
     putObject: async ({ body, contentType, key }) => {
       const response = await client.fetch(objectUrl(key), {
         body,
