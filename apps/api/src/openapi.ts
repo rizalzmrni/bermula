@@ -3,6 +3,7 @@ import type { OpenAPIHono } from "@hono/zod-openapi";
 import { Scalar } from "@scalar/hono-api-reference";
 import { createMiddleware } from "hono/factory";
 
+import { AUTH_BASE_PATH, mergeAuthDocument } from "./lib/auth-openapi";
 import { notFoundHandler } from "./lib/errors";
 import type { AppEnv } from "./types";
 
@@ -31,17 +32,20 @@ export const registerDocs = (app: OpenAPIHono<AppEnv>) => {
 
   app.use("/openapi.json", docsGuard);
   app.use("/docs", docsGuard);
+  // Endpoint skema plugin `openAPI` better-auth membuka peta endpoint yang sama.
+  app.use(`${AUTH_BASE_PATH}/open-api/*`, docsGuard);
 
-  app.doc31("/openapi.json", (c) => ({
-    info: {
-      description:
-        "Endpoint autentikasi (`/api/auth/*`) disediakan better-auth dan belum tercantum di sini.",
-      title: `${APP_NAME} API`,
-      version: "0.1.0",
-    },
-    openapi: "3.1.0",
-    servers: [{ url: c.var.env.BETTER_AUTH_URL }],
-  }));
+  // Bukan `app.doc31`: dokumen dari `createRoute` digabung dengan skema
+  // better-auth, yang baru bisa dibuat dari instance auth per request.
+  app.get("/openapi.json", async (c) => {
+    const document = app.getOpenAPI31Document({
+      info: { title: `${APP_NAME} API`, version: "0.1.0" },
+      openapi: "3.1.0",
+      servers: [{ url: c.var.env.BETTER_AUTH_URL }],
+    });
+    const authDocument = await c.var.auth.api.generateOpenAPISchema();
+    return c.json(mergeAuthDocument(document, authDocument));
+  });
 
   app.get(
     "/docs",

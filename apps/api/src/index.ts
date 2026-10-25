@@ -19,9 +19,11 @@ app.use("*", corsMiddleware);
 app.use("/api/auth/*", rateLimit("AUTH_RATE_LIMIT"));
 app.use("/api/*", rateLimit("API_RATE_LIMIT"));
 
+// Sebelum handler auth: guard `/api/auth/open-api/*` harus jalan lebih dulu.
+registerDocs(app);
+
 app.on(["GET", "POST"], "/api/auth/*", (c) => c.var.auth.handler(c.req.raw));
 
-registerDocs(app);
 app.onError(errorHandler);
 app.notFound(notFoundHandler);
 

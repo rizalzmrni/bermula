@@ -61,6 +61,7 @@ describe(createAuth, () => {
       "admin",
       "organization",
       "two-factor",
+      "open-api",
     ]);
   });
 

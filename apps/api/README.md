@@ -18,6 +18,11 @@ bun run dev                      # wrangler dev → http://localhost:8787
 | `/api/images`, `/api/documents` | Upload, daftar, unduh, hapus file (lihat di bawah)       |
 | `GET /docs`, `/openapi.json`    | Scalar & dokumen OpenAPI (hanya `API_DOCS_ENABLED=true`) |
 
+`/openapi.json` juga memuat endpoint better-auth (tag `Auth*`, model `Auth*`),
+digabung dari `auth.api.generateOpenAPISchema()` di `src/lib/auth-openapi.ts`.
+`/api/auth/open-api/*` ikut dijaga `API_DOCS_ENABLED`; halaman `/api/auth/reference`
+bawaan plugin dimatikan.
+
 Perubahan pada `.dev.vars` baru terbaca setelah `wrangler dev` di-restart.
 
 ## Upload file
