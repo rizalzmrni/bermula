@@ -15,6 +15,31 @@ export const getSafeRedirect = (target: FormDataEntryValue | string | null) => {
   return target;
 };
 
+export const TWO_FACTOR_PATH = "/sign-in/two-factor";
+
+/**
+ * URL langkah kedua login, membawa tujuan akhir (sudah disaring) dan
+ * cara verifikasi opsional (`?method=`).
+ */
+export const getTwoFactorUrl = ({
+  redirectTo,
+  method,
+}: {
+  redirectTo: FormDataEntryValue | string | null;
+  method?: string;
+}) => {
+  const target = getSafeRedirect(redirectTo);
+  const params = new URLSearchParams();
+  if (target !== DEFAULT_REDIRECT) {
+    params.set("redirectTo", target);
+  }
+  if (method) {
+    params.set("method", method);
+  }
+  const query = params.toString();
+  return query ? `${TWO_FACTOR_PATH}?${query}` : TWO_FACTOR_PATH;
+};
+
 /** URL halaman login yang membawa path saat ini sebagai `redirectTo`. */
 export const getLoginUrl = (request: Request) => {
   const { pathname, search } = new URL(request.url);

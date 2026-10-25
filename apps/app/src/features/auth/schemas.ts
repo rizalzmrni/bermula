@@ -23,3 +23,45 @@ export const signUpSchema = z.object({
 export type SignUpInput = z.infer<typeof signUpSchema>;
 
 export const resendVerificationSchema = z.object({ email: z.email() });
+
+/** Cara verifikasi langkah kedua; nilai juga dipakai di query `?method=`. */
+export const TWO_FACTOR_METHOD = {
+  backupCode: "backup-code",
+  totp: "totp",
+} as const;
+
+export type TwoFactorMethod =
+  (typeof TWO_FACTOR_METHOD)[keyof typeof TWO_FACTOR_METHOD];
+
+export const TOTP_CODE_LENGTH = 6;
+// Kode cadangan better-auth berbentuk `xxxxx-xxxxx`; batas atas hanya
+// mencegah input berlebihan, kecocokan dicek api.
+export const BACKUP_CODE_MAX_LENGTH = 32;
+
+const TOTP_CODE_PATTERN = /^\d{6}$/u;
+
+// Checkbox HTML hanya terkirim ("on") bila dicentang.
+const trustDeviceSchema = z
+  .literal("on")
+  .optional()
+  .transform((value) => value === "on");
+
+export const twoFactorSchema = z.discriminatedUnion("method", [
+  z.object({
+    code: z.string().regex(TOTP_CODE_PATTERN),
+    method: z.literal(TWO_FACTOR_METHOD.totp),
+    trustDevice: trustDeviceSchema,
+  }),
+  z.object({
+    code: z.string().trim().min(1).max(BACKUP_CODE_MAX_LENGTH),
+    method: z.literal(TWO_FACTOR_METHOD.backupCode),
+    trustDevice: trustDeviceSchema,
+  }),
+]);
+
+export type TwoFactorInput = z.infer<typeof twoFactorSchema>;
+
+export const parseTwoFactorMethod = (value: string | null): TwoFactorMethod =>
+  value === TWO_FACTOR_METHOD.backupCode
+    ? TWO_FACTOR_METHOD.backupCode
+    : TWO_FACTOR_METHOD.totp;

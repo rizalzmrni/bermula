@@ -1,6 +1,21 @@
 import { describe, expect, it } from "vitest";
 
-import { getLoginUrl, getSafeRedirect } from "./redirect";
+import { getLoginUrl, getSafeRedirect, getTwoFactorUrl } from "./redirect";
+
+describe(getTwoFactorUrl, () => {
+  it("carries a safe redirect target and the method", () => {
+    expect(
+      getTwoFactorUrl({ method: "backup-code", redirectTo: "/projects/1" })
+    ).toBe("/sign-in/two-factor?redirectTo=%2Fprojects%2F1&method=backup-code");
+  });
+
+  it("drops unsafe or default targets", () => {
+    expect(getTwoFactorUrl({ redirectTo: "//evil.example" })).toBe(
+      "/sign-in/two-factor"
+    );
+    expect(getTwoFactorUrl({ redirectTo: null })).toBe("/sign-in/two-factor");
+  });
+});
 
 describe(getSafeRedirect, () => {
   it("keeps internal paths with their query", () => {

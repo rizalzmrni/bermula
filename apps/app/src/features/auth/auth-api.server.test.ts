@@ -5,12 +5,16 @@ import type { ApiBinding } from "../../lib/api-client";
 import {
   getSignInErrorMessage,
   getSignUpErrorMessage,
+  getTwoFactorError,
   getVerifyEmailCallbackUrl,
   getVerifyEmailErrorMessage,
+  hasTwoFactorChallenge,
+  isTwoFactorRedirect,
   resendVerificationEmail,
   signUpWithEmail,
+  verifyTwoFactor,
 } from "./auth-api.server";
-import { signUpSchema } from "./schemas";
+import { signUpSchema, twoFactorSchema } from "./schemas";
 
 const APP_REQUEST = new Request("http://localhost:5173/sign-up", {
   headers: { origin: "http://localhost:5173" },
@@ -180,5 +184,127 @@ describe(getSetCookieHeaders, () => {
       ],
     });
     expect(getSetCookieHeaders(response).getSetCookie()).toHaveLength(2);
+  });
+});
+
+describe(isTwoFactorRedirect, () => {
+  it("detects the 2FA challenge without consuming the body", async () => {
+    const response = Response.json({
+      twoFactorMethods: ["totp"],
+      twoFactorRedirect: true,
+    });
+    await expect(isTwoFactorRedirect(response)).resolves.toBeTruthy();
+    await expect(response.json()).resolves.toHaveProperty(
+      "twoFactorRedirect",
+      true
+    );
+  });
+
+  it("is false for a normal sign-in or a non-JSON body", async () => {
+    await expect(
+      isTwoFactorRedirect(Response.json({ redirect: false, token: "abc" }))
+    ).resolves.toBeFalsy();
+    await expect(
+      isTwoFactorRedirect(new Response("<html>"))
+    ).resolves.toBeFalsy();
+  });
+});
+
+describe(hasTwoFactorChallenge, () => {
+  it.each([
+    "better-auth.two_factor=abc",
+    "theme=dark; better-auth.two_factor=abc",
+    "__Secure-better-auth.two_factor=abc",
+  ])("finds the challenge cookie in %j", (cookie) => {
+    const request = new Request("http://localhost/", { headers: { cookie } });
+    expect(hasTwoFactorChallenge(request)).toBeTruthy();
+  });
+
+  it("ignores requests without the cookie", () => {
+    const request = new Request("http://localhost/", {
+      headers: { cookie: "better-auth.session_token=abc; my_two_factor=x" },
+    });
+    expect(hasTwoFactorChallenge(request)).toBeFalsy();
+    expect(hasTwoFactorChallenge(new Request("http://localhost/"))).toBeFalsy();
+  });
+});
+
+describe(verifyTwoFactor, () => {
+  it.each([
+    ["totp", "123456", "/api/auth/two-factor/verify-totp"],
+    ["backup-code", "abcde-12345", "/api/auth/two-factor/verify-backup-code"],
+  ] as const)("sends a %s code to its endpoint", async (method, code, path) => {
+    const { api, requests } = createFakeApi();
+
+    await verifyTwoFactor({
+      api,
+      input: { code, method, trustDevice: true },
+      request: APP_REQUEST,
+    });
+
+    const [sent] = requests;
+    expect(new URL(sent?.url ?? "").pathname).toBe(path);
+    await expect(sent?.json()).resolves.toStrictEqual({
+      code,
+      trustDevice: true,
+    });
+  });
+});
+
+describe("two-factor schema", () => {
+  it("accepts a 6-digit TOTP code and reads the checkbox", () => {
+    expect(
+      twoFactorSchema.parse({
+        code: "012345",
+        method: "totp",
+        trustDevice: "on",
+      })
+    ).toStrictEqual({ code: "012345", method: "totp", trustDevice: true });
+  });
+
+  it("treats a missing checkbox as not trusted", () => {
+    expect(
+      twoFactorSchema.parse({ code: "abcde-12345", method: "backup-code" })
+        .trustDevice
+    ).toBeFalsy();
+  });
+
+  it.each([
+    { code: "12345", method: "totp" },
+    { code: "12345a", method: "totp" },
+    { code: "   ", method: "backup-code" },
+    { code: "123456", method: "sms" },
+  ])("rejects %j", (input) => {
+    expect(twoFactorSchema.safeParse(input).success).toBeFalsy();
+  });
+});
+
+describe(getTwoFactorError, () => {
+  it("lets the user retry a wrong code", async () => {
+    const response = Response.json({ code: "INVALID_CODE" }, { status: 401 });
+    await expect(getTwoFactorError(response)).resolves.toStrictEqual({
+      message: "Kode salah. Periksa lalu coba lagi.",
+      restart: false,
+    });
+  });
+
+  it.each([
+    "INVALID_TWO_FACTOR_COOKIE",
+    "TOO_MANY_ATTEMPTS_REQUEST_NEW_CODE",
+    "ACCOUNT_TEMPORARILY_LOCKED",
+  ])("asks to sign in again for %s", async (code) => {
+    const response = Response.json({ code }, { status: 401 });
+    await expect(getTwoFactorError(response)).resolves.toHaveProperty(
+      "restart",
+      true
+    );
+  });
+
+  it("reports rate limiting without restarting", async () => {
+    const response = new Response(null, { status: 429 });
+    await expect(getTwoFactorError(response)).resolves.toStrictEqual({
+      message: "Terlalu banyak percobaan. Coba lagi dalam satu menit.",
+      restart: false,
+    });
   });
 });

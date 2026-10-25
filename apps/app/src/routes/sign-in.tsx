@@ -3,6 +3,7 @@ import { data, Link, redirect } from "react-router";
 
 import {
   getSignInErrorMessage,
+  isTwoFactorRedirect,
   signInWithEmail,
 } from "../features/auth/auth-api.server";
 import { AUTH_LINK_CLASS, AuthLayout } from "../features/auth/auth-layout";
@@ -10,7 +11,7 @@ import { LoginForm } from "../features/auth/login-form";
 import { signInSchema } from "../features/auth/schemas";
 import { getSetCookieHeaders } from "../lib/api-client";
 import { getCloudflare } from "../lib/cloudflare";
-import { getSafeRedirect } from "../lib/redirect";
+import { getSafeRedirect, getTwoFactorUrl } from "../lib/redirect";
 import { getAccount } from "../lib/session.server";
 import type { Route } from "./+types/sign-in";
 
@@ -52,10 +53,14 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
     );
   }
 
-  // Cookie sesi dari api diteruskan ke browser lewat respons redirect ini.
-  throw redirect(getSafeRedirect(formData.get("redirectTo")), {
-    headers: getSetCookieHeaders(response),
-  });
+  const redirectTo = formData.get("redirectTo");
+  // Cookie dari api (sesi, atau `two_factor` bila 2FA aktif) diteruskan ke
+  // browser lewat respons redirect ini.
+  const headers = getSetCookieHeaders(response);
+  if (await isTwoFactorRedirect(response)) {
+    throw redirect(getTwoFactorUrl({ redirectTo }), { headers });
+  }
+  throw redirect(getSafeRedirect(redirectTo), { headers });
 };
 
 const LoginPage = ({ loaderData, actionData }: Route.ComponentProps) => (
