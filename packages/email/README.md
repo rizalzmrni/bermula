@@ -45,6 +45,15 @@ const auth = createAuth({ db, emails, env, logger, waitUntil });
   `@react-email/render`. Kegagalan kirim dilempar sebagai `Error`; `packages/auth`
   yang mencatatnya ke logger.
 
+## Testing
+
+`bun run test` berjalan di workerd (`@cloudflare/vitest-plugin`, konfigurasi
+`wrangler.jsonc` khusus test dengan compatibility date & flag `apps/api`), jadi
+kondisi ekspor `workerd` `@react-email/render` dan SDK Resend ikut teruji.
+Bundling esbuild milik `wrangler dev`/`deploy` **tidak** tercakup (Vitest memakai
+pipeline Vite); bug semacam `render2 is not a function` hanya muncul di sana, jadi
+setelah mengubah impor paket ini cek sekali lewat `wrangler dev` di `apps/api`.
+
 ## Env (di apps/api)
 
 `RESEND_API_KEY` dan `EMAIL_FROM` (lihat `apps/api/.dev.vars.example`). Untuk dev

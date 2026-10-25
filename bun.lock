@@ -195,9 +195,11 @@
       },
       "devDependencies": {
         "@bermula/typescript-config": "workspace:*",
+        "@cloudflare/vitest-plugin": "catalog:test",
         "@types/react": "catalog:react",
         "typescript": "catalog:",
         "vitest": "catalog:test",
+        "wrangler": "catalog:api",
       },
     },
     "packages/env": {

@@ -1,0 +1,9 @@
+// Bukan Worker yang di-deploy. Konfigurasi ini hanya dipakai
+// @cloudflare/vitest-plugin agar render & kirim email diuji di workerd dengan
+// compatibility date & flag yang sama dengan apps/api (pemakai paket ini).
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "bermula-email-test",
+  "compatibility_date": "2026-10-19",
+  "compatibility_flags": ["nodejs_compat"],
+}
