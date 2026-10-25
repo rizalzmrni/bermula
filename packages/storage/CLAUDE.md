@@ -45,7 +45,11 @@ tanpa menyentuh fitur.
   (terverifikasi ke bucket asli 2026-10-24).
 - Nama bucket dari binding/env; jangan hardcode.
 - Konfigurasi CORS bucket R2 untuk origin `APP_URL` agar upload dari browser
-  berhasil; tulis langkahnya di laporan sebagai langkah manual.
+  berhasil; tulis langkahnya di laporan sebagai langkah manual. Aturan dev ada
+  di `r2-cors.dev.json` (hanya `GET` presigned & `PUT` upload + header
+  `content-type`), diterapkan dengan
+  `bunx wrangler r2 bucket cors set <R2_BUCKET_NAME> --file r2-cors.dev.json`.
+  Origin produksi dibuat file terpisah setelah domain diputuskan.
 
 ## Modul
 

@@ -98,6 +98,7 @@ Bila tugas menyentuh salah satunya: berhenti dan tanyakan.
 - 2026-10-25 — **Form = TanStack Form + submit elemen form ke action.** Validasi: atribut browser dulu (`Form` Base UI), lalu skema Zod `onDynamic` + `revalidateLogic()` (submit pertama, lalu tiap perubahan). Bila lolos, elemen `<form>` dikirim lewat `useSubmit`/`fetcher.submit`, sehingga request identik dengan submit tanpa JavaScript (login tetap jalan tanpa JS) dan action + penerusan `Set-Cookie` tidak berubah. Skema klien mencakup seluruh nilai form (checkbox = boolean); skema action dibangun dari skema klien dengan `.extend()` (field tersembunyi seperti `intent`, checkbox dari `FormData` = `"on"`). Semua form auth & keamanan dipindah (keputusan developer).
 - 2026-10-25 — **Data akun lewat TanStack Query**, bukan field loader: QueryClient loader per request di Router context (terpisah dari client render di `DataProvider`), state dikirim via `dehydrate()`. Mutasi lewat action tetap memicu revalidasi loader; state baru menimpa cache browser saat hydrate. `@tanstack/react-table` ditunda (keputusan developer).
 - 2026-10-21 — `drizzle.config.ts` membaca `.env` dengan `process.loadEnvFile()` bawaan Node (tanpa `dotenv`), type-check terpisah lewat `tsconfig.node.json`.
+- 2026-10-25 — **Saran `@types/node` dari `wrangler types` diabaikan.** Sejak `compatibility_date` ≥ `2026-08-04`, `nodejs_compat` aktif bawaan untuk semua Worker (miniflare `NODEJS_COMPAT_DEFAULT_ON_DATE`), jadi wrangler selalu menyarankannya. `@types/node` tetap tidak masuk tsconfig kode Worker (`docs/dependencies.md`), agar API Node tidak terpakai tanpa sengaja.
 
 ## Hal yang perlu diverifikasi
 
@@ -115,13 +116,12 @@ Sudah terverifikasi (2026-10-21): `ultracite init` menambah blok sendiri ke `AGE
 - Preset base tanpa DOM/`types` berarti global Web seperti `URL`/`fetch` tidak tersedia di paket murni; paket yang butuh harus menambah lib/tipe runtime-nya secara eksplisit.
 - `db:generate` mewajibkan `DATABASE_URL` terisi walau tidak menyambung ke DB (validasi di `drizzle.config.ts`).
 - Frame stack PostHog dari server berupa lokasi bundle; source map belum di-upload ke PostHog.
-- `.npmrc` kosong sisa create-turbo; boleh dihapus.
 - Endpoint better-auth (`/api/auth/*`) belum masuk dokumen OpenAPI; opsi: plugin `openAPI` better-auth atau tautan ke referensinya.
 - `getActiveMembership` dan query `services/files.ts` baru teruji lewat e2e manual; belum ada test otomatis berbasis DB (logika murni: `canDeleteFile`, `checkUploadedObject` sudah diuji).
 - Baris `storage_files` berstatus `pending` yang tidak pernah di-complete (dan objeknya bila sempat di-PUT) belum dibersihkan; butuh Cron Trigger.
 - Menghapus organisasi menghapus baris `storage_files` (cascade) tetapi objek R2-nya tertinggal.
 - Test `apps/api` ikut memuat `.dev.vars` (wrangler); variabel wajib ditimpa `TEST_BINDINGS`, tetapi variabel opsional yang diisi di `.dev.vars` (mis. PostHog) akan ikut aktif di test.
-- Aturan CORS bucket R2 dev mengizinkan `POST`, `DELETE`, `HEAD`, dan semua header; yang dibutuhkan hanya `GET` & `PUT` + `content-type`. Origin produksi ditambahkan setelah domain diputuskan.
+- Aturan CORS bucket R2 dev yang aktif masih mengizinkan `POST`, `DELETE`, `HEAD`, dan semua header. Versi yang dipersempit (`GET` & `PUT` + `content-type`) ada di `packages/storage/r2-cors.dev.json`, tetapi belum diterapkan ke bucket (langkah manual, lihat `packages/storage/CLAUDE.md`). Origin produksi ditambahkan setelah domain diputuskan.
 - Test `packages/email` berjalan di Node, jadi bug bundling khusus wrangler/workerd (seperti `render` yang `undefined`, lihat keputusan 2026-10-25) tidak tertangkap; pertimbangkan test pengiriman di `@cloudflare/vitest-plugin`.
 - Dev lokal: setelah me-restart `apps/api`, restart juga `apps/app`. Kalau tidak, Service Binding app tetap memegang alamat Worker lama ("Network connection lost", semua loader 500).
 - Form kirim ulang verifikasi butuh JavaScript (fetcher); tanpa JS, POST dokumen ke `/verify-email` diakhiri redirect loader ke `/`.
@@ -129,7 +129,6 @@ Sudah terverifikasi (2026-10-21): `ultracite init` menambah blok sendiri ke `AGE
 - Database Neon dev berisi akun uji `delivered@resend.dev` (email ditandai terverifikasi langsung di DB, TOTP aktif) untuk menguji 2FA; aman dihapus. Halaman keamanan teruji e2e lewat endpoint `.data` (2026-10-25): kata sandi/kode salah, buat ulang kode cadangan, matikan → aktifkan ulang 2FA, ganti kata sandi + sesi lain dicabut. Tampilan dan alur seluruh halaman auth dicek developer di browser (2026-10-25).
 - Reset kata sandi teruji e2e (2026-10-25, `wrangler dev` + Neon dev, 16 cek): respons generik untuk email tak terdaftar, token tersimpan & tautan email → `?token`, tautan salah → `?error=INVALID_TOKEN`, header no-referrer/no-store, kata sandi pendek ditolak tanpa membuang token, token sekali pakai, semua sesi dicabut, login dengan kata sandi baru → langkah 2FA. Kata sandi akun uji `delivered@resend.dev` kini `Reset-e2e-2026!`.
 - React Router hanya meneruskan `Set-Cookie` dari `data()`/`redirect()`; header lain (mis. `Cache-Control`) wajib lewat export `headers` route.
-- `wrangler types` di `apps/app` menyarankan memasang `@types/node` ("Node.js compatibility enabled") walau `wrangler.jsonc` tidak memakai `nodejs_compat`; diabaikan, perlu dicek.
 - Windows: menghentikan `bun run dev` dari tool background bisa meninggalkan proses `node`/`workerd` yatim yang tetap memegang port 5173/8787; app lalu pindah ke 5174 dan request ke 5173 dijawab Worker lama. Cek `netstat -ano | findstr 5173` sebelum menjalankan ulang.
 - Base UI Select tidak bisa dipilih lewat event sintetis di happy-dom (klik, pointer, keyboard); test `packages/data` mengisi nilainya lewat state form. Pemilihan Select lewat UI belum teruji di browser; cek saat form pertama yang memakainya dibuat.
 - Security page: hasil action (QR, kode cadangan) hanya dibaca lewat `useFetcher`, jadi alur aktivasi 2FA butuh JavaScript (sudah begitu sejak awal).
