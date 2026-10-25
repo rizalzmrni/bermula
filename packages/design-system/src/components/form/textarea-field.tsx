@@ -1,8 +1,5 @@
-import {
-  FormField,
-  hasFieldErrors,
-  useFieldA11y,
-} from "@bermula/design-system/components/form/form-field";
+import { Field as FieldPrimitive } from "@base-ui/react/field";
+import { FormField } from "@bermula/design-system/components/form/form-field";
 import type { BaseFieldProps } from "@bermula/design-system/components/form/form-field";
 import { Textarea } from "@bermula/design-system/components/ui/textarea";
 import type { ComponentProps } from "react";
@@ -15,26 +12,19 @@ export const TextareaField = ({
   description,
   errors,
   className,
-  id,
+  name,
+  disabled,
   ...textareaProps
-}: TextareaFieldProps) => {
-  const invalid = hasFieldErrors(errors);
-  const { controlProps, ...ids } = useFieldA11y({
-    hasDescription: Boolean(description),
-    id,
-    invalid,
-  });
-
-  return (
-    <FormField
-      className={className}
-      description={description}
-      errors={errors}
-      invalid={invalid}
-      label={label}
-      {...ids}
-    >
-      <Textarea {...textareaProps} {...controlProps} />
-    </FormField>
-  );
-};
+}: TextareaFieldProps) => (
+  <FormField
+    className={className}
+    description={description}
+    disabled={disabled}
+    errors={errors}
+    label={label}
+    name={name}
+  >
+    {/* `Textarea` shadcn adalah elemen biasa; `Field.Control` mendaftarkannya ke Field. */}
+    <FieldPrimitive.Control render={<Textarea {...textareaProps} />} />
+  </FormField>
+);

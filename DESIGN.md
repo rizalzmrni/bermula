@@ -97,6 +97,11 @@ Aturan:
 - **Form:** field presentasional (label, kontrol, deskripsi, error dengan
   `text-destructive` + `aria-invalid`) di `packages/design-system`; `createFormHook`
   TanStack Form yang mendaftarkan field itu di `packages/data`. Validasi Zod.
+  Bungkus field dengan `Form` (`components/form/form`) dan pasang atribut
+  validasi browser (`required`, `minLength`, `type="email"`, dll.) di field agar
+  kesalahan dasar tertangkap sebelum JavaScript validasi berjalan. Pilihan:
+  `select` (≤10 opsi), `combobox` (daftar panjang, bisa dicari), `radio-group`
+  (2–5 opsi yang perlu terlihat semua).
 - **Komponen reusable** (presentasional: data lewat props, tanpa fetch/sesi) di
   `src/components/{layout,navigation,form,feedback}/`. Menu didefinisikan sekali
   per app sebagai `NavItem[]` (`lib/navigation`) dan dipakai header, nav mobile,

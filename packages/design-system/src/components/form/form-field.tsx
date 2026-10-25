@@ -1,120 +1,128 @@
+import { Field as FieldPrimitive } from "@base-ui/react/field";
 import {
   Field,
   FieldContent,
   FieldDescription,
-  FieldError,
   FieldLabel,
 } from "@bermula/design-system/components/ui/field";
-import { useId } from "react";
+import { cn } from "cn";
 import type { ReactNode } from "react";
 
 /**
- * Bentuk error yang diterima semua field. Cocok dengan `field.state.meta.errors`
- * TanStack Form saat validator berupa skema Zod (issue punya `message`).
+ * Bentuk error eksternal yang diterima semua field. Cocok dengan
+ * `field.state.meta.errors` TanStack Form saat validatornya skema Zod.
  */
 export type FieldErrors = ({ message?: string } | undefined)[];
 
-/** Props bersama semua field presentasional. */
+/** Props bersama semua field. */
 export interface BaseFieldProps {
   label: ReactNode;
   description?: ReactNode;
+  /** Error dari luar (TanStack Form/server); menimpa pesan validasi browser. */
   errors?: FieldErrors;
   className?: string;
 }
 
-export const hasFieldErrors = (errors: FieldErrors | undefined) =>
-  errors?.some((error) => Boolean(error?.message)) ?? false;
+export const getErrorMessages = (errors: FieldErrors | undefined) => [
+  ...new Set(
+    (errors ?? [])
+      .map((error) => error?.message)
+      .filter((message): message is string => Boolean(message))
+  ),
+];
 
-interface FieldA11yOptions {
-  id?: string;
-  hasDescription: boolean;
-  invalid: boolean;
-}
+export const hasFieldErrors = (errors: FieldErrors | undefined) =>
+  getErrorMessages(errors).length > 0;
+
+const ERROR_CLASS = "text-sm font-normal text-destructive";
+
+/** Deskripsi field; Base UI menautkannya ke kontrol lewat `aria-describedby`. */
+export const FormFieldDescription = ({ children }: { children?: ReactNode }) =>
+  children ? (
+    <FieldPrimitive.Description render={<FieldDescription />}>
+      {children}
+    </FieldPrimitive.Description>
+  ) : null;
 
 /**
- * Id kontrol + atribut ARIA yang menautkan label, deskripsi, dan pesan error
- * ke kontrol, sehingga pembaca layar membacakan semuanya.
+ * Pesan error: error eksternal bila ada, selain itu pesan validasi browser
+ * (`validationMessage`, sudah dilokalkan browser) setelah form divalidasi.
  */
-export const useFieldA11y = ({
-  id,
-  hasDescription,
-  invalid,
-}: FieldA11yOptions) => {
-  const generatedId = useId();
-  const controlId = id ?? generatedId;
-  const descriptionId = `${controlId}-description`;
-  const errorId = `${controlId}-error`;
-  const describedBy = [
-    hasDescription ? descriptionId : null,
-    invalid ? errorId : null,
-  ]
-    .filter(Boolean)
-    .join(" ");
+export const FormFieldError = ({ errors }: { errors?: FieldErrors }) => {
+  const messages = getErrorMessages(errors);
 
-  return {
-    controlId,
-    controlProps: {
-      "aria-describedby": describedBy || undefined,
-      "aria-invalid": invalid || undefined,
-      id: controlId,
-    },
-    descriptionId,
-    errorId,
-  };
+  // Tanpa `children` sama sekali (bukan `undefined`), agar Base UI mengisi
+  // pesan validasi browser.
+  return messages.length > 0 ? (
+    <FieldPrimitive.Error className={ERROR_CLASS} match role="alert">
+      {messages.join(" ")}
+    </FieldPrimitive.Error>
+  ) : (
+    <FieldPrimitive.Error className={ERROR_CLASS} role="alert" />
+  );
 };
 
 interface FormFieldProps extends BaseFieldProps {
-  controlId: string;
-  descriptionId: string;
-  errorId: string;
-  invalid: boolean;
+  /** Nama field; dipakai untuk `FormData` dan error server di `Form`. */
+  name?: string;
+  disabled?: boolean;
   /** `horizontal` untuk checkbox/switch (kontrol di samping label). */
   orientation?: "vertical" | "horizontal";
+  /** Id label, bila kontrol perlu `aria-labelledby` sendiri (mis. date picker). */
+  labelId?: string;
   children: ReactNode;
 }
 
-/** Kerangka label + kontrol + deskripsi + error yang dipakai semua field. */
+/**
+ * Kerangka satu field di atas `Field` Base UI: label, deskripsi, dan error
+ * ditautkan otomatis ke kontrol, dan atribut validasi browser (`required`,
+ * `minLength`, `pattern`, `type`, dll.) pada kontrol divalidasi saat `Form`
+ * di-submit.
+ */
 export const FormField = ({
   label,
   description,
   errors,
   className,
-  controlId,
-  descriptionId,
-  errorId,
-  invalid,
+  name,
+  disabled,
   orientation = "vertical",
+  labelId,
   children,
 }: FormFieldProps) => {
-  const labelElement = <FieldLabel htmlFor={controlId}>{label}</FieldLabel>;
-  const descriptionElement = description ? (
-    <FieldDescription id={descriptionId}>{description}</FieldDescription>
-  ) : null;
-  const errorElement = <FieldError errors={errors} id={errorId} />;
-
-  if (orientation === "horizontal") {
-    return (
-      <Field
-        className={className}
-        data-invalid={invalid || undefined}
-        orientation="horizontal"
-      >
-        {children}
-        <FieldContent>
-          {labelElement}
-          {descriptionElement}
-          {errorElement}
-        </FieldContent>
-      </Field>
-    );
-  }
+  const invalid = hasFieldErrors(errors);
+  const labelElement = (
+    <FieldPrimitive.Label id={labelId} render={<FieldLabel />}>
+      {label}
+    </FieldPrimitive.Label>
+  );
 
   return (
-    <Field className={className} data-invalid={invalid || undefined}>
-      {labelElement}
-      {children}
-      {descriptionElement}
-      {errorElement}
-    </Field>
+    <FieldPrimitive.Root
+      className={cn(className)}
+      disabled={disabled}
+      // `undefined` (bukan `false`) agar validitas browser tetap berlaku.
+      invalid={invalid || undefined}
+      name={name}
+      render={<Field orientation={orientation} />}
+    >
+      {orientation === "horizontal" ? (
+        <>
+          {children}
+          <FieldContent>
+            {labelElement}
+            <FormFieldDescription>{description}</FormFieldDescription>
+            <FormFieldError errors={errors} />
+          </FieldContent>
+        </>
+      ) : (
+        <>
+          {labelElement}
+          {children}
+          <FormFieldDescription>{description}</FormFieldDescription>
+          <FormFieldError errors={errors} />
+        </>
+      )}
+    </FieldPrimitive.Root>
   );
 };

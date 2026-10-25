@@ -1,8 +1,4 @@
-import {
-  FormField,
-  hasFieldErrors,
-  useFieldA11y,
-} from "@bermula/design-system/components/form/form-field";
+import { FormField } from "@bermula/design-system/components/form/form-field";
 import type { BaseFieldProps } from "@bermula/design-system/components/form/form-field";
 import {
   InputGroup,
@@ -11,7 +7,7 @@ import {
   InputGroupInput,
 } from "@bermula/design-system/components/ui/input-group";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
-import { useState } from "react";
+import { useId, useState } from "react";
 import type { ComponentProps } from "react";
 
 type PasswordFieldProps = BaseFieldProps &
@@ -23,37 +19,36 @@ export const PasswordField = ({
   description,
   errors,
   className,
+  name,
+  disabled,
   id,
   ...inputProps
 }: PasswordFieldProps) => {
   const [visible, setVisible] = useState(false);
-  const invalid = hasFieldErrors(errors);
-  const { controlProps, ...ids } = useFieldA11y({
-    hasDescription: Boolean(description),
-    id,
-    invalid,
-  });
+  const generatedId = useId();
+  const inputId = id ?? generatedId;
   const ToggleIcon = visible ? IconEyeOff : IconEye;
 
   return (
     <FormField
       className={className}
       description={description}
+      disabled={disabled}
       errors={errors}
-      invalid={invalid}
       label={label}
-      {...ids}
+      name={name}
     >
       <InputGroup>
         <InputGroupInput
           {...inputProps}
-          {...controlProps}
+          id={inputId}
           type={visible ? "text" : "password"}
         />
         <InputGroupAddon align="inline-end">
           <InputGroupButton
-            aria-controls={ids.controlId}
+            aria-controls={inputId}
             aria-pressed={visible}
+            disabled={disabled}
             onClick={() => setVisible((current) => !current)}
             size="icon-xs"
           >
