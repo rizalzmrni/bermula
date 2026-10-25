@@ -7,7 +7,12 @@ import vitest from "ultracite/oxlint/vitest";
 export default defineConfig({
   env: core.env,
   extends: [core, react, remix, vitest],
-  ignorePatterns: core.ignorePatterns,
+  ignorePatterns: [
+    ...core.ignorePatterns,
+    // Komponen shadcn hasil CLI (gaya `function`, pola ARIA bawaan); tidak
+    // diubah manual agar `shadcn add --overwrite` tetap bisa memperbarui.
+    "packages/design-system/src/components/ui/**",
+  ],
   overrides: [
     {
       // Satu-satunya tempat yang boleh menulis ke console; kode lain wajib
