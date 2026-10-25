@@ -117,6 +117,10 @@ Setiap komponen yang memuat data menampilkan empat state:
 3. **Empty** — keadaan kosong yang menjelaskan apa yang biasanya ada + aksi berikutnya.
 4. **Success** — konten sebenarnya.
 
+Pakai komponen `components/feedback/`: `LoadingSkeleton` (pilih varian yang mirip
+konten), `ErrorState`, `EmptyState`. Aksi merusak/tak bisa dibatalkan selalu
+lewat `ConfirmDialog` dengan `destructive` dan deskripsi akibatnya.
+
 ## Format Angka, Tanggal, Mata Uang
 
 - Gunakan **satu helper formatter terpusat** (`packages/design-system` atau `apps/*/app/lib/format.ts`),
