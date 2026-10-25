@@ -10,6 +10,11 @@ Aturan tambahan saat bekerja di `apps/api`. Aturan root `CLAUDE.md` tetap berlak
   dan dokumentasi sekaligus.
 - Rangkai route secara chaining agar tipe RPC terbentuk; ekspor
   `export type AppType = typeof app` dan `type Bindings` dari `src/index.ts`.
+- Konsumen (app/web) memakai `hcWithType` dari `@bermula/api/client`
+  (`src/client.ts`). Tipenya di-compile oleh `build:types`
+  (`tsconfig.types.json` → `dist/types`, ter-ignore git) dengan konfigurasi api
+  sendiri; `src/client.ts` hanya boleh mengimpor `AppType` sebagai tipe agar
+  kode server tidak ikut ke bundle konsumen.
 - Skema domain bersama berasal dari `packages/core/src/schemas`.
 - Bentuk error seragam, dengan status HTTP yang sesuai:
   `{ error: { code: string; message: string; details?: unknown } }`.
