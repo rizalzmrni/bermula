@@ -1,7 +1,11 @@
 import { CheckboxField } from "@bermula/design-system/components/form/checkbox-field";
+import { ComboboxField } from "@bermula/design-system/components/form/combobox-field";
+import { DatePickerField } from "@bermula/design-system/components/form/date-picker-field";
 import { Form as FormRoot } from "@bermula/design-system/components/form/form";
 import { OtpField } from "@bermula/design-system/components/form/otp-field";
 import { PasswordField } from "@bermula/design-system/components/form/password-field";
+import { RadioGroupField } from "@bermula/design-system/components/form/radio-group-field";
+import { SelectField } from "@bermula/design-system/components/form/select-field";
 import { SubmitButton as SubmitButtonBase } from "@bermula/design-system/components/form/submit-button";
 import { SwitchField } from "@bermula/design-system/components/form/switch-field";
 import { TextField } from "@bermula/design-system/components/form/text-field";
@@ -64,6 +68,12 @@ type BoundProps<TProps> = Omit<
   "name" | "value" | "onChange" | "onBlur" | "errors"
 >;
 
+// Untuk field pilihan & tanggal yang nilainya lewat `onValueChange`.
+type BoundValueProps<TProps> = Omit<
+  BoundProps<TProps>,
+  "defaultValue" | "onValueChange"
+>;
+
 const BoundTextField = (
   props: BoundProps<ComponentProps<typeof TextField>>
 ) => {
@@ -113,10 +123,7 @@ const BoundTextareaField = (
 };
 
 const BoundOtpField = (
-  props: Omit<
-    BoundProps<ComponentProps<typeof OtpField>>,
-    "defaultValue" | "onValueChange"
-  >
+  props: BoundValueProps<ComponentProps<typeof OtpField>>
 ) => {
   const field = useFieldContext<string>();
   return (
@@ -167,6 +174,77 @@ const BoundSwitchField = (
   );
 };
 
+/** Nilai `string | null`: `null` = belum ada yang dipilih. */
+const BoundSelectField = (
+  props: BoundValueProps<ComponentProps<typeof SelectField>>
+) => {
+  const field = useFieldContext<string | null>();
+  return (
+    <SelectField
+      {...props}
+      errors={field.state.meta.errors}
+      name={field.name}
+      onBlur={field.handleBlur}
+      onValueChange={(value) => field.handleChange(value)}
+      value={field.state.value}
+    />
+  );
+};
+
+/** Nilai `string | null` (`option.value`), sama seperti `SelectField`. */
+const BoundComboboxField = (
+  props: BoundValueProps<ComponentProps<typeof ComboboxField>>
+) => {
+  const field = useFieldContext<string | null>();
+  return (
+    <ComboboxField
+      {...props}
+      errors={field.state.meta.errors}
+      name={field.name}
+      onBlur={field.handleBlur}
+      onValueChange={(value) => field.handleChange(value)}
+      value={field.state.value}
+    />
+  );
+};
+
+/** Nilai `string | null`; `null` hanya sebelum pengguna memilih. */
+const BoundRadioGroupField = (
+  props: BoundValueProps<ComponentProps<typeof RadioGroupField>>
+) => {
+  const field = useFieldContext<string | null>();
+  return (
+    <RadioGroupField
+      {...props}
+      errors={field.state.meta.errors}
+      name={field.name}
+      onBlur={field.handleBlur}
+      onValueChange={(value) => field.handleChange(value)}
+      value={field.state.value}
+    />
+  );
+};
+
+/**
+ * Nilai `Date | null` (tanggal lokal) di state form; elemen form tetap
+ * mengirim `YYYY-MM-DD` ke action lewat input tersembunyi.
+ */
+const BoundDatePickerField = (
+  props: BoundValueProps<ComponentProps<typeof DatePickerField>>
+) => {
+  const field = useFieldContext<Date | null>();
+  return (
+    <DatePickerField
+      {...props}
+      errors={field.state.meta.errors}
+      name={field.name}
+      onBlur={field.handleBlur}
+      onValueChange={(value) => field.handleChange(value)}
+      value={field.state.value}
+    />
+  );
+};
+
 /**
  * `<form>` design-system yang terhubung ke TanStack Form. Atribut validasi
  * browser diperiksa dulu oleh `Form` Base UI; bila lolos, skema Zod form
@@ -209,8 +287,12 @@ const SubmitButton = (
 export const { useAppForm, withForm } = createFormHook({
   fieldComponents: {
     CheckboxField: BoundCheckboxField,
+    ComboboxField: BoundComboboxField,
+    DatePickerField: BoundDatePickerField,
     OtpField: BoundOtpField,
     PasswordField: BoundPasswordField,
+    RadioGroupField: BoundRadioGroupField,
+    SelectField: BoundSelectField,
     SwitchField: BoundSwitchField,
     TextField: BoundTextField,
     TextareaField: BoundTextareaField,
