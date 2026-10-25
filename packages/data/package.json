@@ -1,0 +1,34 @@
+{
+  "name": "@bermula/data",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./form": "./src/form.tsx",
+    "./provider": "./src/provider.tsx",
+    "./query-client": "./src/query-client.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@bermula/design-system": "workspace:*",
+    "@tanstack/react-form": "catalog:tanstack",
+    "@tanstack/react-query": "catalog:tanstack",
+    "@tanstack/react-query-devtools": "catalog:tanstack",
+    "react": "catalog:react"
+  },
+  "devDependencies": {
+    "@bermula/typescript-config": "workspace:*",
+    "@testing-library/dom": "catalog:test",
+    "@testing-library/react": "catalog:test",
+    "@types/react": "catalog:react",
+    "@types/react-dom": "catalog:react",
+    "happy-dom": "catalog:test",
+    "react-dom": "catalog:react",
+    "typescript": "catalog:",
+    "vitest": "catalog:test",
+    "zod": "catalog:"
+  }
+}
