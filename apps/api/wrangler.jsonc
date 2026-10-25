@@ -8,6 +8,8 @@
   // Workers Logs: log JSON dari logger proyek tampil di dashboard Cloudflare.
   "observability": { "enabled": true },
   "dev": { "port": 8787 },
+  // Pembersihan storage harian, 03.00 WIB (cron memakai UTC). Lihat src/scheduled.ts.
+  "triggers": { "crons": ["0 20 * * *"] },
   // Secret & URL diisi lewat `.dev.vars` (lokal) dan `wrangler secret put` (produksi),
   // tidak di file ini. Skema: packages/env/src/api.ts.
   "ratelimits": [

@@ -5,6 +5,7 @@ import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
 import { betterAuth } from "better-auth";
 import { APIError } from "better-auth/api";
 import { admin } from "better-auth/plugins/admin";
+import { openAPI } from "better-auth/plugins/open-api";
 import { organization } from "better-auth/plugins/organization";
 import { twoFactor } from "better-auth/plugins/two-factor";
 
@@ -206,6 +207,11 @@ export const createAuth = ({
       // TOTP (aplikasi authenticator) + backup code. Rahasia & kode disimpan
       // terenkripsi dengan `BETTER_AUTH_SECRET`; OTP via email belum dipakai.
       twoFactor(),
+      // Hanya sumber skema untuk `/openapi.json` apps/api
+      // (`auth.api.generateOpenAPISchema()`). Halaman Scalar bawaannya dimatikan
+      // (memuat skrip CDN tanpa versi); `/api/auth/open-api/*` dijaga
+      // `API_DOCS_ENABLED` di apps/api.
+      openAPI({ disableDefaultReference: true }),
     ],
     // Limiter bawaan menyimpan hitungan di memori isolate, yang tidak berlaku
     // di Workers. `/api/auth/*` dibatasi binding Rate Limiting di apps/api.

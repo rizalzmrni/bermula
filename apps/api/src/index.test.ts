@@ -85,6 +85,33 @@ describe("api worker", () => {
     ]);
   });
 
+  it("documents better-auth endpoints next to the api routes", async () => {
+    const response = await request("/openapi.json", { ip: "10.0.0.9" });
+    const document: {
+      components: { schemas: Record<string, unknown> };
+      paths: Record<string, { post?: { tags?: string[] } }>;
+    } = await response.json();
+
+    expect(document.paths["/api/auth/sign-in/email"]?.post?.tags).toStrictEqual(
+      ["Auth"]
+    );
+    expect(Object.keys(document.paths)).toStrictEqual(
+      expect.arrayContaining([
+        "/api/auth/organization/create",
+        "/api/auth/two-factor/enable",
+      ])
+    );
+    expect(Object.keys(document.components.schemas)).toStrictEqual(
+      expect.arrayContaining(["Account", "AuthAccount", "AuthUser"])
+    );
+  });
+
+  it("does not serve the better-auth reference page", async () => {
+    const response = await request("/api/auth/reference", { ip: "10.0.0.10" });
+
+    expect(response.status).toBe(404);
+  });
+
   it("documents image and document routes separately", async () => {
     const response = await request("/openapi.json", { ip: "10.0.0.7" });
     const document: { paths: Record<string, unknown> } = await response.json();

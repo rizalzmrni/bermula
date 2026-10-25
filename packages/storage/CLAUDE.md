@@ -45,13 +45,17 @@ tanpa menyentuh fitur.
   (terverifikasi ke bucket asli 2026-10-24).
 - Nama bucket dari binding/env; jangan hardcode.
 - Konfigurasi CORS bucket R2 untuk origin `APP_URL` agar upload dari browser
-  berhasil; tulis langkahnya di laporan sebagai langkah manual.
+  berhasil; tulis langkahnya di laporan sebagai langkah manual. Aturan dev ada
+  di `r2-cors.dev.json` (hanya `GET` presigned & `PUT` upload + header
+  `content-type`), diterapkan dengan
+  `bunx wrangler r2 bucket cors set <R2_BUCKET_NAME> --file r2-cors.dev.json`.
+  Origin produksi dibuat file terpisah setelah domain diputuskan.
 
 ## Modul
 
 | Ekspor                            | Isi                                                                                           |
 | --------------------------------- | --------------------------------------------------------------------------------------------- |
-| `@bermula/storage/object-storage` | Tipe `ObjectStorage` (antarmuka netral provider)                                              |
+| `@bermula/storage/object-storage` | Tipe `ObjectStorage` (antarmuka netral provider, termasuk `listObjects` berhalaman cursor)    |
 | `@bermula/storage/r2-storage`     | `createR2Storage({ bucket, presigner })`: binding untuk put/get/head/delete                   |
 | `@bermula/storage/r2-s3-storage`  | `createR2S3Storage(config)`: semua operasi lewat S3 API (dipakai `apps/api`)                  |
 | `@bermula/storage/r2-presigner`   | `createR2Presigner(config)`: presigned URL S3 API (`allHeaders` menandatangani tipe & ukuran) |

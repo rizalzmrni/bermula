@@ -88,3 +88,40 @@ describe("getObject", () => {
     await expect(new Response(object?.body).text()).resolves.toBe("isi");
   });
 });
+
+describe("listObjects", () => {
+  it("sends a signed ListObjectsV2 request with prefix, limit, and cursor", async () => {
+    const fetchMock = stubFetch(
+      () =>
+        new Response(
+          "<ListBucketResult><IsTruncated>false</IsTruncated></ListBucketResult>"
+        )
+    );
+
+    const page = await storage.listObjects({
+      cursor: "token-1",
+      limit: 500,
+      prefix: "images/",
+    });
+    const url = new URL(fetchMock.mock.calls[0]?.[0].url ?? "");
+
+    expect(url.origin + url.pathname).toBe(
+      "https://test-account.r2.cloudflarestorage.com/test-bucket"
+    );
+    expect(Object.fromEntries(url.searchParams)).toStrictEqual({
+      "continuation-token": "token-1",
+      "list-type": "2",
+      "max-keys": "500",
+      prefix: "images/",
+    });
+    expect(page).toStrictEqual({ cursor: undefined, objects: [] });
+  });
+
+  it("throws when the listing fails", async () => {
+    stubFetch(() => new Response(null, { status: 403 }));
+
+    await expect(storage.listObjects({ prefix: "images/" })).rejects.toThrow(
+      /LIST failed with status 403/u
+    );
+  });
+});

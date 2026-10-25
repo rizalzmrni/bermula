@@ -8,7 +8,8 @@ import { registerDocs } from "./openapi";
 import { documentRoutes, imageRoutes } from "./routes/files";
 import { healthRoutes } from "./routes/health";
 import { meRoutes } from "./routes/me";
-import type { AppEnv } from "./types";
+import { scheduled } from "./scheduled";
+import type { AppEnv, Bindings } from "./types";
 
 const app = new OpenAPIHono<AppEnv>({ defaultHook: validationHook });
 
@@ -19,9 +20,11 @@ app.use("*", corsMiddleware);
 app.use("/api/auth/*", rateLimit("AUTH_RATE_LIMIT"));
 app.use("/api/*", rateLimit("API_RATE_LIMIT"));
 
+// Sebelum handler auth: guard `/api/auth/open-api/*` harus jalan lebih dulu.
+registerDocs(app);
+
 app.on(["GET", "POST"], "/api/auth/*", (c) => c.var.auth.handler(c.req.raw));
 
-registerDocs(app);
 app.onError(errorHandler);
 app.notFound(notFoundHandler);
 
@@ -35,4 +38,7 @@ const routes = app
 export type AppType = typeof routes;
 export type { Bindings } from "./types";
 
-export default app;
+export default {
+  fetch: app.fetch,
+  scheduled,
+} satisfies ExportedHandler<Bindings>;
