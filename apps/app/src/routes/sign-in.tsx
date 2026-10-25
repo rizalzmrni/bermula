@@ -1,20 +1,13 @@
 import { APP_NAME } from "@bermula/core/brand";
-import { Logo } from "@bermula/design-system/components/layout/logo";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@bermula/design-system/components/ui/card";
-import { data, redirect } from "react-router";
+import { data, Link, redirect } from "react-router";
 
 import {
   getSignInErrorMessage,
-  signInSchema,
   signInWithEmail,
 } from "../features/auth/auth-api.server";
+import { AUTH_LINK_CLASS, AuthLayout } from "../features/auth/auth-layout";
 import { LoginForm } from "../features/auth/login-form";
+import { signInSchema } from "../features/auth/schemas";
 import { getSetCookieHeaders } from "../lib/api-client";
 import { getCloudflare } from "../lib/cloudflare";
 import { getSafeRedirect } from "../lib/redirect";
@@ -66,25 +59,23 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
 };
 
 const LoginPage = ({ loaderData, actionData }: Route.ComponentProps) => (
-  <main className="bg-muted/40 flex min-h-svh flex-col items-center justify-center gap-6 p-4">
-    <Logo />
-    <Card className="w-full max-w-sm">
-      <CardHeader>
-        <CardTitle>
-          <h1>Masuk ke akun Anda</h1>
-        </CardTitle>
-        <CardDescription>
-          Gunakan email dan kata sandi terdaftar.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <LoginForm
-          formError={actionData?.formError}
-          redirectTo={loaderData.redirectTo}
-        />
-      </CardContent>
-    </Card>
-  </main>
+  <AuthLayout
+    description="Gunakan email dan kata sandi terdaftar."
+    footer={
+      <p>
+        Belum punya akun?{" "}
+        <Link className={AUTH_LINK_CLASS} to="/sign-up">
+          Daftar
+        </Link>
+      </p>
+    }
+    title="Masuk ke akun Anda"
+  >
+    <LoginForm
+      formError={actionData?.formError}
+      redirectTo={loaderData.redirectTo}
+    />
+  </AuthLayout>
 );
 
 export default LoginPage;

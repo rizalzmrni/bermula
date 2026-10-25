@@ -2,12 +2,9 @@ import { Form } from "@bermula/design-system/components/form/form";
 import { PasswordField } from "@bermula/design-system/components/form/password-field";
 import { SubmitButton } from "@bermula/design-system/components/form/submit-button";
 import { TextField } from "@bermula/design-system/components/form/text-field";
-import {
-  Alert,
-  AlertDescription,
-} from "@bermula/design-system/components/ui/alert";
-import { IconAlertTriangle } from "@tabler/icons-react";
 import { Form as RouterForm, useNavigation } from "react-router";
+
+import { FormErrorAlert } from "./form-error-alert";
 
 interface LoginFormProps {
   redirectTo: string | null;
@@ -24,12 +21,7 @@ export const LoginForm = ({ redirectTo, formError }: LoginFormProps) => {
 
   return (
     <Form render={<RouterForm method="post" />}>
-      {formError ? (
-        <Alert variant="destructive">
-          <IconAlertTriangle aria-hidden="true" />
-          <AlertDescription>{formError}</AlertDescription>
-        </Alert>
-      ) : null}
+      <FormErrorAlert message={formError} />
       {redirectTo ? (
         <input name="redirectTo" type="hidden" value={redirectTo} />
       ) : null}
