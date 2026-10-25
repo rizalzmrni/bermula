@@ -7,29 +7,47 @@ Diimpor oleh `apps/app/CLAUDE.md` dan `apps/web/CLAUDE.md`.
 - Ambil data di **loader**, ubah data di **action** atau `useMutation`.
 - Loader/action berjalan di Worker; komponen terkirim ke browser. Jangan menaruh
   secret, akses DB, atau impor server-only di modul yang ikut ke bundle klien.
-- Env server hanya lewat `context.cloudflare.env` di loader/action, bukan dari
-  modul top-level. Env klien hanya `VITE_*` lewat `packages/env`.
-- Satu file per route di `app/routes/`; route tipis, hanya menyusun fitur dari
-  `app/features/`.
+- Env & binding server hanya lewat `getCloudflare(context).env` di loader/action
+  (`src/lib/cloudflare.ts`), bukan dari modul top-level. Sejak React Router 8
+  `context` adalah `RouterContextProvider` (`AppLoadContext` dihapus), jadi
+  `src/worker.ts` mengisi `cloudflareContext` lewat `context.set(...)`.
+  Env klien hanya `VITE_*` lewat `packages/env`.
+- Modul yang hanya boleh jalan di server diberi akhiran `.server.ts` agar
+  bundler menolak bila terimpor dari kode klien.
+- Kode sumber di `src/` (`appDirectory: "src"`), bukan default `app/`, agar
+  seragam dengan paket lain. Satu file per route di `src/routes/`; route tipis,
+  hanya menyusun fitur dari `src/features/`.
 
 ## Memanggil api: Service Binding
 
 - `wrangler.jsonc` mendeklarasikan service binding `API` ke Worker `api`.
-- Saat SSR (loader/action), klien `hc<AppType>` memakai `fetch` dari
-  `context.cloudflare.env.API`, bukan URL publik. Alasan: tanpa hop jaringan
-  publik dan tanpa masalah CORS.
-- Teruskan header `cookie` dari `request` asli agar sesi pengguna terbawa.
-- Di browser, klien `hc<AppType>` memakai `API_URL` publik dengan
+- Klien dibuat dengan `hcWithType` dari `@bermula/api/client` (pola panduan
+  RPC Hono untuk monorepo), bukan `hc<AppType>`: tipenya dibaca dari `.d.ts`
+  hasil `build:types` api, sehingga app tidak meng-type-check source api dengan
+  global `Env`/lib DOM miliknya. Setelah mengubah route api, jalankan
+  `bun run build:types` di `apps/api` agar tipe di editor ikut berubah
+  (`check-types` menjalankannya otomatis lewat turbo).
+- Saat SSR (loader/action), klien memakai `fetch` dari
+  binding `API` (`getCloudflare(context).env.API`), bukan URL publik. Alasan:
+  tanpa hop jaringan publik dan tanpa masalah CORS.
+- Teruskan header `cookie` (sesi), `origin` (cek CSRF better-auth),
+  `cf-connecting-ip` (rate limit per pengguna), dan `user-agent` dari `request`
+  asli. Login/logout lewat action yang memanggil `/api/auth/*` via binding lalu
+  meneruskan `Set-Cookie` api ke respons app.
+- Di browser, klien memakai `API_URL` publik dengan
   `credentials: "include"`.
-- Buat satu factory di `app/lib/api-client.ts` yang menerima mode (server dengan
+- Buat satu factory di `src/lib/api-client.ts` yang menerima mode (server dengan
   binding + request, atau browser); jangan membuat klien di tempat lain.
 - Cek sintaks service binding & cara memanggilnya di dokumentasi resmi
   Cloudflare dan `@cloudflare/vite-plugin` versi terpasang.
 
 ## Auth gate
 
-- Loader halaman terproteksi memanggil `/api/auth/get-session` lewat Service
-  Binding. Tanpa sesi → `redirect` ke halaman login (dengan `redirectTo`).
+- Loader halaman terproteksi memanggil `GET /api/me` lewat Service Binding
+  (sesi + organisasi aktif + role dalam satu panggilan; lebih lengkap dari
+  `/api/auth/get-session`). 401 → `redirect` ke `/masuk?redirectTo=…`; status
+  error lain dilempar ke ErrorBoundary. `redirectTo` selalu disaring
+  `getSafeRedirect` (hanya path internal) untuk mencegah open redirect.
 - `apps/app`/`apps/web` **tidak** mengakses DB dan tidak mengimpor konfigurasi
   server better-auth; hanya klien better-auth (`packages/auth` entry client).
 - Gunakan satu helper `requireSession({ request, context })` agar tidak

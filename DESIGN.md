@@ -125,7 +125,7 @@ lewat `ConfirmDialog` dengan `destructive` dan deskripsi akibatnya.
 
 ## Format Angka, Tanggal, Mata Uang
 
-- Gunakan **satu helper formatter terpusat** (`packages/design-system` atau `apps/*/app/lib/format.ts`),
+- Gunakan **satu helper formatter terpusat** (`packages/design-system` atau `apps/*/src/lib/format.ts`),
   jangan memformat inline di komponen.
 - Default locale `id-ID` (dapat diubah developer). Tampilkan tanggal/waktu dalam zona
   waktu pengguna.

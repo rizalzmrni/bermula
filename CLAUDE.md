@@ -130,7 +130,7 @@ bermula/
 ├── apps/
 │   ├── web/            # Marketing — React Router (SSR) → Workers
 │   ├── app/            # Aplikasi utama — React Router (SSR) → Workers
-│   │   └── app/{routes,features,components,lib}
+│   │   └── src/{routes,features,components,lib}
 │   ├── api/            # Hono → Workers
 │   │   └── src/{routes,services,middleware,openapi.ts,index.ts}
 │   ├── email/          # Server preview React Email (template diimpor dari packages/email)
@@ -158,7 +158,7 @@ bermula/
   bila dipakai >1 app.
 - `packages/core`: fungsi murni tanpa DB, fetch, atau React — dipakai klien
   (umpan balik instan) dan server (validasi), dan mudah diuji.
-- Fitur baru = satu folder di `apps/app/app/features/`, ditambah modul di
+- Fitur baru = satu folder di `apps/app/src/features/`, ditambah modul di
   `apps/api/src/routes/` dan `services/` bila butuh data server.
 - Arah dependensi: `apps/*` → `packages/*`. Paket tidak mengimpor dari `apps/`,
   kecuali **impor tipe** `AppType` dari `apps/api` oleh `apps/web`/`apps/app`.

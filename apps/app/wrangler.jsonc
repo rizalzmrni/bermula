@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "bermula-app",
+  "main": "./src/worker.ts",
+  "compatibility_date": "2026-10-19",
+  // Workers Logs: log JSON dari logger proyek tampil di dashboard Cloudflare.
+  "observability": { "enabled": true },
+  "upload_source_maps": true,
+  // Loader/action memanggil apps/api lewat Service Binding (tanpa hop jaringan
+  // publik & tanpa CORS). Saat dev, jalankan `bun run dev` di apps/api juga:
+  // Vite menyambung ke Worker api lewat dev registry wrangler.
+  "services": [{ "binding": "API", "service": "bermula-api" }],
+  // Domain/route produksi belum ditetapkan (keputusan tertunda di STATUS.md).
+}

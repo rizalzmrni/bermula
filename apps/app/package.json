@@ -1,0 +1,44 @@
+{
+  "name": "@bermula/app",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "react-router dev",
+    "build": "react-router build",
+    "preview": "bun run build && vite preview",
+    "deploy": "wrangler deploy",
+    "typegen": "wrangler types && react-router typegen",
+    "check-types": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@bermula/auth": "workspace:*",
+    "@bermula/core": "workspace:*",
+    "@bermula/design-system": "workspace:*",
+    "@bermula/env": "workspace:*",
+    "@bermula/observability": "workspace:*",
+    "@tabler/icons-react": "catalog:ui",
+    "hono": "catalog:api",
+    "react": "catalog:react",
+    "react-dom": "catalog:react",
+    "react-router": "catalog:react",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@bermula/api": "workspace:*",
+    "@bermula/typescript-config": "workspace:*",
+    "@cloudflare/vite-plugin": "catalog:api",
+    "@react-router/dev": "catalog:react",
+    "@tailwindcss/vite": "catalog:ui",
+    "@testing-library/react": "catalog:test",
+    "@types/react": "catalog:react",
+    "@types/react-dom": "catalog:react",
+    "happy-dom": "catalog:test",
+    "tailwindcss": "catalog:ui",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:test",
+    "wrangler": "catalog:api"
+  }
+}
