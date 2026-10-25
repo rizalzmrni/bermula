@@ -77,6 +77,35 @@
         "wrangler": "catalog:api",
       },
     },
+    "apps/web": {
+      "name": "@bermula/web",
+      "version": "0.0.0",
+      "dependencies": {
+        "@bermula/core": "workspace:*",
+        "@bermula/design-system": "workspace:*",
+        "@bermula/env": "workspace:*",
+        "@bermula/observability": "workspace:*",
+        "@bermula/seo": "workspace:*",
+        "@tabler/icons-react": "catalog:ui",
+        "cn": "catalog:ui",
+        "react": "catalog:react",
+        "react-dom": "catalog:react",
+        "react-router": "catalog:react",
+      },
+      "devDependencies": {
+        "@bermula/typescript-config": "workspace:*",
+        "@cloudflare/vite-plugin": "catalog:api",
+        "@react-router/dev": "catalog:react",
+        "@tailwindcss/vite": "catalog:ui",
+        "@types/react": "catalog:react",
+        "@types/react-dom": "catalog:react",
+        "tailwindcss": "catalog:ui",
+        "typescript": "catalog:",
+        "vite": "catalog:",
+        "vitest": "catalog:test",
+        "wrangler": "catalog:api",
+      },
+    },
     "packages/auth": {
       "name": "@bermula/auth",
       "version": "0.0.0",
@@ -219,6 +248,18 @@
     "packages/observability": {
       "name": "@bermula/observability",
       "version": "0.0.0",
+      "devDependencies": {
+        "@bermula/typescript-config": "workspace:*",
+        "typescript": "catalog:",
+        "vitest": "catalog:test",
+      },
+    },
+    "packages/seo": {
+      "name": "@bermula/seo",
+      "version": "0.0.0",
+      "dependencies": {
+        "@bermula/core": "workspace:*",
+      },
       "devDependencies": {
         "@bermula/typescript-config": "workspace:*",
         "typescript": "catalog:",
@@ -396,9 +437,13 @@
 
     "@bermula/observability": ["@bermula/observability@workspace:packages/observability"],
 
+    "@bermula/seo": ["@bermula/seo@workspace:packages/seo"],
+
     "@bermula/storage": ["@bermula/storage@workspace:packages/storage"],
 
     "@bermula/typescript-config": ["@bermula/typescript-config@workspace:packages/typescript-config"],
+
+    "@bermula/web": ["@bermula/web@workspace:apps/web"],
 
     "@better-auth/core": ["@better-auth/core@1.7.12", "", { "dependencies": { "@standard-schema/spec": "^1.1.0", "zod": "^4.5.4" }, "peerDependencies": { "@better-auth/utils": "^0.4.2 || ^0.5.0", "@better-fetch/fetch": "1.3.2", "@opentelemetry/api": "^1.9.0", "better-call": "1.4.4", "jose": "^6.1.0", "kysely": "^0.28.5 || ^0.29.0", "nanostores": "^1.0.1" }, "optionalPeers": ["@opentelemetry/api"] }, "sha512-SUStBGHJ13KnSO6+7U/1DSlfuOtln4jtOrFZqzQtxZVHZIrAoMjwHNGitlF+s7hvKbuC3Z14xjnqfLLqIqGfxw=="],
 
