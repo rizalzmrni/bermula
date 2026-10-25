@@ -10,7 +10,7 @@ import type {
   UploadRejection,
   UploadRequest,
 } from "@bermula/core/files";
-import type { Db } from "@bermula/db/client";
+import type { QueryDb } from "@bermula/db/client";
 import { files } from "@bermula/db/schema/storage";
 import type { StoredFile } from "@bermula/db/schema/storage";
 import { createObjectKey } from "@bermula/storage/object-key";
@@ -36,7 +36,7 @@ const FILE_MANAGER_ROLES = new Set(["owner", "admin"]);
 
 /** Organisasi aktif + jenis file: setiap query dibatasi keduanya. */
 export interface FileScope {
-  db: Db;
+  db: QueryDb;
   storage: ObjectStorage;
   organizationId: string;
   kind: FileKind;

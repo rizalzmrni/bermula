@@ -64,5 +64,9 @@ Aturan root `CLAUDE.md` tetap berlaku.
 ## Seed & test
 
 - Seed di `src/seed.ts`, hanya untuk database lokal/dev.
-- Test tidak menyentuh database produksi; pakai database lokal/branch Neon dev
-  atau stub di level service.
+- Test tidak menyentuh database produksi. Service berbasis DB diuji dengan
+  `createTestDb()` dari `@bermula/db/testing`: PGlite (Postgres WASM di memori)
+  dengan migrasi dari `migrations/`, tanpa jaringan. Hanya untuk test di Node;
+  file ini di-type-check lewat `tsconfig.node.json`.
+- Service yang ingin diuji dengan PGlite menerima `QueryDb` (basis bersama
+  driver), bukan `Db`. `Db` (neon-http) tetap dipakai bila butuh `batch`.

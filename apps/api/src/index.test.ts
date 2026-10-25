@@ -37,6 +37,14 @@ describe("api worker", () => {
 
   it("runs with the test bindings, not local secrets", () => {
     expect(env.DATABASE_URL).toBe("postgresql://test:test@db.invalid/test");
+    // Opsional: kosong walau diisi di `.dev.vars` lokal.
+    for (const value of [
+      env.POSTHOG_PROJECT_TOKEN,
+      env.BETTER_STACK_SOURCE_TOKEN,
+      env.GOOGLE_CLIENT_ID,
+    ]) {
+      expect([undefined, ""]).toContain(value);
+    }
   });
 
   it("answers the health check", async () => {

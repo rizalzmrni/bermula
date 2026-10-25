@@ -140,6 +140,7 @@
       },
       "devDependencies": {
         "@bermula/typescript-config": "workspace:*",
+        "@electric-sql/pglite": "catalog:db",
         "@types/node": "catalog:",
         "drizzle-kit": "catalog:db",
         "typescript": "catalog:",
@@ -195,9 +196,11 @@
       },
       "devDependencies": {
         "@bermula/typescript-config": "workspace:*",
+        "@cloudflare/vitest-plugin": "catalog:test",
         "@types/react": "catalog:react",
         "typescript": "catalog:",
         "vitest": "catalog:test",
+        "wrangler": "catalog:api",
       },
     },
     "packages/env": {
@@ -257,6 +260,7 @@
       "wrangler": "^4.152.0",
     },
     "db": {
+      "@electric-sql/pglite": "^0.5.11",
       "@neondatabase/serverless": "^1.2.0",
       "drizzle-kit": "1.0.0-rc.4",
       "drizzle-orm": "1.0.0-rc.4",
@@ -485,6 +489,8 @@
     "@dotenvx/primitives": ["@dotenvx/primitives@0.8.0", "", {}, "sha512-VYJy0uhFm9zTJ1TxBaW/pA8bjbOM/OttaNMwZ1RHG4JKyRG7DhSdiqD1ipQoAyoD22olUtxbP78W9xY3Wd11bg=="],
 
     "@drizzle-team/brocli": ["@drizzle-team/brocli@0.12.1", "", {}, "sha512-yHwomvolVafvUXhy5TdiJVkuNCxXn+bKOs2aWiWEQh/5YaV97Oa/abJz3dmx7lxgIUsUlS1Jl4mEfvJPo3YsVw=="],
+
+    "@electric-sql/pglite": ["@electric-sql/pglite@0.5.11", "", {}, "sha512-SWuqsTjA4DDWqgZ05PC1RJaq8e00p5KACxbqaikDFQ8dIGA0SLRzuPniky7IW+q/c5RDNMdEXwv7mFBWIx9Hxw=="],
 
     "@emnapi/runtime": ["@emnapi/runtime@1.11.3", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-Xz4Tpyki7XyrpbUK1jR1AhdAdaXyhhY4lZ3neLodmhpuWfy2PAQN5B46sAiU4liOXGLkHypn/qU+jvfWSCYYLA=="],
 

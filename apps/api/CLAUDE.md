@@ -84,6 +84,10 @@ atau binding R2 langsung.
 
 ## Testing
 
+- Dua project Vitest (`vitest.config.ts`): `worker` (workerd, `*.test.ts`
+  selain `*.db.test.ts`) dan `db` (Node + PGlite, `*.db.test.ts`). Test service yang
+  menyentuh DB memakai `createTestDb()` dari `@bermula/db/testing`, fixture di
+  `src/testing/db-fixtures.ts`, dan `createMemoryStorage()` sebagai pengganti R2.
 - Handler dan middleware diuji dengan `@cloudflare/vitest-plugin` (pengganti
   `@cloudflare/vitest-pool-workers` yang deprecated; mendukung Vitest 5) di
   workerd asli dengan binding lokal. Dipasang sebagai plugin Vite

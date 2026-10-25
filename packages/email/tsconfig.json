@@ -1,4 +1,4 @@
 {
   "extends": "@bermula/typescript-config/react.json",
-  "include": ["src"]
+  "include": ["src", "vitest.config.ts"]
 }
