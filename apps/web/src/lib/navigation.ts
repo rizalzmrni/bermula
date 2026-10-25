@@ -22,6 +22,7 @@ export const getFooterGroups = (): NavGroup[] => [
     items: [
       { href: PATHS.privacy, title: "Kebijakan Privasi" },
       { href: PATHS.terms, title: "Syarat & Ketentuan" },
+      { href: PATHS.cookieSettings, title: "Pengaturan Cookie" },
     ],
     title: "Legal",
   },

@@ -33,6 +33,7 @@
         "@react-email/render": "2.0.6",
         "@react-email/ui": "6.11.3",
         "better-auth": "^1.7.12",
+        "posthog-js": "^1.438.21",
         "react-email": "6.11.3",
         "resend": "^6.34.1",
         "stripe": "^23.0.1"

@@ -1,7 +1,13 @@
+import { AnalyticsIdentify } from "@bermula/analytics/analytics-provider";
 import { AppShell } from "@bermula/design-system/components/layout/app-shell";
 import type { NavGroup } from "@bermula/design-system/lib/navigation";
 import { readSidebarOpen } from "@bermula/design-system/lib/sidebar-state";
-import { IconCreditCard, IconHome, IconShieldLock } from "@tabler/icons-react";
+import {
+  IconCookie,
+  IconCreditCard,
+  IconHome,
+  IconShieldLock,
+} from "@tabler/icons-react";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { Outlet } from "react-router";
 
@@ -17,6 +23,7 @@ const NAVIGATION: NavGroup[] = [
     items: [
       { href: "/settings/security", icon: IconShieldLock, title: "Keamanan" },
       { href: "/settings/billing", icon: IconCreditCard, title: "Tagihan" },
+      { href: "/settings/cookies", icon: IconCookie, title: "Cookie" },
     ],
     title: "Pengaturan",
   },
@@ -38,6 +45,17 @@ export const loader = async ({ request, context }: Route.LoaderArgs) => {
 
 const AccountUserMenu = () => <UserMenu user={useAccount().user} />;
 
+/** Event PostHog terkait pengguna & organisasi aktif (bila disetujui). */
+const AccountAnalytics = () => {
+  const { organization, user } = useAccount();
+  return (
+    <AnalyticsIdentify
+      organization={{ id: organization.id, name: organization.name }}
+      userId={user.id}
+    />
+  );
+};
+
 const AppLayout = ({ loaderData }: Route.ComponentProps) => (
   <HydrationBoundary state={loaderData.dehydratedState}>
     <AppShell
@@ -45,6 +63,7 @@ const AppLayout = ({ loaderData }: Route.ComponentProps) => (
       groups={NAVIGATION}
       sidebarFooter={<AccountUserMenu />}
     >
+      <AccountAnalytics />
       <Outlet />
     </AppShell>
   </HydrationBoundary>
