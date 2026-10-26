@@ -124,6 +124,10 @@ paket yang harus di-upgrade bersamaan.
   `packages/design-system/package.json`; pindahkan ke catalog `ui` setelahnya.
   `recharts` sengaja dipin persis (`3.8.0`) mengikuti registry shadcn, karena
   komponen `chart` ditulis untuk versi itu.
+- Catalog `storybook` (dipakai `apps/storybook`): semua paket dipin persis ke
+  versi yang sama (10.6.3), karena addon mewajibkan peer `storybook` yang cocok.
+  `storybook` membawa `@vitest/spy`/`@vitest/expect` 3.x untuk utilitas
+  `storybook/test`; Vitest 5 proyek tetap memakai salinan bersarangnya sendiri.
 - `react-email` dan `@react-email/ui` (catalog `services`, dipakai `apps/email`)
   dipin persis ke versi yang sama, karena CLI mewajibkan versi UI preview sama
   dengan versi CLI. `@react-email/render` dipin `2.0.6` agar `packages/email`
