@@ -94,6 +94,24 @@ describe(createApiEnv, () => {
     ).toThrow("GOOGLE_CLIENT_SECRET");
   });
 
+  it("requires both Stripe secrets and checks their prefixes", () => {
+    const stripe = {
+      STRIPE_SECRET_KEY: "sk_test_123",
+      STRIPE_WEBHOOK_SECRET: "whsec_123",
+    };
+
+    expect(createApiEnv({ ...VALID_ENV, ...stripe }).STRIPE_SECRET_KEY).toBe(
+      "sk_test_123"
+    );
+    expect(() =>
+      createApiEnv({ ...VALID_ENV, STRIPE_SECRET_KEY: "sk_test_123" })
+    ).toThrow("STRIPE_WEBHOOK_SECRET");
+    // Publishable key (`pk_`) tertukar dengan secret key.
+    expect(() =>
+      createApiEnv({ ...VALID_ENV, ...stripe, STRIPE_SECRET_KEY: "pk_test_1" })
+    ).toThrow("STRIPE_SECRET_KEY");
+  });
+
   it("accepts a bare cookie domain and rejects a URL", () => {
     expect(
       createApiEnv({ ...VALID_ENV, AUTH_COOKIE_DOMAIN: "example.com" })

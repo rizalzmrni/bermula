@@ -3,6 +3,8 @@ import { createBetterStackTransport } from "@bermula/observability/better-stack"
 import { createLogger } from "@bermula/observability/logger";
 import type { LogFields, LogTransport } from "@bermula/observability/logger";
 import { createPostHogExceptionCapture } from "@bermula/observability/posthog";
+import { createStripeClient } from "@bermula/payments/client";
+import { createStripeGateway } from "@bermula/payments/gateway";
 import { createR2S3Storage } from "@bermula/storage/r2-s3-storage";
 
 // Layanan yang dipakai bersama handler `fetch` (lewat `contextMiddleware`) dan
@@ -49,3 +51,9 @@ export const createStorage = (env: ApiEnv) =>
     bucketName: env.R2_BUCKET_NAME,
     secretAccessKey: env.R2_SECRET_ACCESS_KEY,
   });
+
+/** `undefined` bila Stripe belum dikonfigurasi (pasangan env opsional). */
+export const createPayments = (env: ApiEnv) =>
+  env.STRIPE_SECRET_KEY
+    ? createStripeGateway(createStripeClient(env.STRIPE_SECRET_KEY))
+    : undefined;

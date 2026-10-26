@@ -34,7 +34,8 @@
         "@react-email/ui": "6.11.3",
         "better-auth": "^1.7.12",
         "react-email": "6.11.3",
-        "resend": "^6.34.1"
+        "resend": "^6.34.1",
+        "stripe": "^23.0.1"
       },
       "react": {
         "@react-router/dev": "^8.5.0",

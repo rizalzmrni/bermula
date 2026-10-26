@@ -26,6 +26,11 @@ const R2_ACCOUNT_ID_PATTERN = /^[a-f0-9]{32}$/u;
 // Aturan nama bucket R2: 3–63 karakter, huruf kecil, angka, dan `-`.
 const R2_BUCKET_NAME_PATTERN = /^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/u;
 
+// Secret key (`sk_`) atau restricted key (`rk_`) Stripe, test maupun live.
+const STRIPE_SECRET_KEY_PATTERN = /^(?:sk|rk)_(?:test|live)_\S+$/u;
+// Signing secret endpoint webhook (dashboard atau `stripe listen`).
+const STRIPE_WEBHOOK_SECRET_PATTERN = /^whsec_\S+$/u;
+
 // better-auth menolak secret yang lebih pendek di production.
 const AUTH_SECRET_MIN_LENGTH = 32;
 
@@ -65,6 +70,20 @@ const server = {
   RESEND_API_KEY: z
     .string()
     .regex(RESEND_API_KEY_PATTERN, "Harus API key Resend (re_...)"),
+  STRIPE_SECRET_KEY: z
+    .string()
+    .regex(
+      STRIPE_SECRET_KEY_PATTERN,
+      "Harus secret key Stripe (sk_... / rk_...)"
+    )
+    .optional(),
+  STRIPE_WEBHOOK_SECRET: z
+    .string()
+    .regex(
+      STRIPE_WEBHOOK_SECRET_PATTERN,
+      "Harus signing secret webhook (whsec_...)"
+    )
+    .optional(),
   WEB_URL: originSchema,
 };
 
@@ -74,6 +93,8 @@ const OPTIONAL_PAIRS = [
   ["BETTER_STACK_SOURCE_TOKEN", "BETTER_STACK_INGESTING_URL"],
   ["POSTHOG_PROJECT_TOKEN", "POSTHOG_HOST"],
   ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"],
+  // Tanpa Stripe, endpoint billing membalas 503 (boilerplate tetap jalan).
+  ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"],
 ] as const satisfies readonly (readonly [
   keyof typeof server,
   keyof typeof server,

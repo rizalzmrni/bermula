@@ -21,6 +21,7 @@ import type {
 import { and, desc, eq, sql } from "drizzle-orm";
 
 import { ApiError } from "../lib/errors";
+import { ORGANIZATION_MANAGER_ROLES, hasOrganizationRole } from "../lib/roles";
 
 /** Segmen URL (`/api/images`) sekaligus prefix key R2 (`images/<org>/...`). */
 export const FILE_KIND_PATH = {
@@ -31,8 +32,6 @@ export const FILE_KIND_PATH = {
 // Upload file besar di koneksi lambat bisa lama dimulai; URL tetap pendek.
 const UPLOAD_URL_TTL_SECONDS = 600;
 const DOWNLOAD_URL_TTL_SECONDS = 300;
-// Role organisasi yang boleh menghapus file anggota lain.
-const FILE_MANAGER_ROLES = new Set(["owner", "admin"]);
 
 /** Organisasi aktif + jenis file: setiap query dibatasi keduanya. */
 export interface FileScope {
@@ -82,7 +81,7 @@ export const canDeleteFile = ({
   userId: string;
 }) =>
   file.uploadedBy === userId ||
-  role.split(",").some((value) => FILE_MANAGER_ROLES.has(value.trim()));
+  hasOrganizationRole(role, ORGANIZATION_MANAGER_ROLES);
 
 export const UPLOAD_CHECK = {
   matches: "matches",

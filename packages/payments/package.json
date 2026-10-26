@@ -1,0 +1,29 @@
+{
+  "name": "@bermula/payments",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./client": "./src/client.ts",
+    "./gateway": "./src/gateway.ts",
+    "./subscription": "./src/subscription.ts",
+    "./testing": "./src/testing.ts",
+    "./webhook": "./src/webhook.ts"
+  },
+  "scripts": {
+    "typegen": "wrangler types",
+    "check-types": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@bermula/core": "workspace:*",
+    "stripe": "catalog:services"
+  },
+  "devDependencies": {
+    "@bermula/typescript-config": "workspace:*",
+    "@cloudflare/vitest-plugin": "catalog:test",
+    "typescript": "catalog:",
+    "vitest": "catalog:test",
+    "wrangler": "catalog:api"
+  }
+}

@@ -13,5 +13,6 @@ export default [
   layout("routes/app-layout.tsx", [
     index("routes/dashboard.tsx"),
     route("settings/security", "routes/settings-security.tsx"),
+    route("settings/billing", "routes/settings-billing.tsx"),
   ]),
 ] satisfies RouteConfig;

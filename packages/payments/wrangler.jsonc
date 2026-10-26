@@ -1,0 +1,8 @@
+// Bukan Worker yang di-deploy. Konfigurasi ini hanya dipakai `wrangler types`
+// (tipe runtime Workers untuk type-check) dan @cloudflare/vitest-plugin (test
+// di workerd: Web Crypto & `fetch` yang sama dengan apps/api).
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "bermula-payments-test",
+  "compatibility_date": "2026-10-19",
+}

@@ -26,6 +26,7 @@
         "@bermula/email": "workspace:*",
         "@bermula/env": "workspace:*",
         "@bermula/observability": "workspace:*",
+        "@bermula/payments": "workspace:*",
         "@bermula/storage": "workspace:*",
         "@hono/zod-openapi": "catalog:api",
         "@scalar/hono-api-reference": "catalog:api",
@@ -293,6 +294,21 @@
         "vitest": "catalog:test",
       },
     },
+    "packages/payments": {
+      "name": "@bermula/payments",
+      "version": "0.0.0",
+      "dependencies": {
+        "@bermula/core": "workspace:*",
+        "stripe": "catalog:services",
+      },
+      "devDependencies": {
+        "@bermula/typescript-config": "workspace:*",
+        "@cloudflare/vitest-plugin": "catalog:test",
+        "typescript": "catalog:",
+        "vitest": "catalog:test",
+        "wrangler": "catalog:api",
+      },
+    },
     "packages/seo": {
       "name": "@bermula/seo",
       "version": "0.0.0",
@@ -361,6 +377,7 @@
       "better-auth": "^1.7.12",
       "react-email": "6.11.3",
       "resend": "^6.34.1",
+      "stripe": "^23.0.1",
     },
     "storybook": {
       "@storybook/addon-a11y": "10.6.3",
@@ -488,6 +505,8 @@
     "@bermula/env": ["@bermula/env@workspace:packages/env"],
 
     "@bermula/observability": ["@bermula/observability@workspace:packages/observability"],
+
+    "@bermula/payments": ["@bermula/payments@workspace:packages/payments"],
 
     "@bermula/seo": ["@bermula/seo@workspace:packages/seo"],
 
@@ -2238,6 +2257,8 @@
     "strip-final-newline": ["strip-final-newline@4.0.0", "", {}, "sha512-aulFJcD6YK8V1G7iRB5tigAP4TsHBZZrOV8pjV++zdUwmeV8uzbY7yn6h9MswN62adStNZFuCIx4haBnRuMDaw=="],
 
     "strip-indent": ["strip-indent@4.1.1", "", {}, "sha512-SlyRoSkdh1dYP0PzclLE7r0M9sgbFKKMFXpFRUMNuKhQSbC6VQIGzq3E0qsfvGJaUFJPGv6Ws1NZ/haTAjfbMA=="],
+
+    "stripe": ["stripe@23.0.1", "", { "peerDependencies": { "@types/node": ">=20" }, "optionalPeers": ["@types/node"] }, "sha512-VFLs9IAzSZ8GIm6/vqhjqOL0fbYrSNYCpgZ3LS3YkSi/i5RnyMpu/Hf9YxPTOCYwc3mZKU3IJvuvKffQH2NLMg=="],
 
     "stubborn-fs": ["stubborn-fs@2.0.0", "", { "dependencies": { "stubborn-utils": "^1.0.1" } }, "sha512-Y0AvSwDw8y+nlSNFXMm2g6L51rBGdAQT20J3YSOqxC53Lo3bjWRtr2BKcfYoAf352WYpsZSTURrA0tqhfgudPA=="],
 
