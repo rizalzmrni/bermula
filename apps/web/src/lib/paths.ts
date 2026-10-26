@@ -1,5 +1,6 @@
 /** Path halaman situs; satu sumber untuk route, navigasi, dan sitemap. */
 export const PATHS = {
+  cookieSettings: "/cookie",
   home: "/",
   pricing: "/harga",
   privacy: "/privasi",

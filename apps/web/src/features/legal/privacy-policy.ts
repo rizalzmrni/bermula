@@ -20,6 +20,13 @@ export const PRIVACY_POLICY: LegalDocument = {
       ],
     },
     {
+      heading: "Cookie analitik",
+      paragraphs: [
+        "Dengan persetujuan Anda, kami memakai Google Analytics dan PostHog untuk memahami cara layanan dipakai. Tanpa persetujuan, keduanya tidak dimuat sama sekali.",
+        "Anda dapat mengubah atau mencabut persetujuan kapan saja di halaman Pengaturan Cookie. Cookie yang wajib untuk login dan keamanan selalu aktif.",
+      ],
+    },
+    {
       heading: "Berbagi data",
       paragraphs: [
         "Kami tidak menjual data Anda. Data hanya dibagikan kepada penyedia infrastruktur yang membantu kami menjalankan layanan, dengan perjanjian kerahasiaan.",

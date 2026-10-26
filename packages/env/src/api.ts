@@ -1,7 +1,12 @@
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
-import { onValidationError, originListSchema, originSchema } from "./shared";
+import {
+  onValidationError,
+  originListSchema,
+  originSchema,
+  requireOptionalPairs,
+} from "./shared";
 
 // Neon memberi URL `postgresql://`; `postgres://` juga diterima driver.
 const POSTGRES_URL_PATTERN = /^postgres(?:ql)?:\/\//u;
@@ -109,21 +114,7 @@ export type ApiRuntimeEnv = Partial<Record<keyof typeof server, string>>;
 export const createApiEnv = (runtimeEnv: ApiRuntimeEnv) =>
   createEnv({
     createFinalSchema: (shape) =>
-      z.object(shape).superRefine((env, context) => {
-        for (const [first, second] of OPTIONAL_PAIRS) {
-          const isFirstSet = env[first] !== undefined;
-          const isSecondSet = env[second] !== undefined;
-
-          if (isFirstSet !== isSecondSet) {
-            const missing = isFirstSet ? second : first;
-            context.addIssue({
-              code: "custom",
-              message: `Wajib diisi bersama ${isFirstSet ? first : second}`,
-              path: [missing],
-            });
-          }
-        }
-      }),
+      z.object(shape).superRefine(requireOptionalPairs(OPTIONAL_PAIRS)),
     emptyStringAsUndefined: true,
     isServer: true,
     onValidationError,

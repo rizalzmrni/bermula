@@ -1,3 +1,5 @@
+import { Analytics } from "@bermula/analytics/analytics";
+import { readConsent } from "@bermula/analytics/consent";
 import { APP_NAME } from "@bermula/core/brand";
 import { DataProvider } from "@bermula/data/provider";
 import { DesignSystemProvider } from "@bermula/design-system";
@@ -12,9 +14,11 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useRouteLoaderData,
 } from "react-router";
 
 import type { Route } from "./+types/root";
+import { getAnalyticsConfig, getPrivacyPolicyUrl } from "./lib/analytics";
 import "./lib/zod-locale";
 
 import appCss from "./app.css?url";
@@ -25,6 +29,15 @@ export const links: Route.LinksFunction = () => [
 ];
 
 export const meta = () => [{ title: APP_NAME }];
+
+/** Pilihan cookie analitik dibaca saat SSR, jadi banner tidak berkedip. */
+export const loader = ({ request }: Route.LoaderArgs) => ({
+  consent: readConsent(request.headers.get("Cookie")),
+});
+
+/** Persetujuan dari root loader; `null` bila belum memilih atau loader gagal. */
+export const useConsent = () =>
+  useRouteLoaderData<typeof loader>("root")?.consent ?? null;
 
 export const Layout = ({ children }: { children: ReactNode }) => (
   // next-themes mengubah kelas <html> sebelum hidrasi.
@@ -37,7 +50,15 @@ export const Layout = ({ children }: { children: ReactNode }) => (
     </head>
     <body className={fontVariables}>
       <DesignSystemProvider showTailwindIndicator={import.meta.env.DEV}>
-        <DataProvider devtools={import.meta.env.DEV}>{children}</DataProvider>
+        <DataProvider devtools={import.meta.env.DEV}>
+          <Analytics
+            config={getAnalyticsConfig()}
+            consent={useConsent()}
+            privacyHref={getPrivacyPolicyUrl()}
+          >
+            {children}
+          </Analytics>
+        </DataProvider>
       </DesignSystemProvider>
       <ScrollRestoration />
       <Scripts />

@@ -1,3 +1,4 @@
+import { useAnalytics } from "@bermula/analytics/analytics-provider";
 import {
   Avatar,
   AvatarFallback,
@@ -32,6 +33,7 @@ const getInitials = (name: string) =>
 /** Menu pengguna di footer sidebar: identitas + keluar. */
 export const UserMenu = ({ user }: UserMenuProps) => {
   const submit = useSubmit();
+  const analytics = useAnalytics();
 
   return (
     <SidebarMenu>
@@ -54,9 +56,11 @@ export const UserMenu = ({ user }: UserMenuProps) => {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-56" side="top">
             <DropdownMenuItem
-              onClick={() =>
-                submit(null, { action: "/sign-out", method: "post" })
-              }
+              onClick={() => {
+                // Event setelah logout tidak boleh tercatat atas nama pengguna ini.
+                analytics.reset();
+                submit(null, { action: "/sign-out", method: "post" });
+              }}
             >
               <IconLogout />
               Keluar

@@ -13,6 +13,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@bermula/analytics": "workspace:*",
     "@bermula/core": "workspace:*",
     "@bermula/design-system": "workspace:*",
     "@bermula/env": "workspace:*",

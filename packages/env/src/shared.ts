@@ -41,3 +41,41 @@ export const onValidationError = (
 
   throw new Error(`Invalid environment variables: ${details}`);
 };
+
+/**
+ * Integrasi opsional yang butuh dua variabel: keduanya kosong (fitur mati)
+ * atau keduanya terisi. Dipasang lewat `createFinalSchema` + `superRefine`.
+ */
+export const requireOptionalPairs =
+  <K extends string>(pairs: readonly (readonly [K, K])[]) =>
+  (env: Partial<Record<K, unknown>>, context: z.RefinementCtx) => {
+    for (const [first, second] of pairs) {
+      const isFirstSet = env[first] !== undefined;
+      const isSecondSet = env[second] !== undefined;
+
+      if (isFirstSet !== isSecondSet) {
+        context.addIssue({
+          code: "custom",
+          message: `Wajib diisi bersama ${isFirstSet ? first : second}`,
+          path: [isFirstSet ? second : first],
+        });
+      }
+    }
+  };
+
+/**
+ * PostHog di browser (apps/app & apps/web). Project token (`phc_`) memang
+ * publik; prefix dicek agar personal API key (`phx_`, rahasia) tidak tertukar.
+ */
+export const posthogClientSchema = {
+  VITE_POSTHOG_HOST: originSchema.optional(),
+  VITE_POSTHOG_PROJECT_TOKEN: z
+    .string()
+    .regex(/^phc_\S+$/u, "Harus project token PostHog (phc_...)")
+    .optional(),
+};
+
+export const POSTHOG_CLIENT_PAIR = [
+  "VITE_POSTHOG_PROJECT_TOKEN",
+  "VITE_POSTHOG_HOST",
+] as const;

@@ -1,0 +1,34 @@
+{
+  "name": "@bermula/analytics",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./analytics": "./src/analytics.tsx",
+    "./analytics-provider": "./src/analytics-provider.tsx",
+    "./consent": "./src/consent.ts",
+    "./consent-banner": "./src/consent-banner.tsx",
+    "./consent-form": "./src/consent-form.tsx",
+    "./consent-settings": "./src/consent-settings.tsx"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@bermula/design-system": "workspace:*",
+    "posthog-js": "catalog:services",
+    "react": "catalog:react",
+    "react-router": "catalog:react",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@bermula/typescript-config": "workspace:*",
+    "@testing-library/dom": "catalog:test",
+    "@testing-library/react": "catalog:test",
+    "@types/react": "catalog:react",
+    "happy-dom": "catalog:test",
+    "typescript": "catalog:",
+    "vitest": "catalog:test"
+  }
+}
