@@ -18,7 +18,7 @@ diperlukan:
 | `apps/app/CLAUDE.md`, `apps/web/CLAUDE.md` | React Router di Workers (keduanya mengimpor `docs/react-router.md`)                     |
 | `packages/db/CLAUDE.md`                    | Drizzle, Neon, migrasi, scoping data                                                    |
 | `packages/storage/CLAUDE.md`               | Cloudflare R2, presigned URL                                                            |
-| `packages/payments/CLAUDE.md`              | Stripe & webhook                                                                        |
+| `packages/payments/CLAUDE.md`              | Polar & webhook                                                                         |
 | `docs/dependencies.md`                     | bun catalog lengkap — **baca sebelum menambah/upgrade dependensi**                      |
 | `docs/git.md`                              | Detail branch, commit, hook — **baca sebelum commit pertama di sesi**                   |
 | `STATUS.md`                                | Paket yang sudah ada, fase berjalan, keputusan tertunda — **baca di awal setiap tugas** |
@@ -68,7 +68,7 @@ Satu bahasa (TypeScript) agar tipe dan logika dibagikan antar-paket; satu runtim
 | Validasi / Env     | Zod / t3-env (`@t3-oss/env-core`)                                                            |
 | UI                 | Tailwind CSS + shadcn/ui                                                                     |
 | Auth               | better-auth                                                                                  |
-| Pembayaran / Email | Stripe / Resend + React Email                                                                |
+| Pembayaran / Email | Polar (Merchant of Record) / Resend + React Email                                            |
 | Storage            | Cloudflare R2 (dibungkus `packages/storage`)                                                 |
 | Data               | TanStack Query, Table, Form                                                                  |
 | Analitik           | Google Analytics (web) + PostHog (produk)                                                    |
@@ -90,21 +90,24 @@ lokasi catalog) dan menunggu persetujuan.
 
 Keputusan yang sudah ditetapkan. Jangan menyimpang tanpa persetujuan.
 
-| Topik                       | Keputusan                                                                                                                                                                                         | Detail                  |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
-| Data fetching halaman       | Loader melakukan auth gate + prefetch ke QueryClient (`ensureQueryData`), lalu di-dehydrate; komponen memakai `useQuery` dengan query key yang sama. Mutasi lewat `useMutation` + invalidasi key. | `docs/react-router.md`  |
-| app/web → api saat SSR      | **Service Binding** `API` (bukan URL publik); cookie sesi diteruskan dari request asli.                                                                                                           | `docs/react-router.md`  |
-| Cek sesi di app             | Lewat api (`/api/auth/get-session` via Service Binding). `apps/app` dan `apps/web` **tidak** mengakses DB atau mengimpor konfigurasi server better-auth.                                          | `docs/react-router.md`  |
-| Template & pengiriman email | Template + fungsi kirim di `packages/email`; `apps/email` hanya server preview; `apps/api` yang memanggil fungsi kirim.                                                                           | —                       |
-| Analitik server             | PostHog dari Worker lewat HTTP capture API dengan `fetch` (tanpa SDK Node); `posthog-js` hanya di browser.                                                                                        | `apps/api/CLAUDE.md`    |
-| Rate limiting               | Binding Rate Limiting Workers, bukan state in-memory.                                                                                                                                             | `apps/api/CLAUDE.md`    |
-| Driver DB                   | `neon-http` untuk query biasa; `neon-serverless` (Pool per request) bila butuh transaksi.                                                                                                         | `packages/db/CLAUDE.md` |
-| Scoping data                | Per-organisasi: plugin organization better-auth; tabel data pengguna memakai `organization_id` dari organisasi aktif di sesi.                                                                     | `packages/db/CLAUDE.md` |
+| Topik                       | Keputusan                                                                                                                                                                                         | Detail                        |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| Data fetching halaman       | Loader melakukan auth gate + prefetch ke QueryClient (`ensureQueryData`), lalu di-dehydrate; komponen memakai `useQuery` dengan query key yang sama. Mutasi lewat `useMutation` + invalidasi key. | `docs/react-router.md`        |
+| app/web → api saat SSR      | **Service Binding** `API` (bukan URL publik); cookie sesi diteruskan dari request asli.                                                                                                           | `docs/react-router.md`        |
+| Cek sesi di app             | Lewat api (`/api/auth/get-session` via Service Binding). `apps/app` dan `apps/web` **tidak** mengakses DB atau mengimpor konfigurasi server better-auth.                                          | `docs/react-router.md`        |
+| Template & pengiriman email | Template + fungsi kirim di `packages/email`; `apps/email` hanya server preview; `apps/api` yang memanggil fungsi kirim.                                                                           | —                             |
+| Analitik server             | PostHog dari Worker lewat HTTP capture API dengan `fetch` (tanpa SDK Node); `posthog-js` hanya di browser.                                                                                        | `apps/api/CLAUDE.md`          |
+| Rate limiting               | Binding Rate Limiting Workers, bukan state in-memory.                                                                                                                                             | `apps/api/CLAUDE.md`          |
+| Driver DB                   | `neon-http` untuk query biasa; `neon-serverless` (Pool per request) bila butuh transaksi.                                                                                                         | `packages/db/CLAUDE.md`       |
+| Scoping data                | Per-organisasi: plugin organization better-auth; tabel data pengguna memakai `organization_id` dari organisasi aktif di sesi.                                                                     | `packages/db/CLAUDE.md`       |
+| Pembayaran                  | Polar sebagai Merchant of Record; pembayar = organisasi (owner/admin). Checkout & Customer Portal di halaman Polar. Status langganan disalin ke Postgres lewat webhook.                           | `packages/payments/CLAUDE.md` |
 
 **Keputusan tertunda** (dicatat di `STATUS.md`): bila tugas menyentuhnya,
 **berhenti dan tanyakan**, jangan memilih sendiri.
 
 - **Domain produksi:** semua URL/origin dari env sampai ditetapkan.
+- **Pendekatan integrasi Polar:** plugin `@polar-sh/better-auth` atau SDK
+  `@polar-sh/sdk` langsung di `packages/payments`.
 
 ## Dependensi (ringkas)
 
@@ -142,7 +145,7 @@ bermula/
 │   ├── core/           # Logika domain murni (tanpa I/O) + skema Zod bersama
 │   ├── design-system/  # Tailwind, globals.css, komponen shadcn/ui, dark mode, cn()
 │   ├── data/           # TanStack Query (client+provider), helper Form & Table
-│   ├── payments/       # Stripe: client + webhook handler
+│   ├── payments/       # Polar: client + webhook handler
 │   ├── email/          # Template React Email + fungsi kirim Resend
 │   ├── storage/        # Cloudflare R2: binding + presigned URL
 │   ├── analytics/      # GA (web) + PostHog

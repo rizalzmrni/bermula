@@ -25,7 +25,7 @@ agar bekerja bersama), **type-safe** dari database sampai UI, **modern**, dan **
 | Database            | Neon (Postgres serverless)                     |
 | ORM                 | Drizzle + drizzle-kit                          |
 | Autentikasi         | better-auth                                    |
-| Pembayaran          | Stripe                                         |
+| Pembayaran          | Polar (Merchant of Record)                     |
 | Email               | Resend + React Email                           |
 | Object storage      | Cloudflare R2                                  |
 | UI                  | Tailwind CSS + shadcn/ui                       |
@@ -60,7 +60,7 @@ bermula/
 │   ├── core/           # Logika domain murni + skema Zod bersama
 │   ├── design-system/  # Sumber utama UI: token, globals.css, komponen shadcn/ui
 │   ├── data/           # Setup TanStack Query/Form/Table
-│   ├── payments/       # Stripe
+│   ├── payments/       # Polar
 │   ├── email/          # Resend
 │   ├── storage/        # Cloudflare R2
 │   ├── analytics/      # GA + PostHog
@@ -82,7 +82,7 @@ dengan `"workspace:*"`. Dependensi mengalir satu arah: `apps/*` → `packages/*`
 - **Bun** (package manager & test runner) — lihat https://bun.sh
 - **Node.js 20+** (untuk sebagian tooling)
 - **Wrangler** (CLI Cloudflare) — ikut terpasang sebagai dependensi
-- Akun layanan: **Cloudflare**, **Neon**, **Stripe**, **Resend**
+- Akun layanan: **Cloudflare**, **Neon**, **Polar**, **Resend**
   (serta PostHog/BetterStack bila mengaktifkan analitik & observability)
 
 ---

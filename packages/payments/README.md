@@ -1,8 +1,14 @@
 # @bermula/payments
 
-Integrasi Stripe untuk `apps/api`: klien, gateway, verifikasi webhook, dan
+Integrasi pembayaran untuk `apps/api`: klien, gateway, verifikasi webhook, dan
 pemetaan subscription. Tanpa DB; penyimpanan & otorisasi ada di
-`apps/api/src/services/billing.ts`. Stripe SDK `stripe` 23 (API `2026-09-30`).
+`apps/api/src/services/billing.ts`.
+
+> **Penyedia: Polar** (Merchant of Record), menggantikan Stripe (keputusan
+> 2026-10-27, lihat `STATUS.md`). Migrasi kode **belum dikerjakan**: tabel di
+> bawah masih menggambarkan implementasi Stripe yang ada sekarang (SDK `stripe`
+> 23, API `2026-09-30`) dan akan diganti saat migrasi. Aturan Polar ada di
+> `CLAUDE.md` paket ini.
 
 | Entry                            | Isi                                                                                    |
 | -------------------------------- | -------------------------------------------------------------------------------------- |
@@ -12,7 +18,7 @@ pemetaan subscription. Tanpa DB; penyimpanan & otorisasi ada di
 | `@bermula/payments/subscription` | `toSubscriptionSnapshot`, `getSubscriptionIdFromEvent`, `ORGANIZATION_METADATA_KEY`    |
 | `@bermula/payments/testing`      | `signWebhookPayload`, `createTestEvent`, `TEST_WEBHOOK_SECRET` (hanya untuk test)      |
 
-## Keputusan
+## Keputusan (implementasi Stripe saat ini)
 
 - **Paket di `@bermula/core/plans`**, harga yang ditagih di Stripe. Price
   dicari lewat `lookup_key` `<plan>_monthly`, jadi ID Price tidak perlu
@@ -33,6 +39,8 @@ sama dengan produksi; tanpa memanggil API Stripe.
 
 ## Env (di apps/api)
 
-`STRIPE_SECRET_KEY` (`sk_`/`rk_`) dan `STRIPE_WEBHOOK_SECRET` (`whsec_`), pasangan
-opsional. Lihat `apps/api/.dev.vars.example` dan langkah uji lokal di
+Saat ini `STRIPE_SECRET_KEY` (`sk_`/`rk_`) dan `STRIPE_WEBHOOK_SECRET`
+(`whsec_`), pasangan opsional. Setelah migrasi diganti `POLAR_ACCESS_TOKEN`,
+`POLAR_WEBHOOK_SECRET`, dan pemilih lingkungan sandbox/production (nama final
+ditetapkan saat implementasi). Lihat `apps/api/.dev.vars.example` dan
 `apps/api/README.md`.

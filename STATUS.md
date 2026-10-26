@@ -5,7 +5,7 @@
 
 ## Fase berjalan
 
-**Fase 4 — selesai** (Fase 3 auth selesai dan dicek developer di browser 2026-10-25). `packages/data` selesai: akun lewat loader prefetch + TanStack Query, semua form app memakai TanStack Form. `apps/web` (situs marketing + SEO) selesai 2026-10-25. `apps/email` (server preview) selesai 2026-10-25. `apps/storybook` selesai 2026-10-25, sehingga Fase 4 selesai. **Fase 6 sedang berjalan:** `packages/payments` + tagihan di api/app selesai 2026-10-25 (migrasi billing diterapkan ke Neon dev 2026-10-26, belum diuji end-to-end dengan Stripe). `packages/analytics` (GA + PostHog browser dengan persetujuan cookie) selesai 2026-10-26. Semua PR Fase 4–6 (#9–#12) sudah di-merge ke `main` 2026-10-26. Berikutnya: uji Stripe end-to-end + analitik di `apps/app`, lalu deploy (Fase 7).
+**Fase 4 — selesai** (Fase 3 auth selesai dan dicek developer di browser 2026-10-25). `packages/data` selesai: akun lewat loader prefetch + TanStack Query, semua form app memakai TanStack Form. `apps/web` (situs marketing + SEO) selesai 2026-10-25. `apps/email` (server preview) selesai 2026-10-25. `apps/storybook` selesai 2026-10-25, sehingga Fase 4 selesai. **Fase 6 sedang berjalan:** `packages/payments` + tagihan di api/app selesai 2026-10-25 dengan Stripe (migrasi billing diterapkan ke Neon dev 2026-10-26); **2026-10-27 diputuskan pindah ke Polar**, kode belum dimigrasikan. `packages/analytics` (GA + PostHog browser dengan persetujuan cookie) selesai 2026-10-26. Semua PR Fase 4–6 (#9–#12) sudah di-merge ke `main` 2026-10-26. Berikutnya: putuskan pendekatan integrasi Polar, migrasi tagihan ke Polar + uji di Polar Sandbox, cek analitik di `apps/app`, lalu deploy (Fase 7).
 Arahan developer (2026-10-21): siapkan **semua `packages/*` lebih dulu**, baru
 kemudian `apps/*`. Pengecualian (2026-10-24): `apps/api` dibuat lebih dulu
 sebelum `packages/storage`.
@@ -20,7 +20,7 @@ sebelum `packages/storage`.
 | 3    | `packages/auth` + better-auth di api, auth gate di `apps/app`                                           | ✅     |
 | 4    | `packages/design-system`, `apps/storybook`, `apps/app`, `apps/web`                                      | ✅     |
 | 5    | `packages/email` + `apps/email`, `packages/storage`                                                     | ✅     |
-| 6    | `packages/payments` (Stripe + webhook) ✅, `packages/analytics` ✅, `packages/seo` (✅ lebih awal)      | ✅     |
+| 6    | `packages/payments` (Polar + webhook) 🚧, `packages/analytics` ✅, `packages/seo` (✅ lebih awal)       | 🚧     |
 | 7    | CI/CD dan deploy                                                                                        | ⏳     |
 
 Status: ⏳ belum · 🚧 sedang · ✅ selesai
@@ -45,7 +45,7 @@ Status: ⏳ belum · 🚧 sedang · ✅ selesai
 - `apps/web` — situs marketing React Router 8 (SSR) di Workers (`bermula-web`, port dev 5174 `strictPort`, tanpa Service Binding). `entry.server.tsx` selalu menunggu `allReady` (HTML lengkap untuk crawler tanpa `isbot`). Route: `/` (hero, fitur, cara kerja, FAQ + JSON-LD Organization/WebSite/FAQPage, CTA), `/harga` (paket statis `features/pricing/plans.ts`, harga via `formatCurrency`; disambungkan ke Stripe di Fase 6), `/privasi` & `/syarat` (teks **placeholder** ditandai Alert, wajib diganti sebelum publikasi), `/sitemap.xml` & `/robots.txt` (resource route, `Cache-Control` 1 jam), catch-all 404 (status HTTP 404, `noindex`, tetap di dalam header/footer). `lib/site.ts` (`getSiteConfig`, `appLink`, `pageMeta`), `lib/paths.ts` (satu sumber path untuk route, navigasi, sitemap). Tautan Masuk/Daftar ke apps/app memakai `<a>` + `buttonVariants`. Analitik: banner persetujuan, route action `/consent`, halaman `/cookie` (tautan footer "Pengaturan Cookie"), bagian "Cookie analitik" di kebijakan privasi.
 - `apps/email` (`@bermula/email-preview`) — server preview React Email (CLI `react-email` + `@react-email/ui` 6.11.3, dipin persis): `bun run dev` → http://localhost:3000 membaca `packages/email/src/templates` (data dari `PreviewProps`), `bun run export` → HTML statis di `dist/`. Hanya dev lokal; tanpa env, tidak di-deploy.
 - `apps/storybook` (`@bermula/storybook`) — Storybook 10.6.3 (`@storybook/react-vite`, addon docs/a11y/themes, catalog `storybook` dipin persis, telemetri mati). Decorator: `MemoryRouter` + `DesignSystemProvider` dengan `forcedTheme` dari toolbar (default terang). 32 komponen / 61 story di `src/stories/{foundations,ui,form,feedback,layout,navigation}` (story di app ini, bukan di design-system). `bun run dev` → http://localhost:6006, `build` → `dist/`.
-- `packages/payments` — Stripe 23 (catalog `services`, test di workerd): `/client` (`createStripeClient` per request, fetch HTTP client), `/gateway` (`PaymentGateway`: create customer, cari Price via lookup key, Checkout, Portal, ambil subscription), `/webhook` (`verifyWebhookEvent`, Web Crypto), `/subscription` (`toSubscriptionSnapshot`, `getSubscriptionIdFromEvent`), `/testing` (tanda tangan event uji). Lihat README-nya.
+- `packages/payments` — **masih Stripe, akan dimigrasikan ke Polar** (keputusan 2026-10-27). Stripe 23 (catalog `services`, test di workerd): `/client` (`createStripeClient` per request, fetch HTTP client), `/gateway` (`PaymentGateway`: create customer, cari Price via lookup key, Checkout, Portal, ambil subscription), `/webhook` (`verifyWebhookEvent`, Web Crypto), `/subscription` (`toSubscriptionSnapshot`, `getSubscriptionIdFromEvent`), `/testing` (tanda tangan event uji). Lihat README-nya.
 - `apps/app` `/settings/billing` (sidebar "Pengaturan → Tagihan", `features/billing`): loader `prefetchQuery` ringkasan tagihan (gagal → state error + coba lagi), paket saat ini + status + tanggal perpanjangan/berakhir, pilihan paket berbayar (owner/admin, paket gratis) → action `intent=checkout` me-redirect ke Stripe Checkout, tombol "Kelola tagihan" → Portal. Kembali dari Checkout (`?checkout=success`) menampilkan notifikasi dan mengambil ulang data tiap 3 detik sampai webhook mengubah paket. `apps/web` `/harga` kini membaca `PLANS` dari `@bermula/core/plans`.
 - `packages/analytics` — posthog-js 1.438 (catalog `services`) + GA4 `gtag.js` tanpa library: cookie persetujuan `analytics_consent` ditulis server (`handleConsentAction`, cek origin, jalan tanpa JS), `Analytics` (provider + banner), `ConsentSettings`, `useAnalytics`/`AnalyticsIdentify` (identify + group `organization`). Pelacak hanya dimuat setelah "Terima"; pencabutan menghentikannya tanpa reload. Test Vitest + happy-dom. `apps/app`: route `/consent`, `/settings/cookies` (sidebar "Cookie"), identify di layout, `reset()` saat logout. Lihat README-nya.
 
@@ -53,9 +53,10 @@ Status: ⏳ belum · 🚧 sedang · ✅ selesai
 
 Bila tugas menyentuh salah satunya: berhenti dan tanyakan.
 
-| Topik           | Opsi | Batas waktu                     |
-| --------------- | ---- | ------------------------------- |
-| Domain produksi | —    | Sebelum deploy pertama (Fase 7) |
+| Topik                      | Opsi                                                                                                                                                                                                                            | Batas waktu                     |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| Domain produksi            | —                                                                                                                                                                                                                               | Sebelum deploy pertama (Fase 7) |
+| Pendekatan integrasi Polar | (a) plugin `@polar-sh/better-auth` (2.1.0) + sinkronisasi organisasi eksperimental, (b) plugin dengan `reference_id` (tanpa cek keanggotaan), (c) SDK `@polar-sh/sdk` langsung di `packages/payments` di balik `PaymentGateway` | Sebelum migrasi tagihan dimulai |
 
 ## Keputusan yang sudah diambil
 
@@ -121,9 +122,11 @@ Bila tugas menyentuh salah satunya: berhenti dan tanyakan.
 
 - 2026-10-26 — **Analitik dengan persetujuan opt-in** (disetujui developer): tidak ada script analitik sebelum "Terima" (termasuk tanpa Consent Mode GA). PostHog di `apps/web` + `apps/app`, GA hanya di `apps/web`. `posthog-js` ^1.438.21 di catalog `services`. Cookie persetujuan per origin, jadi web dan app menanyakan terpisah. `apps/app` mendapat `VITE_WEB_URL` (wajib) untuk tautan kebijakan privasi.
 
+- 2026-10-27 — **Pembayaran pindah dari Stripe ke Polar** (keputusan developer). Stripe tidak cocok untuk badan usaha Indonesia: akun Stripe Indonesia hanya menerima IDR lewat virtual account, tanpa kartu dan tanpa transaksi internasional; akun luar negeri butuh badan usaha di luar Indonesia. Polar adalah Merchant of Record (mengurus pajak penjualan internasional), mendukung payout ke Indonesia lewat Stripe Connect Express, dan harga multi-mata uang termasuk IDR. Model tetap: pembayar = organisasi, Checkout & Portal di halaman Polar, status langganan disalin ke Postgres lewat webhook. Keputusan 2026-10-25 "Tagihan Stripe per organisasi" digantikan untuk bagian penyedia; aturan otorisasi owner/admin tetap.
+
 ## Hal yang perlu diverifikasi
 
-- **Tagihan Stripe belum diuji end-to-end** (butuh akun Stripe test mode, Price dengan lookup key `pro_monthly`/`business_monthly`, Customer Portal aktif, Stripe CLI, serta `STRIPE_SECRET_KEY`/`STRIPE_WEBHOOK_SECRET` di `apps/api/.dev.vars`; migrasi billing sudah ada di Neon dev). Langkah di `apps/api/README.md` bagian "Tagihan". Yang sudah teruji: service dengan PGlite + gateway palsu, verifikasi signature di workerd, helper action app.
+- **Tagihan belum pernah diuji end-to-end.** Uji Stripe dibatalkan karena pindah ke Polar; setelah migrasi, uji di Polar Sandbox (langkah di `apps/api/README.md` bagian "Tagihan"). Yang sudah teruji (versi Stripe): service dengan PGlite + gateway palsu, verifikasi signature di workerd, helper action app.
 
 - `packages/analytics` di `apps/web` dicek 2026-10-26 lewat `bun run dev` dengan env dummy: banner SSR tampil tanpa cookie, "Terima" → script gtag + `config` + `page_view`, `posthog-js` dimuat, banner hilang; `/cookie` "Tolak" → `ga-disable-*` + PostHog opt-out, status "Ditolak"; POST lintas-origin 403; POST tanpa JS 302 ke `redirectTo`; tanpa error konsol; lebar 390 px & mode gelap. Belum diuji dengan akun GA/PostHog asli dan belum dicek di `apps/app` (butuh api + login).
 - `apps/storybook` dicek 2026-10-25: 61 story dirender berurutan tanpa error konsol, docs & story di mode terang dan gelap, panel Accessibility aktif, `build` berhasil.
@@ -147,7 +150,7 @@ Sudah terverifikasi (2026-10-21): `ultracite init` menambah blok sendiri ke `AGE
 - Cookie `_ga`/PostHog yang sudah tertulis tidak dihapus saat persetujuan dicabut (pelacak hanya dimatikan); bila perlu, hapus lewat `Set-Cookie` kedaluwarsa di action `/consent`.
 - Dev: StrictMode membuat page view pertama GA tercatat dua kali (hanya development).
 - `billing_webhook_events` bertambah terus; kelak bisa dipangkas (mis. >90 hari) lewat Cron Trigger yang sudah ada.
-- Stripe belum mendukung akun merchant Indonesia; untuk pasar Indonesia, `PaymentGateway` memungkinkan penyedia lain (mis. Xendit/Midtrans) tanpa mengubah service.
+- Polar (lewat Stripe) kemungkinan hanya menerima kartu dan wallet; QRIS, VA, dan e-wallet lokal tidak tersedia. Bila pelanggan Indonesia membutuhkannya, tambahkan penyedia lokal (mis. Xendit) di balik `PaymentGateway`.
 - Batas fitur per paket (anggota, kuota storage) belum ditegakkan; `resolveEffectivePlan` sudah tersedia untuk itu.
 
 - Preset base tanpa DOM/`types` berarti global Web seperti `URL`/`fetch` tidak tersedia di paket murni; paket yang butuh harus menambah lib/tipe runtime-nya secara eksplisit.
