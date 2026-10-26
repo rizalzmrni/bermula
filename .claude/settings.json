@@ -1,4 +1,8 @@
 {
+  "permissions": {
+    "ask": ["Bash(gh pr merge:*)", "Bash(bun run db:migrate:*)"],
+    "deny": ["Bash(gh pr merge --admin:*)"]
+  },
   "hooks": {
     "PostToolUse": [
       {
