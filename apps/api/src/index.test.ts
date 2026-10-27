@@ -194,39 +194,55 @@ describe("api worker", () => {
     ]);
   });
 
-  it("rejects a Stripe webhook with a forged or missing signature", async () => {
-    const payload = JSON.stringify({ id: "evt_forged", object: "event" });
-    const forged = await request("/api/webhooks/stripe", {
+  it("rejects a Polar webhook with a forged or missing signature", async () => {
+    const payload = JSON.stringify({ data: {}, type: "subscription.updated" });
+    const forged = await request("/api/webhooks/polar", {
       body: payload,
-      headers: {
-        "stripe-signature": await signWebhookPayload(
-          payload,
-          "whsec_attacker_secret"
-        ),
-      },
+      headers: await signWebhookPayload({
+        payload,
+        secret: "polar_whs_attacker_secret",
+      }),
       ip: "10.0.0.12",
       method: "POST",
     });
-    const missing = await request("/api/webhooks/stripe", {
+    const missing = await request("/api/webhooks/polar", {
       body: payload,
       ip: "10.0.0.12",
       method: "POST",
     });
     const forgedBody: ErrorBody = await forged.json();
 
-    expect(forged.status).toBe(400);
+    expect(forged.status).toBe(403);
     expect(forgedBody.error.code).toBe("INVALID_SIGNATURE");
     expect(missing.status).toBe(400);
   });
 
-  it("does not rate limit Stripe webhooks per IP", async () => {
+  it("acknowledges a signed Polar event of an unknown type", async () => {
+    // Dibalas tanpa menyentuh DB, jadi aman walau DB test tidak tersambung.
+    const payload = JSON.stringify({ data: {}, type: "future.event" });
+    const response = await request("/api/webhooks/polar", {
+      body: payload,
+      headers: await signWebhookPayload({ payload }),
+      ip: "10.0.0.12",
+      method: "POST",
+    });
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toStrictEqual({ received: true });
+  });
+
+  it("does not rate limit Polar webhooks per IP", async () => {
     const statuses: number[] = [];
     // Satu lebih banyak dari batas API_RATE_LIMIT (100/menit).
     for (let attempt = 0; attempt < 101; attempt += 1) {
       // oxlint-disable-next-line no-await-in-loop
-      const response = await request("/api/webhooks/stripe", {
+      const response = await request("/api/webhooks/polar", {
         body: "{}",
-        headers: { "stripe-signature": "t=1,v1=invalid" },
+        headers: {
+          "webhook-id": "msg_1",
+          "webhook-signature": "v1,invalid",
+          "webhook-timestamp": "1",
+        },
         ip: "10.0.0.13",
         method: "POST",
       });
@@ -247,11 +263,11 @@ describe("api worker", () => {
         "/api/billing/subscription",
         "/api/billing/checkout-sessions",
         "/api/billing/portal-sessions",
-        "/api/webhooks/stripe",
+        "/api/webhooks/polar",
       ])
     );
     expect(
-      document.paths["/api/webhooks/stripe"]?.post?.security
+      document.paths["/api/webhooks/polar"]?.post?.security
     ).toBeUndefined();
   });
 });

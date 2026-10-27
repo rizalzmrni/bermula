@@ -4,7 +4,7 @@
 
 ## Branch
 
-- Format: `tipe/deskripsi-singkat` (contoh `feat/stripe-webhook`).
+- Format: `tipe/deskripsi-singkat` (contoh `feat/polar-webhook`).
 - Tipe branch = `type` commit:
 
   | Tipe       | Untuk apa                                        |

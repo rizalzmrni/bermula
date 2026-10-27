@@ -1,11 +1,26 @@
-import { Stripe } from "stripe";
+import { createPolarCore } from "@polar-sh/sdk/2026-10";
+import type { PolarCore } from "@polar-sh/sdk/2026-10";
 
-export type StripeClient = Stripe;
+export type PolarClient = PolarCore;
+
+/** Lingkungan Polar; token, produk, dan webhook sandbox terpisah dari production. */
+export const POLAR_SERVER = {
+  production: "production",
+  sandbox: "sandbox",
+} as const;
+
+export type PolarServer = (typeof POLAR_SERVER)[keyof typeof POLAR_SERVER];
 
 /**
- * Klien Stripe per request (secret dari binding Worker). HTTP client berbasis
- * `fetch` agar berjalan di Workers. Versi API mengikuti versi yang dipin SDK
- * (`Stripe.API_VERSION`); naikkan bersama upgrade paket `stripe`.
+ * Klien core Polar per request (token dari binding Worker). Klien core +
+ * fungsi per operasi (lihat `gateway.ts`) agar hanya operasi yang dipakai ikut
+ * ter-bundle. Versi API ditentukan path impor (`/2026-10`); naikkan bersama
+ * upgrade paket.
  */
-export const createStripeClient = (secretKey: string): StripeClient =>
-  new Stripe(secretKey, { httpClient: Stripe.createFetchHttpClient() });
+export const createPolarClient = ({
+  accessToken,
+  server,
+}: {
+  accessToken: string;
+  server: PolarServer;
+}): PolarClient => createPolarCore({ accessToken, environment: server });

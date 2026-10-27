@@ -41,7 +41,7 @@ import type { BillingOverview } from "./queries";
 import { BILLING_INTENT, CHECKOUT_RESULT } from "./schemas";
 import type { CheckoutResult } from "./schemas";
 
-/** Hasil action bila gagal; bila berhasil, action me-redirect ke Stripe. */
+/** Hasil action bila gagal; bila berhasil, action me-redirect ke Polar. */
 export interface BillingActionResult {
   formError: string;
 }
@@ -115,7 +115,7 @@ const CurrentPlanCard = ({ overview }: { overview: BillingOverview }) => {
         <CardFooter className="flex-col items-stretch gap-2 sm:items-start">
           <p className="text-muted-foreground text-sm">
             Ganti paket, perbarui metode pembayaran, unduh faktur, atau batalkan
-            langganan di portal Stripe.
+            langganan di portal Polar.
           </p>
           <PortalForm />
         </CardFooter>

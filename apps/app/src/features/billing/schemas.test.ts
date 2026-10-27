@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { billingActionSchema, readCheckoutResult } from "./schemas";
 
 describe(readCheckoutResult, () => {
-  it("reads the result Stripe redirects back with", () => {
+  it("reads the result Polar redirects back with", () => {
     expect(readCheckoutResult(new URLSearchParams("checkout=success"))).toBe(
       "success"
     );

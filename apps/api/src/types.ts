@@ -20,7 +20,7 @@ export interface AppVariables {
   storage: ObjectStorage;
   /** `undefined` bila PostHog belum dikonfigurasi. */
   captureException: CaptureException | undefined;
-  /** `undefined` bila Stripe belum dikonfigurasi; endpoint billing membalas 503. */
+  /** `undefined` bila Polar belum dikonfigurasi; endpoint billing membalas 503. */
   payments: PaymentGateway | undefined;
 }
 

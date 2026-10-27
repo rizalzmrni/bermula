@@ -16,8 +16,8 @@ bun run dev                      # wrangler dev → http://localhost:8787
 | `GET, POST /api/auth/*`         | better-auth (sign-up, sign-in, organisasi, 2FA, admin)   |
 | `GET /api/me`                   | Pengguna login + organisasi aktif                        |
 | `/api/images`, `/api/documents` | Upload, daftar, unduh, hapus file (lihat di bawah)       |
-| `/api/billing/*`                | Langganan, Stripe Checkout & Portal (lihat di bawah)     |
-| `POST /api/webhooks/stripe`     | Webhook Stripe (signature, tanpa sesi & rate limit)      |
+| `/api/billing/*`                | Langganan, Checkout & Portal (lihat di bawah)            |
+| `POST /api/webhooks/polar`      | Webhook Polar (Standard Webhooks, tanpa sesi)            |
 | `GET /docs`, `/openapi.json`    | Scalar & dokumen OpenAPI (hanya `API_DOCS_ENABLED=true`) |
 
 `/openapi.json` juga memuat endpoint better-auth (tag `Auth*`, model `Auth*`),
@@ -45,35 +45,42 @@ Worker. Image dan dokumen punya endpoint, kebijakan (`UPLOAD_POLICIES` di
 Bucket R2 harus privat dan punya aturan CORS untuk origin app (`PUT`, `GET`,
 header `content-type`).
 
-## Tagihan (Stripe)
+## Tagihan (Polar)
 
-Pembayar = organisasi. Opsional: tanpa `STRIPE_SECRET_KEY` +
-`STRIPE_WEBHOOK_SECRET`, `GET /api/billing/subscription` tetap jalan
-(`billingEnabled: false`, paket `free`) dan endpoint lain membalas 503.
+Penyedia: **Polar** (Merchant of Record). Pembayar = organisasi. Opsional: tanpa
+`POLAR_ACCESS_TOKEN` + `POLAR_WEBHOOK_SECRET`, `GET /api/billing/subscription`
+tetap jalan (`billingEnabled: false`, paket `free`) dan endpoint lain membalas 503.
 
 - `GET /api/billing/subscription` — paket berlaku + langganan, dibaca dari
   Postgres (semua anggota).
-- `POST /api/billing/checkout-sessions` `{ plan }` → `{ url }` Stripe Checkout
-  (owner/admin; 409 bila sudah berlangganan). Customer Stripe dibuat sekali per
-  organisasi (`billing_customers`). Price dicari lewat `lookup_key`
-  `<plan>_monthly`.
-- `POST /api/billing/portal-sessions` → `{ url }` Billing Portal (owner/admin).
-- `POST /api/webhooks/stripe` — verifikasi signature atas body mentah, lewati
-  `event.id` yang sudah tercatat (`billing_webhook_events`), ambil ulang
-  subscription dari Stripe lalu upsert `billing_subscriptions`. Diproses
-  sebelum membalas: bila gagal → 500 → Stripe mengirim ulang.
+- `POST /api/billing/checkout-sessions` `{ plan }` → `{ url }` Polar Checkout
+  (owner/admin; 409 bila sudah berlangganan). Customer Polar ditautkan lewat
+  `external_customer_id` = ID organisasi; IP pengguna (`cf-connecting-ip`)
+  diteruskan untuk mata uang & pajak.
+- `POST /api/billing/portal-sessions` → `{ url }` Customer Portal
+  (owner/admin; 409 sebelum ada langganan).
+- `POST /api/webhooks/polar` — verifikasi Standard Webhooks atas body mentah
+  (signature/timestamp salah → 403), idempoten per `webhook-id`, upsert
+  `billing_subscriptions` dari payload hanya bila `modified_at` lebih baru.
+  Tipe event yang tidak dikenal SDK dibalas 200. Diproses sebelum membalas:
+  bila gagal → 5xx → Polar mengirim ulang.
 
-Uji lokal (Stripe test mode):
+Uji lokal dengan Polar Sandbox:
 
-1. Buat Product + Price bulanan dengan lookup key `pro_monthly` dan
-   `business_monthly` (harga samakan dengan `PLANS` di `@bermula/core/plans`).
-2. Aktifkan Customer Portal di dashboard (Settings → Billing → Customer portal).
-3. `stripe listen --forward-to localhost:8787/api/webhooks/stripe`, salin
-   `whsec_...` ke `STRIPE_WEBHOOK_SECRET` di `.dev.vars`, restart `wrangler dev`.
-4. Bayar dengan kartu uji `4242 4242 4242 4242` dari `/settings/billing` di app.
-
-Produksi: buat endpoint webhook di dashboard Stripe dengan event
-`checkout.session.completed` dan `customer.subscription.*`.
+1. Di https://sandbox.polar.sh buat organisasi, lalu **Organization Access
+   Token** dengan scope `products:read`, `checkouts:write`,
+   `customer_sessions:write` → `POLAR_ACCESS_TOKEN` (biarkan `POLAR_SERVER`
+   kosong = `sandbox`). Bila pembuatan Checkout ditolak 401/403, tambahkan
+   `customers:write`.
+2. Buat produk langganan bulanan untuk paket berbayar di `PLANS`
+   (`@bermula/core/plans`) dengan metadata `plan` = `pro` / `business`.
+   Samakan harga dengan `monthlyPrice` (tampilan di app/web).
+3. Polar tidak bisa memanggil `localhost`: jalankan tunnel ke `wrangler dev`
+   (mis. `cloudflared tunnel --url http://localhost:8787`), daftarkan
+   `<url-tunnel>/api/webhooks/polar` di Settings → Webhooks (format Raw, event
+   `subscription.*`), lalu salin secret-nya ke `POLAR_WEBHOOK_SECRET`.
+4. Restart `wrangler dev` (dan `apps/app`), bayar dengan kartu uji sandbox dari
+   `/settings/billing`, lalu cek paket berubah setelah webhook tiba.
 
 ## Cron (pembersihan storage)
 

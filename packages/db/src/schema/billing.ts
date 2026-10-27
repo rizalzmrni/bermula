@@ -18,40 +18,32 @@ const toSqlList = (values: readonly string[]) =>
   sql.raw(values.map((value) => `'${value}'`).join(", "));
 
 /**
- * Satu Stripe customer per organisasi (pembayar = organisasi, bukan pengguna).
- * Dibuat saat Checkout pertama dan dipakai ulang untuk Billing Portal.
- */
-export const customers = snakeCase.table("billing_customers", {
-  id: id(),
-  stripeCustomerId: text().notNull().unique(),
-  organizationId: uuid()
-    .notNull()
-    .unique()
-    .references(() => organizations.id, { onDelete: "cascade" }),
-  createdAt: createdAt(),
-  updatedAt: updatedAt(),
-});
-
-/**
- * Salinan langganan Stripe yang disinkronkan webhook; sumber kebenaran untuk
- * otorisasi fitur (tanpa memanggil Stripe di setiap request). Satu baris per
- * subscription Stripe, sehingga riwayat (batal lalu berlangganan lagi) tetap ada.
+ * Salinan langganan Polar yang disinkronkan webhook; sumber kebenaran untuk
+ * otorisasi fitur (tanpa memanggil Polar di setiap request). Satu baris per
+ * subscription Polar, sehingga riwayat (batal lalu berlangganan lagi) tetap ada.
+ * Organisasi dipetakan lewat `external_id` customer Polar, jadi tidak ada tabel
+ * customer terpisah.
  */
 export const subscriptions = snakeCase.table(
   "billing_subscriptions",
   {
     id: id(),
-    stripeSubscriptionId: text().notNull().unique(),
+    polarSubscriptionId: text().notNull().unique(),
     plan: text().$type<PaidPlanId>().notNull(),
-    /** Status Stripe apa adanya (`active`, `past_due`, `canceled`, ...). */
+    /** Status Polar apa adanya (`active`, `past_due`, `canceled`, ...). */
     status: text().notNull(),
-    stripeCustomerId: text().notNull(),
+    polarCustomerId: text().notNull(),
     organizationId: uuid()
       .notNull()
       .references(() => organizations.id, { onDelete: "cascade" }),
     currentPeriodEnd: timestamp({ withTimezone: true }),
-    /** Dijadwalkan berhenti di akhir periode atau pada tanggal `cancel_at`. */
+    /** Dijadwalkan berhenti di akhir periode atau pada tanggal `ends_at`. */
     cancelAtPeriodEnd: boolean().default(false).notNull(),
+    /**
+     * `modified_at` subscription di Polar. Webhook bisa tiba tidak berurutan;
+     * snapshot yang lebih lama dari nilai ini tidak menimpa baris.
+     */
+    polarModifiedAt: timestamp({ withTimezone: true }).notNull(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -65,15 +57,14 @@ export const subscriptions = snakeCase.table(
 );
 
 /**
- * `event.id` webhook Stripe yang sudah diproses. Stripe bisa mengirim ulang
- * event yang sama; baris di sini membuat pengiriman ulang dilewati.
+ * Header `webhook-id` webhook Polar yang sudah diproses. Polar mengirim ulang
+ * pengiriman yang gagal dengan ID yang sama; baris di sini membuatnya dilewati.
  */
 export const webhookEvents = snakeCase.table("billing_webhook_events", {
-  /** ID event Stripe (`evt_...`), bukan UUID. */
+  /** ID pengiriman Polar (header `webhook-id`), bukan UUID. */
   id: text().primaryKey(),
   type: text().notNull(),
   createdAt: createdAt(),
 });
 
-export type BillingCustomer = typeof customers.$inferSelect;
 export type Subscription = typeof subscriptions.$inferSelect;

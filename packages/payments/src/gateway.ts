@@ -1,74 +1,62 @@
-import type { StripeClient } from "./client";
-import { ORGANIZATION_METADATA_KEY } from "./subscription";
-import type { SubscriptionSource } from "./subscription";
+import type { PaidPlanId } from "@bermula/core/plans";
+import { createCheckouts } from "@polar-sh/sdk/2026-10/services/checkouts";
+import { createCustomerSessions } from "@polar-sh/sdk/2026-10/services/customer_sessions";
+import { listProducts } from "@polar-sh/sdk/2026-10/services/products";
+
+import type { PolarClient } from "./client";
+import { PLAN_METADATA_KEY } from "./subscription";
 
 /**
- * Operasi Stripe yang dipakai api, dalam bentuk sempit. Service bergantung pada
- * interface ini, bukan klien Stripe, sehingga mudah dipalsukan di test dan
- * Stripe bisa diganti penyedia lain tanpa menyentuh service.
+ * Operasi Polar yang dipakai api, dalam bentuk sempit. Service bergantung pada
+ * interface ini, bukan SDK, sehingga mudah dipalsukan di test dan Polar bisa
+ * diganti penyedia lain tanpa menyentuh service.
+ *
+ * Organisasi dipetakan ke customer Polar lewat `external_id` = ID organisasi,
+ * jadi ID customer Polar tidak perlu disimpan sebelum Checkout selesai.
  */
 export interface PaymentGateway {
-  createCustomer: (input: {
+  /** ID produk aktif untuk paket, atau `null` bila belum dibuat di Polar. */
+  findProductId: (plan: PaidPlanId) => Promise<string | null>;
+  createCheckout: (input: {
     organizationId: string;
-    name: string;
-    /** Mencegah customer ganda bila request diulang (Stripe menyimpannya 24 jam). */
-    idempotencyKey: string;
-  }) => Promise<{ id: string }>;
-  /** ID Price aktif untuk `lookup_key`, atau `null` bila belum dibuat di Stripe. */
-  findPriceId: (lookupKey: string) => Promise<string | null>;
-  createCheckoutSession: (input: {
-    customerId: string;
-    organizationId: string;
-    priceId: string;
+    productId: string;
     successUrl: string;
-    cancelUrl: string;
-  }) => Promise<{ url: string | null }>;
+    returnUrl: string;
+    /** IP pelanggan asli; Polar memakainya untuk memilih mata uang & pajak. */
+    customerIpAddress: string | undefined;
+  }) => Promise<{ url: string }>;
   createPortalSession: (input: {
-    customerId: string;
+    organizationId: string;
     returnUrl: string;
   }) => Promise<{ url: string }>;
-  retrieveSubscription: (id: string) => Promise<SubscriptionSource>;
 }
 
-export const createStripeGateway = (stripe: StripeClient): PaymentGateway => ({
-  createCheckoutSession: async (input) => {
-    const metadata = { [ORGANIZATION_METADATA_KEY]: input.organizationId };
-    const session = await stripe.checkout.sessions.create({
-      cancel_url: input.cancelUrl,
-      client_reference_id: input.organizationId,
-      customer: input.customerId,
-      line_items: [{ price: input.priceId, quantity: 1 }],
-      mode: "subscription",
-      // Webhook membaca organisasi dari metadata subscription.
-      subscription_data: { metadata },
+export const createPolarGateway = (polar: PolarClient): PaymentGateway => ({
+  createCheckout: async (input) => {
+    const checkout = await createCheckouts(polar)({
+      customer_ip_address: input.customerIpAddress ?? null,
+      // Customer dibuat Polar saat Checkout selesai, dengan `external_id` ini.
+      external_customer_id: input.organizationId,
+      products: [input.productId],
+      return_url: input.returnUrl,
       success_url: input.successUrl,
     });
-    return { url: session.url };
-  },
-  createCustomer: async (input) => {
-    const customer = await stripe.customers.create(
-      {
-        metadata: { [ORGANIZATION_METADATA_KEY]: input.organizationId },
-        name: input.name,
-      },
-      { idempotencyKey: input.idempotencyKey }
-    );
-    return { id: customer.id };
+    return { url: checkout.url };
   },
   createPortalSession: async (input) => {
-    const session = await stripe.billingPortal.sessions.create({
-      customer: input.customerId,
+    const session = await createCustomerSessions(polar)({
+      external_customer_id: input.organizationId,
       return_url: input.returnUrl,
     });
-    return { url: session.url };
+    return { url: session.customer_portal_url };
   },
-  findPriceId: async (lookupKey) => {
-    const prices = await stripe.prices.list({
-      active: true,
+  findProductId: async (plan) => {
+    const products = await listProducts(polar)({
+      is_archived: false,
+      is_recurring: true,
       limit: 1,
-      lookup_keys: [lookupKey],
+      metadata: { [PLAN_METADATA_KEY]: plan },
     });
-    return prices.data[0]?.id ?? null;
+    return products.items[0]?.id ?? null;
   },
-  retrieveSubscription: (id) => stripe.subscriptions.retrieve(id),
 });

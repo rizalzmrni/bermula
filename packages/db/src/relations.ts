@@ -9,7 +9,7 @@ import {
   twoFactors,
   verifications,
 } from "./schema/auth";
-import { customers, subscriptions } from "./schema/billing";
+import { subscriptions } from "./schema/billing";
 import { files } from "./schema/storage";
 import { users } from "./schema/users";
 
@@ -23,7 +23,6 @@ import { users } from "./schema/users";
 export const relations = defineRelations(
   {
     accounts,
-    customers,
     files,
     invitations,
     members,
@@ -37,12 +36,6 @@ export const relations = defineRelations(
   (r) => ({
     accounts: {
       user: r.one.users({ from: r.accounts.userId, to: r.users.id }),
-    },
-    customers: {
-      organization: r.one.organizations({
-        from: r.customers.organizationId,
-        to: r.organizations.id,
-      }),
     },
     files: {
       organization: r.one.organizations({

@@ -1,26 +1,18 @@
-import {
-  isEntitledStatus,
-  resolveEffectivePlan,
-  toStripeLookupKey,
-} from "@bermula/core/plans";
+import { isEntitledStatus, resolveEffectivePlan } from "@bermula/core/plans";
 import type { PaidPlanId } from "@bermula/core/plans";
 import type { QueryDb } from "@bermula/db/client";
 import { organizations } from "@bermula/db/schema/auth";
-import {
-  customers,
-  subscriptions,
-  webhookEvents,
-} from "@bermula/db/schema/billing";
+import { subscriptions, webhookEvents } from "@bermula/db/schema/billing";
 import type { Subscription } from "@bermula/db/schema/billing";
 import type { Logger } from "@bermula/observability/logger";
 import type { PaymentGateway } from "@bermula/payments/gateway";
 import {
-  getSubscriptionIdFromEvent,
+  getSubscriptionFromEvent,
   toSubscriptionSnapshot,
 } from "@bermula/payments/subscription";
 import type { SubscriptionSnapshot } from "@bermula/payments/subscription";
-import type { StripeEvent } from "@bermula/payments/webhook";
-import { desc, eq } from "drizzle-orm";
+import type { PolarWebhookEvent } from "@bermula/payments/webhook";
+import { desc, eq, lt } from "drizzle-orm";
 import { z } from "zod";
 
 import { ApiError } from "../lib/errors";
@@ -36,7 +28,7 @@ const notConfigured = () =>
     status: 503,
   });
 
-/** Stripe opsional (pasangan env); tanpa konfigurasi, fitur tagihan membalas 503. */
+/** Polar opsional (pasangan env); tanpa konfigurasi, fitur tagihan membalas 503. */
 export const requirePayments = (payments: PaymentGateway | undefined) => {
   if (!payments) {
     throw notConfigured();
@@ -44,18 +36,12 @@ export const requirePayments = (payments: PaymentGateway | undefined) => {
   return payments;
 };
 
-/** Webhook butuh gateway (mengambil subscription) dan secret signature. */
-export const requireWebhookConfig = ({
-  payments,
-  secret,
-}: {
-  payments: PaymentGateway | undefined;
-  secret: string | undefined;
-}) => {
-  if (!(payments && secret)) {
+/** Webhook hanya butuh secret signature; datanya diambil dari payload. */
+export const requireWebhookSecret = (secret: string | undefined) => {
+  if (!secret) {
     throw notConfigured();
   }
-  return { payments, secret };
+  return secret;
 };
 
 const assertBillingManager = (role: string) => {
@@ -84,16 +70,7 @@ const findCurrentSubscription = async (
   return rows.find((row) => isEntitledStatus(row.status)) ?? rows[0] ?? null;
 };
 
-const findCustomer = async (db: QueryDb, organizationId: string) => {
-  const [customer] = await db
-    .select()
-    .from(customers)
-    .where(eq(customers.organizationId, organizationId))
-    .limit(1);
-  return customer ?? null;
-};
-
-/** Bentuk respons API: tanggal sebagai ISO string, tanpa ID internal Stripe. */
+/** Bentuk respons API: tanggal sebagai ISO string, tanpa ID internal Polar. */
 const toSubscriptionResponse = (subscription: Subscription) => ({
   cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
   currentPeriodEnd: subscription.currentPeriodEnd?.toISOString() ?? null,
@@ -112,60 +89,22 @@ export const getBillingOverview = async ({
   role: string;
   billingEnabled: boolean;
 }) => {
-  const [subscription, customer] = await Promise.all([
-    findCurrentSubscription(db, organizationId),
-    findCustomer(db, organizationId),
-  ]);
+  const subscription = await findCurrentSubscription(db, organizationId);
 
   return {
     billingEnabled,
     canManage: hasOrganizationRole(role, ORGANIZATION_MANAGER_ROLES),
-    hasBillingAccount: customer !== null,
+    // Customer Polar baru ada setelah Checkout pertama selesai; saat itu
+    // webhook sudah menyimpan langganannya.
+    hasBillingAccount: subscription !== null,
     plan: resolveEffectivePlan(subscription),
     subscription: subscription ? toSubscriptionResponse(subscription) : null,
   };
 };
 
-/**
- * Customer Stripe organisasi, dibuat saat Checkout pertama. Idempotency key
- * membuat request ganda mendapat customer yang sama; `onConflictDoNothing`
- * menangani dua request yang menyimpan bersamaan.
- */
-const getOrCreateCustomerId = async ({
-  db,
-  organizationId,
-  payments,
-}: {
-  db: QueryDb;
-  organizationId: string;
-  payments: PaymentGateway;
-}) => {
-  const existing = await findCustomer(db, organizationId);
-  if (existing) {
-    return existing.stripeCustomerId;
-  }
-
-  const [organization] = await db
-    .select({ name: organizations.name })
-    .from(organizations)
-    .where(eq(organizations.id, organizationId))
-    .limit(1);
-  const created = await payments.createCustomer({
-    idempotencyKey: `customer-${organizationId}`,
-    name: organization?.name ?? organizationId,
-    organizationId,
-  });
-
-  await db
-    .insert(customers)
-    .values({ organizationId, stripeCustomerId: created.id })
-    .onConflictDoNothing();
-  const stored = await findCustomer(db, organizationId);
-  return stored?.stripeCustomerId ?? created.id;
-};
-
 export const createCheckoutSession = async ({
   appUrl,
+  customerIpAddress,
   db,
   organizationId,
   payments,
@@ -173,6 +112,8 @@ export const createCheckoutSession = async ({
   role,
 }: {
   appUrl: string;
+  /** IP browser pengguna (bukan IP Worker app) untuk mata uang & pajak. */
+  customerIpAddress: string | undefined;
   db: QueryDb;
   organizationId: string;
   payments: PaymentGateway;
@@ -192,8 +133,8 @@ export const createCheckoutSession = async ({
     });
   }
 
-  const priceId = await payments.findPriceId(toStripeLookupKey(plan));
-  if (!priceId) {
+  const productId = await payments.findProductId(plan);
+  if (!productId) {
     throw new ApiError({
       code: "PRICE_NOT_CONFIGURED",
       message: "Harga paket ini belum tersedia.",
@@ -201,22 +142,13 @@ export const createCheckoutSession = async ({
     });
   }
 
-  const customerId = await getOrCreateCustomerId({
-    db,
+  return payments.createCheckout({
+    customerIpAddress,
     organizationId,
-    payments,
-  });
-  const session = await payments.createCheckoutSession({
-    cancelUrl: `${appUrl}${BILLING_PAGE_PATH}?checkout=cancel`,
-    customerId,
-    organizationId,
-    priceId,
+    productId,
+    returnUrl: `${appUrl}${BILLING_PAGE_PATH}?checkout=cancel`,
     successUrl: `${appUrl}${BILLING_PAGE_PATH}?checkout=success`,
   });
-  if (!session.url) {
-    throw new Error("Stripe Checkout session has no URL");
-  }
-  return { url: session.url };
 };
 
 export const createPortalSession = async ({
@@ -234,8 +166,9 @@ export const createPortalSession = async ({
 }) => {
   assertBillingManager(role);
 
-  const customer = await findCustomer(db, organizationId);
-  if (!customer) {
+  // Tanpa langganan apa pun, customer Polar belum ada dan Portal akan gagal.
+  const subscription = await findCurrentSubscription(db, organizationId);
+  if (!subscription) {
     throw new ApiError({
       code: "NO_BILLING_ACCOUNT",
       message:
@@ -245,7 +178,7 @@ export const createPortalSession = async ({
   }
 
   return payments.createPortalSession({
-    customerId: customer.stripeCustomerId,
+    organizationId,
     returnUrl: `${appUrl}${BILLING_PAGE_PATH}`,
   });
 };
@@ -253,22 +186,13 @@ export const createPortalSession = async ({
 const organizationIdSchema = z.uuid();
 
 /**
- * Pemilik subscription: dari tabel customer (dibuat api sendiri), lalu dari
- * metadata. Metadata bisa diisi manual di dashboard Stripe, jadi dicek ke DB.
+ * Pemilik subscription dari `external_id` customer. Hanya api yang mengisinya
+ * (saat Checkout), tetapi tetap dicek ke DB: organisasi bisa sudah dihapus.
  */
 const resolveOrganizationId = async (
   db: QueryDb,
   snapshot: SubscriptionSnapshot
 ) => {
-  const [customer] = await db
-    .select({ organizationId: customers.organizationId })
-    .from(customers)
-    .where(eq(customers.stripeCustomerId, snapshot.stripeCustomerId))
-    .limit(1);
-  if (customer) {
-    return customer.organizationId;
-  }
-
   const parsed = organizationIdSchema.safeParse(snapshot.organizationId);
   if (!parsed.success) {
     return null;
@@ -285,6 +209,8 @@ export const WEBHOOK_OUTCOME = {
   duplicate: "duplicate",
   ignored: "ignored",
   skipped: "skipped",
+  /** Snapshot lebih lama dari yang tersimpan (event tiba tidak berurutan). */
+  stale: "stale",
   synced: "synced",
 } as const;
 
@@ -300,10 +226,10 @@ const syncSubscription = async ({
   logger: Logger;
   snapshot: SubscriptionSnapshot;
 }): Promise<WebhookOutcome> => {
-  const fields = { stripeSubscriptionId: snapshot.stripeSubscriptionId };
+  const fields = { polarSubscriptionId: snapshot.polarSubscriptionId };
   const { plan } = snapshot;
   if (!plan) {
-    logger.warn("Subscription price has no known lookup key", fields);
+    logger.warn("Subscription product has no known plan metadata", fields);
     return WEBHOOK_OUTCOME.skipped;
   }
   const organizationId = await resolveOrganizationId(db, snapshot);
@@ -317,59 +243,64 @@ const syncSubscription = async ({
     currentPeriodEnd: snapshot.currentPeriodEnd,
     organizationId,
     plan,
+    polarCustomerId: snapshot.polarCustomerId,
+    polarModifiedAt: snapshot.modifiedAt,
     status: snapshot.status,
-    stripeCustomerId: snapshot.stripeCustomerId,
   };
-  await db
+  // Upsert bersyarat dalam satu statement: baris hanya diganti snapshot yang
+  // lebih baru, sehingga event lama yang tiba belakangan tidak menimpanya.
+  const written = await db
     .insert(subscriptions)
-    .values({ ...values, stripeSubscriptionId: snapshot.stripeSubscriptionId })
+    .values({ ...values, polarSubscriptionId: snapshot.polarSubscriptionId })
     .onConflictDoUpdate({
       set: values,
-      target: subscriptions.stripeSubscriptionId,
-    });
-  return WEBHOOK_OUTCOME.synced;
+      setWhere: lt(subscriptions.polarModifiedAt, snapshot.modifiedAt),
+      target: subscriptions.polarSubscriptionId,
+    })
+    .returning({ id: subscriptions.id });
+  return written.length > 0 ? WEBHOOK_OUTCOME.synced : WEBHOOK_OUTCOME.stale;
 };
 
 /**
- * Event yang sudah tercatat dilewati. Selain itu subscription diambil ulang dari
- * Stripe (bukan dari payload event) lalu di-upsert, jadi urutan event yang tiba
- * tidak berpengaruh dan pemrosesan ulang aman. Event baru dicatat setelah sync
- * berhasil: bila sync gagal, Stripe mengirim ulang dan sync dicoba lagi.
+ * Pengiriman yang sudah tercatat (`webhook-id`) dilewati. Selain itu
+ * subscription dari payload di-upsert bila lebih baru dari yang tersimpan, jadi
+ * urutan event yang tiba tidak berpengaruh dan pemrosesan ulang aman, tanpa
+ * memanggil API Polar (webhook harus dibalas cepat). Pengiriman baru dicatat
+ * setelah sync berhasil: bila sync gagal, Polar mengirim ulang.
  */
 export const processWebhookEvent = async ({
   db,
   event,
   logger,
-  payments,
+  webhookId,
 }: {
   db: QueryDb;
-  event: StripeEvent;
+  event: PolarWebhookEvent;
   logger: Logger;
-  payments: PaymentGateway;
+  /** Header `webhook-id`; sama untuk setiap pengiriman ulang event yang sama. */
+  webhookId: string;
 }): Promise<WebhookOutcome> => {
   const [processed] = await db
     .select({ id: webhookEvents.id })
     .from(webhookEvents)
-    .where(eq(webhookEvents.id, event.id))
+    .where(eq(webhookEvents.id, webhookId))
     .limit(1);
   if (processed) {
     return WEBHOOK_OUTCOME.duplicate;
   }
 
-  const subscriptionId = getSubscriptionIdFromEvent(event);
-  const outcome = subscriptionId
+  const subscription = getSubscriptionFromEvent(event);
+  const outcome = subscription
     ? await syncSubscription({
         db,
         logger,
-        snapshot: toSubscriptionSnapshot(
-          await payments.retrieveSubscription(subscriptionId)
-        ),
+        snapshot: toSubscriptionSnapshot(subscription),
       })
     : WEBHOOK_OUTCOME.ignored;
 
   await db
     .insert(webhookEvents)
-    .values({ id: event.id, type: event.type })
+    .values({ id: webhookId, type: event.type })
     .onConflictDoNothing();
   return outcome;
 };

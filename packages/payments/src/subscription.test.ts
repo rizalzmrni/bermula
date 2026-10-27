@@ -1,34 +1,27 @@
-import { PLAN, toStripeLookupKey } from "@bermula/core/plans";
+import { PLAN } from "@bermula/core/plans";
 import { describe, expect, it } from "vitest";
 
 import {
-  ORGANIZATION_METADATA_KEY,
-  getSubscriptionIdFromEvent,
+  PLAN_METADATA_KEY,
+  getSubscriptionFromEvent,
   toSubscriptionSnapshot,
 } from "./subscription";
 import type { SubscriptionSource } from "./subscription";
 import { createTestEvent } from "./testing";
 
 const ORGANIZATION_ID = "0f8fad5b-d9cb-469f-a165-70867728950e";
-// 2026-11-25T00:00:00Z dalam detik Unix (format waktu Stripe).
-const PERIOD_END = 1_795_564_800;
 
 const subscription = (
   overrides: Partial<SubscriptionSource> = {}
 ): SubscriptionSource => ({
-  cancel_at: null,
   cancel_at_period_end: false,
-  customer: "cus_123",
+  created_at: "2026-10-25T00:00:00Z",
+  current_period_end: "2026-11-25T00:00:00Z",
+  customer: { external_id: ORGANIZATION_ID, id: "cus_123" },
+  ends_at: null,
   id: "sub_123",
-  items: {
-    data: [
-      {
-        current_period_end: PERIOD_END,
-        price: { lookup_key: toStripeLookupKey(PLAN.pro) },
-      },
-    ],
-  },
-  metadata: { [ORGANIZATION_METADATA_KEY]: ORGANIZATION_ID },
+  modified_at: "2026-10-26T00:00:00Z",
+  product: { metadata: { [PLAN_METADATA_KEY]: PLAN.pro } },
   status: "active",
   ...overrides,
 });
@@ -38,42 +31,36 @@ describe(toSubscriptionSnapshot, () => {
     expect(toSubscriptionSnapshot(subscription())).toStrictEqual({
       cancelAtPeriodEnd: false,
       currentPeriodEnd: new Date("2026-11-25T00:00:00Z"),
+      modifiedAt: new Date("2026-10-26T00:00:00Z"),
       organizationId: ORGANIZATION_ID,
       plan: PLAN.pro,
+      polarCustomerId: "cus_123",
+      polarSubscriptionId: "sub_123",
       status: "active",
-      stripeCustomerId: "cus_123",
-      stripeSubscriptionId: "sub_123",
     });
   });
 
-  it("accepts an expanded customer object", () => {
+  it("falls back to the creation time for a never-modified subscription", () => {
     const snapshot = toSubscriptionSnapshot(
-      subscription({ customer: { id: "cus_expanded" } })
+      subscription({ modified_at: null })
     );
 
-    expect(snapshot.stripeCustomerId).toBe("cus_expanded");
+    expect(snapshot.modifiedAt).toStrictEqual(new Date("2026-10-25T00:00:00Z"));
   });
 
-  it("treats a scheduled cancel date as ending", () => {
+  it("treats a scheduled end date as ending", () => {
     const snapshot = toSubscriptionSnapshot(
-      subscription({ cancel_at: PERIOD_END })
+      subscription({ ends_at: "2026-11-25T00:00:00Z" })
     );
 
     expect(snapshot.cancelAtPeriodEnd).toBeTruthy();
   });
 
-  it("leaves unknown prices and missing metadata as null", () => {
+  it("leaves unknown products and missing external ids as null", () => {
     const snapshot = toSubscriptionSnapshot(
       subscription({
-        items: {
-          data: [
-            {
-              current_period_end: PERIOD_END,
-              price: { lookup_key: "legacy_price" },
-            },
-          ],
-        },
-        metadata: {},
+        customer: { external_id: null, id: "cus_dashboard" },
+        product: { metadata: { [PLAN_METADATA_KEY]: "legacy" } },
       })
     );
 
@@ -82,58 +69,22 @@ describe(toSubscriptionSnapshot, () => {
   });
 });
 
-describe(getSubscriptionIdFromEvent, () => {
-  it("reads the subscription from a completed subscription checkout", async () => {
+describe(getSubscriptionFromEvent, () => {
+  it("reads the subscription of lifecycle events", async () => {
     const event = await createTestEvent({
-      data: {
-        object: {
-          id: "cs_1",
-          mode: "subscription",
-          object: "checkout.session",
-          subscription: "sub_abc",
-        },
-      },
-      id: "evt_1",
-      type: "checkout.session.completed",
+      data: subscription({ id: "sub_xyz" }),
+      type: "subscription.revoked",
     });
 
-    expect(getSubscriptionIdFromEvent(event)).toBe("sub_abc");
-  });
-
-  it("ignores one-off payment checkouts", async () => {
-    const event = await createTestEvent({
-      data: {
-        object: {
-          id: "cs_2",
-          mode: "payment",
-          object: "checkout.session",
-          subscription: null,
-        },
-      },
-      id: "evt_1",
-      type: "checkout.session.completed",
-    });
-
-    expect(getSubscriptionIdFromEvent(event)).toBeNull();
-  });
-
-  it("reads the id of subscription lifecycle events", async () => {
-    const event = await createTestEvent({
-      data: { object: { id: "sub_xyz", object: "subscription" } },
-      id: "evt_1",
-      type: "customer.subscription.deleted",
-    });
-
-    expect(getSubscriptionIdFromEvent(event)).toBe("sub_xyz");
+    expect(getSubscriptionFromEvent(event)?.id).toBe("sub_xyz");
   });
 
   it("ignores unrelated events", async () => {
     const event = await createTestEvent({
-      data: { object: { id: "in_1", object: "invoice" } },
-      id: "evt_1",
-      type: "invoice.paid",
+      data: { id: "ord_1" },
+      type: "order.paid",
     });
 
-    expect(getSubscriptionIdFromEvent(event)).toBeNull();
+    expect(getSubscriptionFromEvent(event)).toBeNull();
   });
 });
