@@ -30,24 +30,66 @@ export const billingOverviewQueryOptions = (client: ApiClient) =>
     queryKey: billingKeys.overview(),
   });
 
-const PAYMENT_POLL_INTERVAL_MS = 3000;
+/** Alasan halaman menunggu perubahan dari webhook Polar. */
+export const BILLING_AWAIT = {
+  /** Baru kembali dari Checkout: tunggu sampai paket berubah dari `free`. */
+  payment: "payment",
+  /** Baru kembali dari Portal: isi perubahannya tidak diketahui. */
+  portal: "portal",
+} as const;
+
+export type BillingAwait = (typeof BILLING_AWAIT)[keyof typeof BILLING_AWAIT];
+
+export const BILLING_POLL_INTERVAL_MS = 3000;
+
+/**
+ * Batas pengambilan data setelah kembali dari Portal (±30 detik). Perubahan di
+ * Portal (batal, ganti paket, kartu baru) tidak bisa dideteksi dari halaman,
+ * jadi polling dibatasi jumlahnya, bukan menunggu kondisi tertentu.
+ */
+export const PORTAL_MAX_DATA_UPDATES = 10;
+
+/** Interval `refetchInterval`, atau `false` untuk berhenti mengambil ulang. */
+export const getBillingRefetchInterval = ({
+  awaiting,
+  dataUpdateCount,
+  plan,
+}: {
+  awaiting: BillingAwait | null;
+  /** `query.state.dataUpdateCount`; termasuk data hasil prefetch loader. */
+  dataUpdateCount: number;
+  plan: BillingOverview["plan"] | undefined;
+}): number | false => {
+  if (awaiting === BILLING_AWAIT.payment && plan === PLAN.free) {
+    return BILLING_POLL_INTERVAL_MS;
+  }
+  if (
+    awaiting === BILLING_AWAIT.portal &&
+    dataUpdateCount < PORTAL_MAX_DATA_UPDATES
+  ) {
+    return BILLING_POLL_INTERVAL_MS;
+  }
+  return false;
+};
 
 /**
  * `useQuery`, bukan suspense: loader hanya mencoba prefetch, jadi bila api
  * sedang gagal halaman tetap tampil dengan state error + coba lagi.
  *
- * `awaitingPayment`: baru kembali dari Checkout. Webhook Polar bisa tiba
- * beberapa detik setelah redirect, jadi data diambil ulang sampai paket berubah.
+ * `awaiting`: baru kembali dari Checkout atau Portal. Webhook Polar bisa tiba
+ * beberapa detik setelah redirect, jadi data diambil ulang sementara waktu.
  */
 export const useBillingOverview = ({
-  awaitingPayment,
+  awaiting,
 }: {
-  awaitingPayment: boolean;
+  awaiting: BillingAwait | null;
 }) =>
   useQuery({
     ...billingOverviewQueryOptions(getBrowserApiClient()),
     refetchInterval: (query) =>
-      awaitingPayment && query.state.data?.plan === PLAN.free
-        ? PAYMENT_POLL_INTERVAL_MS
-        : false,
+      getBillingRefetchInterval({
+        awaiting,
+        dataUpdateCount: query.state.dataUpdateCount,
+        plan: query.state.data?.plan,
+      }),
   });

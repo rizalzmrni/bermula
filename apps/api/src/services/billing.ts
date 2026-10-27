@@ -21,6 +21,12 @@ import { ORGANIZATION_MANAGER_ROLES, hasOrganizationRole } from "../lib/roles";
 /** Halaman tagihan di apps/app; tujuan kembali dari Checkout & Portal. */
 const BILLING_PAGE_PATH = "/settings/billing";
 
+/**
+ * Penanda kembali dari Portal: perubahan di Portal tiba lewat webhook beberapa
+ * detik kemudian, jadi halaman tagihan mengambil ulang data sebentar.
+ */
+const PORTAL_RETURN_QUERY = "portal=return";
+
 const notConfigured = () =>
   new ApiError({
     code: "BILLING_NOT_CONFIGURED",
@@ -179,7 +185,7 @@ export const createPortalSession = async ({
 
   return payments.createPortalSession({
     organizationId,
-    returnUrl: `${appUrl}${BILLING_PAGE_PATH}`,
+    returnUrl: `${appUrl}${BILLING_PAGE_PATH}?${PORTAL_RETURN_QUERY}`,
   });
 };
 
@@ -212,6 +218,11 @@ export const WEBHOOK_OUTCOME = {
   /** Snapshot lebih lama dari yang tersimpan (event tiba tidak berurutan). */
   stale: "stale",
   synced: "synced",
+  /**
+   * Versi yang sama dengan yang tersimpan: Polar mengirim beberapa event
+   * (mis. `created`, `active`, `updated`) untuk satu perubahan.
+   */
+  unchanged: "unchanged",
 } as const;
 
 export type WebhookOutcome =
@@ -258,7 +269,19 @@ const syncSubscription = async ({
       target: subscriptions.polarSubscriptionId,
     })
     .returning({ id: subscriptions.id });
-  return written.length > 0 ? WEBHOOK_OUTCOME.synced : WEBHOOK_OUTCOME.stale;
+  if (written.length > 0) {
+    return WEBHOOK_OUTCOME.synced;
+  }
+
+  // Hanya untuk label log; keputusan tulis tetap di upsert bersyarat di atas.
+  const [stored] = await db
+    .select({ polarModifiedAt: subscriptions.polarModifiedAt })
+    .from(subscriptions)
+    .where(eq(subscriptions.polarSubscriptionId, snapshot.polarSubscriptionId))
+    .limit(1);
+  return stored?.polarModifiedAt.getTime() === snapshot.modifiedAt.getTime()
+    ? WEBHOOK_OUTCOME.unchanged
+    : WEBHOOK_OUTCOME.stale;
 };
 
 /**

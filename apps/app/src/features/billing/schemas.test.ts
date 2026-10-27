@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { billingActionSchema, readCheckoutResult } from "./schemas";
+import {
+  billingActionSchema,
+  readCheckoutResult,
+  readPortalReturn,
+} from "./schemas";
 
 describe(readCheckoutResult, () => {
   it("reads the result Polar redirects back with", () => {
@@ -15,6 +19,14 @@ describe(readCheckoutResult, () => {
   it("ignores missing or unknown values", () => {
     expect(readCheckoutResult(new URLSearchParams())).toBeNull();
     expect(readCheckoutResult(new URLSearchParams("checkout=x"))).toBeNull();
+  });
+});
+
+describe(readPortalReturn, () => {
+  it("detects the return from the customer portal", () => {
+    expect(readPortalReturn(new URLSearchParams("portal=return"))).toBeTruthy();
+    expect(readPortalReturn(new URLSearchParams())).toBeFalsy();
+    expect(readPortalReturn(new URLSearchParams("portal=x"))).toBeFalsy();
   });
 });
 

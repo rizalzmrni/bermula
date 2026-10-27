@@ -35,9 +35,9 @@ import {
 import { useFetcher } from "react-router";
 
 import { FormErrorAlert } from "../auth/form-error-alert";
-import { getSubscriptionStatusLabel } from "./labels";
-import { useBillingOverview } from "./queries";
-import type { BillingOverview } from "./queries";
+import { getSubscriptionBadge } from "./labels";
+import { BILLING_AWAIT, useBillingOverview } from "./queries";
+import type { BillingAwait, BillingOverview } from "./queries";
 import { BILLING_INTENT, CHECKOUT_RESULT } from "./schemas";
 import type { CheckoutResult } from "./schemas";
 
@@ -87,9 +87,7 @@ const PortalForm = () => {
 const CurrentPlanCard = ({ overview }: { overview: BillingOverview }) => {
   const plan = getPlan(overview.plan);
   const { subscription } = overview;
-  const status = subscription
-    ? getSubscriptionStatusLabel(subscription.status)
-    : null;
+  const status = subscription ? getSubscriptionBadge(subscription) : null;
   const showPortal =
     overview.billingEnabled && overview.canManage && overview.hasBillingAccount;
 
@@ -249,14 +247,30 @@ const BillingContent = ({ overview }: { overview: BillingOverview }) => {
   );
 };
 
+const toBillingAwait = ({
+  checkoutResult,
+  portalReturn,
+}: {
+  checkoutResult: CheckoutResult | null;
+  portalReturn: boolean;
+}): BillingAwait | null => {
+  if (checkoutResult === CHECKOUT_RESULT.success) {
+    return BILLING_AWAIT.payment;
+  }
+  return portalReturn ? BILLING_AWAIT.portal : null;
+};
+
 /** Paket organisasi aktif + aksi Checkout/Portal, dengan state loading & error. */
 export const BillingSection = ({
   checkoutResult,
+  portalReturn,
 }: {
   checkoutResult: CheckoutResult | null;
+  /** Baru kembali dari Customer Portal (`?portal=return`). */
+  portalReturn: boolean;
 }) => {
   const query = useBillingOverview({
-    awaitingPayment: checkoutResult === CHECKOUT_RESULT.success,
+    awaiting: toBillingAwait({ checkoutResult, portalReturn }),
   });
 
   if (query.isPending) {

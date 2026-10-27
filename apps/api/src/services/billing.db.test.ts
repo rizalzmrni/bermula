@@ -26,9 +26,10 @@ const APP_URL = "http://localhost:5173";
 const PRO_PRODUCT_ID = "prod_pro";
 const CUSTOMER_IP = "203.0.113.7";
 
-/** Gateway palsu: mencatat input Checkout dan mengembalikan URL contoh. */
+/** Gateway palsu: mencatat input Checkout & Portal dan mengembalikan URL contoh. */
 const createFakeGateway = () => {
   const checkouts: Parameters<PaymentGateway["createCheckout"]>[0][] = [];
+  const portals: Parameters<PaymentGateway["createPortalSession"]>[0][] = [];
   const gateway: PaymentGateway = {
     createCheckout: (input) => {
       checkouts.push(input);
@@ -36,14 +37,16 @@ const createFakeGateway = () => {
         url: `https://checkout.polar.test/${input.productId}`,
       });
     },
-    createPortalSession: (input) =>
-      Promise.resolve({
+    createPortalSession: (input) => {
+      portals.push(input);
+      return Promise.resolve({
         url: `https://portal.polar.test/${input.organizationId}`,
-      }),
+      });
+    },
     findProductId: (plan) =>
       Promise.resolve(plan === PLAN.pro ? PRO_PRODUCT_ID : null),
   };
-  return { checkouts, gateway };
+  return { checkouts, gateway, portals };
 };
 
 const polarSubscription = (
@@ -236,6 +239,25 @@ describe("billing service (PGlite)", () => {
     expect(overview.subscription?.status).toBe("canceled");
   });
 
+  it("reports sibling events with the same version as unchanged", async () => {
+    // Polar mengirim `created`, `active`, dan `updated` dengan `modified_at` sama.
+    const created = await deliver(
+      "msg_created",
+      ownedSubscription(),
+      "subscription.created"
+    );
+    const active = await deliver(
+      "msg_active",
+      ownedSubscription({ status: "past_due" }),
+      "subscription.active"
+    );
+    const [row] = await db.select().from(subscriptions);
+
+    expect(created).toBe(WEBHOOK_OUTCOME.synced);
+    expect(active).toBe(WEBHOOK_OUTCOME.unchanged);
+    expect(row?.status).toBe("active");
+  });
+
   it("skips subscriptions without an owner or a known plan", async () => {
     const orphan = await deliver(
       "msg_orphan",
@@ -303,7 +325,7 @@ describe("billing service (PGlite)", () => {
   });
 
   it("opens the portal only for an organization with a subscription", async () => {
-    const { gateway } = createFakeGateway();
+    const { gateway, portals } = createFakeGateway();
     const portal = () =>
       createPortalSession({
         appUrl: APP_URL,
@@ -321,5 +343,11 @@ describe("billing service (PGlite)", () => {
     await expect(portal()).resolves.toStrictEqual({
       url: `https://portal.polar.test/${organizationId}`,
     });
+    expect(portals).toStrictEqual([
+      {
+        organizationId,
+        returnUrl: `${APP_URL}/settings/billing?portal=return`,
+      },
+    ]);
   });
 });

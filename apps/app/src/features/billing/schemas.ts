@@ -32,3 +32,9 @@ export const readCheckoutResult = (
     ? value
     : null;
 };
+
+/** Query `?portal=return` saat Polar mengarahkan kembali dari Customer Portal. */
+export const PORTAL_RETURN = { param: "portal", value: "return" } as const;
+
+export const readPortalReturn = (searchParams: URLSearchParams): boolean =>
+  searchParams.get(PORTAL_RETURN.param) === PORTAL_RETURN.value;

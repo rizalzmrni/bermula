@@ -1,3 +1,4 @@
+import { formatDate } from "@bermula/core/format";
 import { SUBSCRIPTION_STATUS } from "@bermula/core/plans";
 import type { SubscriptionStatus } from "@bermula/core/plans";
 
@@ -43,3 +44,29 @@ export const getSubscriptionStatusLabel = (status: string): StatusLabel =>
   isKnownStatus(status)
     ? STATUS_LABELS[status]
     : { label: status, variant: "outline" };
+
+/** Status yang tetap berjalan sampai akhir periode walau sudah dibatalkan. */
+const RUNNING_STATUSES = new Set<string>([
+  SUBSCRIPTION_STATUS.active,
+  SUBSCRIPTION_STATUS.trialing,
+]);
+
+/**
+ * Badge langganan. Langganan yang dibatalkan tetap `active` di Polar sampai
+ * akhir periode, jadi tanpa penanda ini badge tetap "Aktif" setelah dibatalkan.
+ * Masalah pembayaran (mis. `past_due`) tetap diutamakan.
+ */
+export const getSubscriptionBadge = (subscription: {
+  status: string;
+  cancelAtPeriodEnd: boolean;
+  currentPeriodEnd: string | null;
+}): StatusLabel => {
+  const { status, cancelAtPeriodEnd, currentPeriodEnd } = subscription;
+  if (!(cancelAtPeriodEnd && RUNNING_STATUSES.has(status))) {
+    return getSubscriptionStatusLabel(status);
+  }
+  const label = currentPeriodEnd
+    ? `Berakhir ${formatDate(new Date(currentPeriodEnd), { day: "numeric", month: "short" })}`
+    : "Akan berakhir";
+  return { label, variant: "secondary" };
+};
