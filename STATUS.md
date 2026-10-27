@@ -5,7 +5,7 @@
 
 ## Fase berjalan
 
-**Fase 4 — selesai** (Fase 3 auth selesai dan dicek developer di browser 2026-10-25). `packages/data` selesai: akun lewat loader prefetch + TanStack Query, semua form app memakai TanStack Form. `apps/web` (situs marketing + SEO) selesai 2026-10-25. `apps/email` (server preview) selesai 2026-10-25. `apps/storybook` selesai 2026-10-25, sehingga Fase 4 selesai. **Fase 6 sedang berjalan:** `packages/payments` + tagihan di api/app selesai 2026-10-25 dengan Stripe; **2026-10-27 pindah ke Polar** (SDK langsung, opsi c) dan kodenya sudah dimigrasikan di branch `feat/payments-polar`; migrasi diterapkan ke Neon dev dan webhook disimulasikan end-to-end 2026-10-27. `packages/analytics` (GA + PostHog browser dengan persetujuan cookie) selesai 2026-10-26. Semua PR Fase 4–6 (#9–#12) sudah di-merge ke `main` 2026-10-26. Berikutnya (setelah maintenance Polar selesai): buat webhook dan uji Checkout/Portal di Polar Sandbox, cek analitik di `apps/app`, lalu deploy (Fase 7).
+**Fase 4 — selesai** (Fase 3 auth selesai dan dicek developer di browser 2026-10-25). `packages/data` selesai: akun lewat loader prefetch + TanStack Query, semua form app memakai TanStack Form. `apps/web` (situs marketing + SEO) selesai 2026-10-25. `apps/email` (server preview) selesai 2026-10-25. `apps/storybook` selesai 2026-10-25, sehingga Fase 4 selesai. **Fase 6 sedang berjalan:** `packages/payments` + tagihan di api/app selesai 2026-10-25 dengan Stripe; **2026-10-27 pindah ke Polar** (SDK langsung, opsi c) dan kodenya sudah dimigrasikan di branch `feat/payments-polar`; migrasi diterapkan ke Neon dev dan webhook disimulasikan end-to-end 2026-10-27. `packages/analytics` (GA + PostHog browser dengan persetujuan cookie) selesai 2026-10-26. Semua PR Fase 4–6 (#9–#12) sudah di-merge ke `main` 2026-10-26. Migrasi Polar (#15) di-merge ke `main` 2026-10-27; CI GitHub Actions (#14) aktif di setiap PR. Berikutnya (setelah maintenance Polar selesai): buat webhook dan uji Checkout/Portal di Polar Sandbox, cek analitik di `apps/app`, lalu deploy (Fase 7).
 Arahan developer (2026-10-21): siapkan **semua `packages/*` lebih dulu**, baru
 kemudian `apps/*`. Pengecualian (2026-10-24): `apps/api` dibuat lebih dulu
 sebelum `packages/storage`.
@@ -21,7 +21,7 @@ sebelum `packages/storage`.
 | 4    | `packages/design-system`, `apps/storybook`, `apps/app`, `apps/web`                                      | ✅     |
 | 5    | `packages/email` + `apps/email`, `packages/storage`                                                     | ✅     |
 | 6    | `packages/payments` (Polar + webhook) 🚧, `packages/analytics` ✅, `packages/seo` (✅ lebih awal)       | 🚧     |
-| 7    | CI/CD dan deploy                                                                                        | ⏳     |
+| 7    | CI/CD dan deploy (CI GitHub Actions ✅, deploy ⏳ menunggu domain)                                      | 🚧     |
 
 Status: ⏳ belum · 🚧 sedang · ✅ selesai
 
@@ -123,6 +123,7 @@ Bila tugas menyentuh salah satunya: berhenti dan tanyakan.
 
 - 2026-10-27 — **Pembayaran pindah dari Stripe ke Polar** (keputusan developer). Stripe tidak cocok untuk badan usaha Indonesia: akun Stripe Indonesia hanya menerima IDR lewat virtual account, tanpa kartu dan tanpa transaksi internasional; akun luar negeri butuh badan usaha di luar Indonesia. Polar adalah Merchant of Record (mengurus pajak penjualan internasional), mendukung payout ke Indonesia lewat Stripe Connect Express, dan harga multi-mata uang termasuk IDR. Model tetap: pembayar = organisasi, Checkout & Portal di halaman Polar, status langganan disalin ke Postgres lewat webhook. Keputusan 2026-10-25 "Tagihan Stripe per organisasi" digantikan untuk bagian penyedia; aturan otorisasi owner/admin tetap.
 - 2026-10-27 — **Integrasi Polar lewat `@polar-sh/sdk` langsung** (opsi c, disetujui developer), bukan plugin `@polar-sh/better-auth`: otorisasi owner/admin & scoping organisasi tetap di service, tanpa fitur eksperimental. `@polar-sh/sdk` ^1.0.2 menggantikan `stripe` di catalog `services` (versi API `2026-10`). Organisasi = customer Polar lewat `external_id` (tabel `billing_customers` dihapus); paket dari metadata produk `plan`; webhook memakai payload + guard `modified_at` tanpa memanggil API Polar (saran Polar: balas < 2 detik). Migrasi dibuat dua langkah (`billing_drop_stripe`, `billing_polar`) agar `drizzle-kit generate` tidak meminta konfirmasi rename interaktif; data tagihan dev hanya data uji Stripe.
+- 2026-10-27 — **CI di GitHub Actions** (disetujui developer): satu job `ubuntu-latest` menjalankan `bun install --frozen-lockfile`, `check-types`, `check`, `test` pada PR dan push ke `main`; Node 24 + bun 1.4.3 (samakan dengan `devEngines` bila bun di-upgrade); cache bun & `.turbo/cache`; tanpa secret. Gratis tanpa batas menit selama repo public dan memakai runner standar. Deploy otomatis ditunda sampai domain produksi diputuskan.
 
 ## Hal yang perlu diverifikasi
 
@@ -170,3 +171,4 @@ Sudah terverifikasi (2026-10-21): `ultracite init` menambah blok sendiri ke `AGE
 - Base UI Select tidak bisa dipilih lewat event sintetis di happy-dom (klik, pointer, keyboard); test `packages/data` mengisi nilainya lewat state form. Pemilihan Select lewat UI belum teruji di browser; cek saat form pertama yang memakainya dibuat.
 - Security page: hasil action (QR, kode cadangan) hanya dibaca lewat `useFetcher`, jadi alur aktivasi 2FA butuh JavaScript (sudah begitu sejak awal).
 - `pre-commit` menjalankan `turbo run check-types --affected` yang membandingkan `main...HEAD`; saat commit langsung di `main` cakupannya bisa kosong, jadi `pre-push`/CI tetap menjalankan check penuh.
+- CI (`.github/workflows/ci.yml`) belum menjadi syarat merge: aktifkan branch protection/ruleset di `main` dengan status check "Type-check, lint, test" (Settings → Rules) setelah run pertama hijau.

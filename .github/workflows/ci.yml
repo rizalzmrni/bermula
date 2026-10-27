@@ -1,0 +1,56 @@
+# Pemeriksaan yang sama dengan hook pre-push: type-check, lint, test.
+# Tanpa secret: test memakai binding palsu (vitest.config.ts) dan PGlite.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Push baru ke PR yang sama membatalkan run lama agar menit runner tidak terbuang.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Type-check, lint, test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      # Vitest, wrangler, dan drizzle-kit berjalan di Node (engines: >=24).
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      # Samakan dengan devEngines.packageManager di package.json.
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.3
+
+      - name: Cache bun
+        uses: actions/cache@v6
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+
+      # Turbo melewati task yang input-nya tidak berubah sejak run sebelumnya.
+      - name: Cache turbo
+        uses: actions/cache@v6
+        with:
+          path: .turbo/cache
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: turbo-${{ runner.os }}-
+
+      # Gagal bila bun.lock tidak sinkron dengan package.json.
+      - run: bun install --frozen-lockfile
+
+      - run: bun run check-types
+      - run: bun run check
+      - run: bun run test

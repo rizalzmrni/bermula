@@ -55,7 +55,10 @@ footer opsional — mis. Closes #42
 - `pre-commit`: lint-staged menjalankan `bunx ultracite fix` pada file yang
   di-stage, lalu `turbo run check-types --affected` (hanya paket yang berubah,
   agar tetap cepat seiring monorepo membesar).
-- `pre-push` dan CI: `check-types`, `check`, dan `test` penuh.
+- `pre-push` dan CI: `check-types`, `check`, dan `test` penuh. CI ada di
+  `.github/workflows/ci.yml` (GitHub Actions, setiap PR dan push ke `main`,
+  tanpa secret). Saat meng-upgrade bun, samakan `bun-version` di workflow dengan
+  `devEngines` di `package.json`.
 - `commit-msg`: commitlint memvalidasi Conventional Commits.
 - Konfigurasi: `commitlint.config.ts` dan `.husky/`. Cek dukungan konfigurasi
   `.ts` di dokumentasi commitlint versi terpasang; gunakan `.mjs` hanya bila
