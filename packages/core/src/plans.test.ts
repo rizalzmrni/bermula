@@ -7,11 +7,10 @@ import {
   PLANS,
   SUBSCRIPTION_STATUS,
   formatPlanPrice,
-  fromStripeLookupKey,
   getPlan,
   isEntitledStatus,
   resolveEffectivePlan,
-  toStripeLookupKey,
+  toPaidPlan,
 } from "./plans";
 
 describe("plan catalog", () => {
@@ -51,17 +50,18 @@ describe(getPlan, () => {
   });
 });
 
-describe(toStripeLookupKey, () => {
-  it("round-trips through fromStripeLookupKey", () => {
+describe(toPaidPlan, () => {
+  it("accepts every paid plan", () => {
     for (const plan of PAID_PLANS) {
-      expect(fromStripeLookupKey(toStripeLookupKey(plan))).toBe(plan);
+      expect(toPaidPlan(plan)).toBe(plan);
     }
   });
 
-  it("rejects unknown or missing lookup keys", () => {
-    expect(fromStripeLookupKey("free_monthly")).toBeNull();
-    expect(fromStripeLookupKey("pro_yearly")).toBeNull();
-    expect(fromStripeLookupKey(null)).toBeNull();
+  it("rejects the free plan and unknown values", () => {
+    expect(toPaidPlan(PLAN.free)).toBeNull();
+    expect(toPaidPlan("pro_monthly")).toBeNull();
+    expect(toPaidPlan(1)).toBeNull();
+    expect(toPaidPlan(null)).toBeNull();
   });
 });
 

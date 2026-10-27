@@ -1,106 +1,79 @@
-import { fromStripeLookupKey } from "@bermula/core/plans";
+import { toPaidPlan } from "@bermula/core/plans";
 import type { PaidPlanId } from "@bermula/core/plans";
-import type { Stripe } from "stripe";
+import type { models } from "@polar-sh/sdk/2026-10";
 
-import type { StripeEvent } from "./webhook";
+import type { PolarWebhookEvent } from "./webhook";
 
 /**
- * Kunci metadata subscription/customer di Stripe yang menyimpan organisasi
- * pemilik. Diisi saat membuat Checkout; dipakai webhook untuk mencari pemilik.
+ * Kunci metadata produk Polar yang menyimpan ID paket (`pro`, `business`).
+ * Dengan metadata, ID produk tidak perlu disimpan di env per lingkungan.
  */
-export const ORGANIZATION_METADATA_KEY = "organizationId";
+export const PLAN_METADATA_KEY = "plan";
 
-const MS_PER_SECOND = 1000;
-
-/** Bagian subscription Stripe yang dipakai; `Stripe.Subscription` cocok dengannya. */
+/** Bagian subscription Polar yang dipakai; `models.Subscription` cocok dengannya. */
 export interface SubscriptionSource {
   id: string;
-  customer: string | { id: string };
-  metadata: Record<string, string>;
   status: string;
+  created_at: string;
+  modified_at: string | null;
+  current_period_end: string;
   cancel_at_period_end: boolean;
-  cancel_at: number | null;
-  items: {
-    data: {
-      current_period_end: number;
-      price: { lookup_key: string | null };
-    }[];
-  };
+  ends_at: string | null;
+  customer: { id: string; external_id?: string | null };
+  product: { metadata: models.Subscription["product"]["metadata"] };
 }
 
 /** Bentuk langganan yang disimpan di Postgres (sumber kebenaran otorisasi). */
 export interface SubscriptionSnapshot {
-  stripeSubscriptionId: string;
-  stripeCustomerId: string;
-  /** `null` bila metadata kosong (mis. subscription dibuat manual di dashboard). */
+  polarSubscriptionId: string;
+  polarCustomerId: string;
+  /** `external_id` customer; diisi api saat Checkout, `null` bila dibuat di dashboard. */
   organizationId: string | null;
-  /** `null` bila Price-nya tidak punya `lookup_key` paket yang dikenal. */
+  /** `null` bila produknya tidak punya metadata `plan` yang dikenal. */
   plan: PaidPlanId | null;
   status: string;
-  currentPeriodEnd: Date | null;
-  /** Langganan dijadwalkan berhenti (akhir periode atau tanggal `cancel_at`). */
+  currentPeriodEnd: Date;
+  /** Langganan dijadwalkan berhenti (akhir periode atau tanggal `ends_at`). */
   cancelAtPeriodEnd: boolean;
+  /** Versi data di Polar; snapshot yang lebih lama dari yang tersimpan diabaikan. */
+  modifiedAt: Date;
 }
-
-const idOf = (value: string | { id: string }) =>
-  typeof value === "string" ? value : value.id;
-
-const findPlan = (items: SubscriptionSource["items"]["data"]) => {
-  for (const item of items) {
-    const plan = fromStripeLookupKey(item.price.lookup_key);
-    if (plan) {
-      return plan;
-    }
-  }
-  return null;
-};
-
-/**
- * Sejak API `2025-03-31`, periode tagihan ada di tiap item subscription, bukan
- * di subscription. Satu paket = satu item; ambil yang paling akhir bila ada lebih.
- */
-const latestPeriodEnd = (items: SubscriptionSource["items"]["data"]) =>
-  items.length > 0
-    ? new Date(
-        Math.max(...items.map((item) => item.current_period_end)) *
-          MS_PER_SECOND
-      )
-    : null;
 
 export const toSubscriptionSnapshot = (
   subscription: SubscriptionSource
 ): SubscriptionSnapshot => ({
   cancelAtPeriodEnd:
-    subscription.cancel_at_period_end || subscription.cancel_at !== null,
-  currentPeriodEnd: latestPeriodEnd(subscription.items.data),
-  organizationId: subscription.metadata[ORGANIZATION_METADATA_KEY] ?? null,
-  plan: findPlan(subscription.items.data),
+    subscription.cancel_at_period_end || subscription.ends_at !== null,
+  currentPeriodEnd: new Date(subscription.current_period_end),
+  modifiedAt: new Date(subscription.modified_at ?? subscription.created_at),
+  organizationId: subscription.customer.external_id ?? null,
+  plan: toPaidPlan(subscription.product.metadata[PLAN_METADATA_KEY]),
+  polarCustomerId: subscription.customer.id,
+  polarSubscriptionId: subscription.id,
   status: subscription.status,
-  stripeCustomerId: idOf(subscription.customer),
-  stripeSubscriptionId: subscription.id,
 });
 
 /**
- * ID subscription yang perlu disinkronkan dari sebuah event, atau `null` bila
- * event tidak relevan untuk langganan. Webhook lalu mengambil ulang subscription
- * terbaru dari Stripe, sehingga urutan event yang tiba tidak berpengaruh.
+ * Subscription dari event `subscription.*`, atau `null` bila event tidak
+ * relevan untuk langganan. Payload Polar memuat subscription lengkap, jadi
+ * tidak perlu mengambil ulang ke API (webhook harus dibalas dalam 2 detik).
  */
-export const getSubscriptionIdFromEvent = (
-  event: StripeEvent
-): string | null => {
+export const getSubscriptionFromEvent = (
+  event: PolarWebhookEvent
+): SubscriptionSource | null => {
   switch (event.type) {
-    case "checkout.session.completed": {
-      const session: Stripe.Checkout.Session = event.data.object;
-      return session.mode === "subscription" && session.subscription
-        ? idOf(session.subscription)
-        : null;
-    }
-    case "customer.subscription.created":
-    case "customer.subscription.updated":
-    case "customer.subscription.deleted":
-    case "customer.subscription.paused":
-    case "customer.subscription.resumed": {
-      return event.data.object.id;
+    case "subscription.created":
+    case "subscription.updated":
+    case "subscription.active":
+    case "subscription.canceled":
+    case "subscription.uncanceled":
+    case "subscription.cycled":
+    case "subscription.revoked":
+    case "subscription.past_due":
+    case "subscription.paused":
+    case "subscription.resumed":
+    case "subscription.migrated": {
+      return event.data;
     }
     default: {
       return null;

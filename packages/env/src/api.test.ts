@@ -94,22 +94,36 @@ describe(createApiEnv, () => {
     ).toThrow("GOOGLE_CLIENT_SECRET");
   });
 
-  it("requires both Stripe secrets and checks their prefixes", () => {
-    const stripe = {
-      STRIPE_SECRET_KEY: "sk_test_123",
-      STRIPE_WEBHOOK_SECRET: "whsec_123",
+  it("requires both Polar secrets and checks the token prefix", () => {
+    const polar = {
+      POLAR_ACCESS_TOKEN: "polar_oat_123",
+      POLAR_WEBHOOK_SECRET: "polar_whs_123",
     };
 
-    expect(createApiEnv({ ...VALID_ENV, ...stripe }).STRIPE_SECRET_KEY).toBe(
-      "sk_test_123"
+    expect(createApiEnv({ ...VALID_ENV, ...polar }).POLAR_ACCESS_TOKEN).toBe(
+      "polar_oat_123"
     );
     expect(() =>
-      createApiEnv({ ...VALID_ENV, STRIPE_SECRET_KEY: "sk_test_123" })
-    ).toThrow("STRIPE_WEBHOOK_SECRET");
-    // Publishable key (`pk_`) tertukar dengan secret key.
+      createApiEnv({ ...VALID_ENV, POLAR_ACCESS_TOKEN: "polar_oat_123" })
+    ).toThrow("POLAR_WEBHOOK_SECRET");
+    // Personal access token tertukar dengan Organization Access Token.
     expect(() =>
-      createApiEnv({ ...VALID_ENV, ...stripe, STRIPE_SECRET_KEY: "pk_test_1" })
-    ).toThrow("STRIPE_SECRET_KEY");
+      createApiEnv({
+        ...VALID_ENV,
+        ...polar,
+        POLAR_ACCESS_TOKEN: "polar_pat_1",
+      })
+    ).toThrow("POLAR_ACCESS_TOKEN");
+  });
+
+  it("targets the Polar sandbox unless production is chosen", () => {
+    expect(createApiEnv(VALID_ENV).POLAR_SERVER).toBe("sandbox");
+    expect(
+      createApiEnv({ ...VALID_ENV, POLAR_SERVER: "production" }).POLAR_SERVER
+    ).toBe("production");
+    expect(() => createApiEnv({ ...VALID_ENV, POLAR_SERVER: "live" })).toThrow(
+      "POLAR_SERVER"
+    );
   });
 
   it("accepts a bare cookie domain and rejects a URL", () => {

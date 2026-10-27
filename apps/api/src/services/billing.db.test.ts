@@ -1,13 +1,9 @@
-import { PLAN, toStripeLookupKey } from "@bermula/core/plans";
-import {
-  customers,
-  subscriptions,
-  webhookEvents,
-} from "@bermula/db/schema/billing";
+import { PLAN } from "@bermula/core/plans";
+import { subscriptions, webhookEvents } from "@bermula/db/schema/billing";
 import { createTestDb } from "@bermula/db/testing";
 import { createLogger } from "@bermula/observability/logger";
 import type { PaymentGateway } from "@bermula/payments/gateway";
-import { ORGANIZATION_METADATA_KEY } from "@bermula/payments/subscription";
+import { PLAN_METADATA_KEY } from "@bermula/payments/subscription";
 import type { SubscriptionSource } from "@bermula/payments/subscription";
 import { createTestEvent } from "@bermula/payments/testing";
 import { eq } from "drizzle-orm";
@@ -27,67 +23,55 @@ const { db } = testDb;
 const logger = createLogger({ minLevel: "error", service: "test" });
 
 const APP_URL = "http://localhost:5173";
-const PRO_PRICE_ID = "price_pro";
-// 2026-11-25T00:00:00Z dalam detik Unix.
-const PERIOD_END = 1_795_564_800;
+const PRO_PRODUCT_ID = "prod_pro";
+const CUSTOMER_IP = "203.0.113.7";
 
-/** Gateway palsu: mencatat panggilan dan mengembalikan data contoh. */
-const createFakeGateway = (stripeSubscriptions: SubscriptionSource[] = []) => {
-  const calls = { checkout: 0, customers: 0 };
+/** Gateway palsu: mencatat input Checkout dan mengembalikan URL contoh. */
+const createFakeGateway = () => {
+  const checkouts: Parameters<PaymentGateway["createCheckout"]>[0][] = [];
   const gateway: PaymentGateway = {
-    createCheckoutSession: (input) => {
-      calls.checkout += 1;
+    createCheckout: (input) => {
+      checkouts.push(input);
       return Promise.resolve({
-        url: `https://checkout.stripe.test/${input.customerId}`,
+        url: `https://checkout.polar.test/${input.productId}`,
       });
-    },
-    createCustomer: () => {
-      calls.customers += 1;
-      return Promise.resolve({ id: `cus_${calls.customers}` });
     },
     createPortalSession: (input) =>
       Promise.resolve({
-        url: `https://portal.stripe.test/${input.customerId}`,
+        url: `https://portal.polar.test/${input.organizationId}`,
       }),
-    findPriceId: (lookupKey) =>
-      Promise.resolve(
-        lookupKey === toStripeLookupKey(PLAN.pro) ? PRO_PRICE_ID : null
-      ),
-    retrieveSubscription: (id) => {
-      const found = stripeSubscriptions.find((item) => item.id === id);
-      return found
-        ? Promise.resolve(found)
-        : Promise.reject(new Error(`No such subscription: ${id}`));
-    },
+    findProductId: (plan) =>
+      Promise.resolve(plan === PLAN.pro ? PRO_PRODUCT_ID : null),
   };
-  return { calls, gateway };
+  return { checkouts, gateway };
 };
 
-const stripeSubscription = (
+const polarSubscription = (
   overrides: Partial<SubscriptionSource> = {}
 ): SubscriptionSource => ({
-  cancel_at: null,
   cancel_at_period_end: false,
-  customer: "cus_1",
+  created_at: "2026-10-25T00:00:00Z",
+  current_period_end: "2026-11-25T00:00:00Z",
+  customer: { external_id: null, id: "cus_1" },
+  ends_at: null,
   id: "sub_1",
-  items: {
-    data: [
-      {
-        current_period_end: PERIOD_END,
-        price: { lookup_key: toStripeLookupKey(PLAN.pro) },
-      },
-    ],
-  },
-  metadata: {},
+  modified_at: "2026-10-25T00:00:00Z",
+  product: { metadata: { [PLAN_METADATA_KEY]: PLAN.pro } },
   status: "active",
   ...overrides,
 });
 
-const subscriptionEvent = (id: string, subscriptionId = "sub_1") =>
-  createTestEvent({
-    data: { object: { id: subscriptionId, object: "subscription" } },
-    id,
-    type: "customer.subscription.updated",
+/** Satu pengiriman webhook bertanda tangan berisi subscription. */
+const deliver = async (
+  webhookId: string,
+  data: SubscriptionSource,
+  type = "subscription.updated"
+) =>
+  processWebhookEvent({
+    db,
+    event: await createTestEvent({ data, type }),
+    logger,
+    webhookId,
   });
 
 describe("billing service (PGlite)", () => {
@@ -96,7 +80,6 @@ describe("billing service (PGlite)", () => {
   beforeEach(async () => {
     await db.delete(webhookEvents);
     await db.delete(subscriptions);
-    await db.delete(customers);
     const organization = await insertOrganization(db, "Tim tagihan");
     organizationId = organization.id;
   });
@@ -106,11 +89,19 @@ describe("billing service (PGlite)", () => {
   const checkout = (gateway: PaymentGateway, role = "owner") =>
     createCheckoutSession({
       appUrl: APP_URL,
+      customerIpAddress: CUSTOMER_IP,
       db,
       organizationId,
       payments: gateway,
       plan: PLAN.pro,
       role,
+    });
+
+  /** Subscription milik organisasi test; `external_id` diisi seperti saat Checkout. */
+  const ownedSubscription = (overrides: Partial<SubscriptionSource> = {}) =>
+    polarSubscription({
+      customer: { external_id: organizationId, id: "cus_1" },
+      ...overrides,
     });
 
   it("reports the free plan before any subscription", async () => {
@@ -130,33 +121,40 @@ describe("billing service (PGlite)", () => {
     });
   });
 
-  it("creates one customer and reuses it for later checkouts", async () => {
-    const { calls, gateway } = createFakeGateway();
+  it("links the checkout to the organization and forwards the user's IP", async () => {
+    const { checkouts, gateway } = createFakeGateway();
 
-    const first = await checkout(gateway);
-    const second = await checkout(gateway, "member,admin");
+    const session = await checkout(gateway, "member,admin");
 
-    expect(first.url).toBe("https://checkout.stripe.test/cus_1");
-    expect(second.url).toBe(first.url);
-    expect(calls.customers).toBe(1);
+    expect(session.url).toBe(`https://checkout.polar.test/${PRO_PRODUCT_ID}`);
+    expect(checkouts).toStrictEqual([
+      {
+        customerIpAddress: CUSTOMER_IP,
+        organizationId,
+        productId: PRO_PRODUCT_ID,
+        returnUrl: `${APP_URL}/settings/billing?checkout=cancel`,
+        successUrl: `${APP_URL}/settings/billing?checkout=success`,
+      },
+    ]);
   });
 
   it("only lets owners and admins start a checkout", async () => {
-    const { calls, gateway } = createFakeGateway();
+    const { checkouts, gateway } = createFakeGateway();
 
     await expect(checkout(gateway, "member")).rejects.toMatchObject({
       code: "FORBIDDEN",
       status: 403,
     });
-    expect(calls.customers).toBe(0);
+    expect(checkouts).toHaveLength(0);
   });
 
-  it("reports a missing Stripe price as not configured", async () => {
+  it("reports a missing Polar product as not configured", async () => {
     const { gateway } = createFakeGateway();
 
     await expect(
       createCheckoutSession({
         appUrl: APP_URL,
+        customerIpAddress: undefined,
         db,
         organizationId,
         payments: gateway,
@@ -167,15 +165,9 @@ describe("billing service (PGlite)", () => {
   });
 
   it("syncs a subscription from a webhook and blocks a second checkout", async () => {
-    const { gateway } = createFakeGateway([stripeSubscription()]);
-    await checkout(gateway);
+    const { gateway } = createFakeGateway();
 
-    const outcome = await processWebhookEvent({
-      db,
-      event: await subscriptionEvent("evt_sync"),
-      logger,
-      payments: gateway,
-    });
+    const outcome = await deliver("msg_sync", ownedSubscription());
     const overview = await getBillingOverview({
       billingEnabled: true,
       db,
@@ -185,6 +177,7 @@ describe("billing service (PGlite)", () => {
 
     expect(outcome).toBe(WEBHOOK_OUTCOME.synced);
     expect(overview.plan).toBe(PLAN.pro);
+    expect(overview.hasBillingAccount).toBeTruthy();
     expect(overview.subscription).toStrictEqual({
       cancelAtPeriodEnd: false,
       currentPeriodEnd: "2026-11-25T00:00:00.000Z",
@@ -197,46 +190,38 @@ describe("billing service (PGlite)", () => {
     });
   });
 
-  it("skips an event it already processed", async () => {
-    const subscription = stripeSubscription();
-    const { gateway } = createFakeGateway([subscription]);
-    await checkout(gateway);
-    const event = await subscriptionEvent("evt_repeat");
+  it("skips a delivery it already processed", async () => {
+    await deliver("msg_repeat", ownedSubscription());
 
-    await processWebhookEvent({ db, event, logger, payments: gateway });
-    // Perubahan di Stripe setelah event pertama tidak diterapkan ulang oleh
-    // pengiriman ulang event yang sama.
-    subscription.status = "canceled";
-    const outcome = await processWebhookEvent({
-      db,
-      event,
-      logger,
-      payments: gateway,
-    });
+    // Pengiriman ulang dengan `webhook-id` yang sama tidak diterapkan lagi,
+    // walau isinya (secara teori) berbeda.
+    const outcome = await deliver(
+      "msg_repeat",
+      ownedSubscription({
+        modified_at: "2026-10-26T00:00:00Z",
+        status: "canceled",
+      })
+    );
     const [row] = await db.select().from(subscriptions);
 
     expect(outcome).toBe(WEBHOOK_OUTCOME.duplicate);
     expect(row?.status).toBe("active");
   });
 
-  it("applies the latest Stripe state on a newer event", async () => {
-    const subscription = stripeSubscription();
-    const { gateway } = createFakeGateway([subscription]);
-    await checkout(gateway);
-    await processWebhookEvent({
-      db,
-      event: await subscriptionEvent("evt_a"),
-      logger,
-      payments: gateway,
-    });
-
-    subscription.status = "canceled";
-    await processWebhookEvent({
-      db,
-      event: await subscriptionEvent("evt_b"),
-      logger,
-      payments: gateway,
-    });
+  it("applies a newer snapshot and ignores an older one that arrives late", async () => {
+    await deliver(
+      "msg_new",
+      ownedSubscription({
+        modified_at: "2026-10-26T00:00:00Z",
+        status: "canceled",
+      }),
+      "subscription.canceled"
+    );
+    const late = await deliver(
+      "msg_old",
+      ownedSubscription({ modified_at: "2026-10-25T00:00:00Z" }),
+      "subscription.active"
+    );
     const rows = await db.select().from(subscriptions);
     const overview = await getBillingOverview({
       billingEnabled: true,
@@ -245,106 +230,79 @@ describe("billing service (PGlite)", () => {
       role: "owner",
     });
 
+    expect(late).toBe(WEBHOOK_OUTCOME.stale);
     expect(rows).toHaveLength(1);
     expect(overview.plan).toBe(PLAN.free);
     expect(overview.subscription?.status).toBe("canceled");
   });
 
-  it("falls back to verified metadata when the customer is unknown", async () => {
-    const { gateway } = createFakeGateway([
-      stripeSubscription({
-        customer: "cus_dashboard",
-        metadata: { [ORGANIZATION_METADATA_KEY]: organizationId },
-      }),
-    ]);
-
-    const outcome = await processWebhookEvent({
-      db,
-      event: await subscriptionEvent("evt_meta"),
-      logger,
-      payments: gateway,
-    });
-
-    expect(outcome).toBe(WEBHOOK_OUTCOME.synced);
-  });
-
   it("skips subscriptions without an owner or a known plan", async () => {
-    const { gateway } = createFakeGateway([
-      stripeSubscription({
-        customer: "cus_unknown",
+    const orphan = await deliver(
+      "msg_orphan",
+      polarSubscription({
+        customer: { external_id: "not-a-uuid", id: "cus_dashboard" },
         id: "sub_orphan",
-        metadata: { [ORGANIZATION_METADATA_KEY]: "not-a-uuid" },
-      }),
-      stripeSubscription({
-        id: "sub_legacy",
-        items: {
-          data: [
-            {
-              current_period_end: PERIOD_END,
-              price: { lookup_key: "legacy" },
-            },
-          ],
+      })
+    );
+    const deletedOrganization = await deliver(
+      "msg_deleted",
+      polarSubscription({
+        customer: {
+          external_id: "0f8fad5b-d9cb-469f-a165-70867728950e",
+          id: "cus_gone",
         },
-      }),
-    ]);
-
-    const orphan = await processWebhookEvent({
-      db,
-      event: await subscriptionEvent("evt_orphan", "sub_orphan"),
-      logger,
-      payments: gateway,
-    });
-    const legacy = await processWebhookEvent({
-      db,
-      event: await subscriptionEvent("evt_legacy", "sub_legacy"),
-      logger,
-      payments: gateway,
-    });
+        id: "sub_gone",
+      })
+    );
+    const legacy = await deliver(
+      "msg_legacy",
+      ownedSubscription({
+        id: "sub_legacy",
+        product: { metadata: { [PLAN_METADATA_KEY]: "legacy" } },
+      })
+    );
     const recorded = await db
       .select()
       .from(webhookEvents)
-      .where(eq(webhookEvents.id, "evt_orphan"));
+      .where(eq(webhookEvents.id, "msg_orphan"));
 
-    expect([orphan, legacy]).toStrictEqual([
+    expect([orphan, deletedOrganization, legacy]).toStrictEqual([
+      WEBHOOK_OUTCOME.skipped,
       WEBHOOK_OUTCOME.skipped,
       WEBHOOK_OUTCOME.skipped,
     ]);
-    // Dicatat agar Stripe tidak terus mengirim ulang event yang tak bisa dipakai.
+    // Dicatat agar Polar tidak terus mengirim ulang event yang tak bisa dipakai.
     expect(recorded).toHaveLength(1);
+    await expect(db.select().from(subscriptions)).resolves.toHaveLength(0);
   });
 
-  it("records unrelated events without calling Stripe", async () => {
-    const { gateway } = createFakeGateway();
-
+  it("records unrelated events as ignored", async () => {
     const outcome = await processWebhookEvent({
       db,
       event: await createTestEvent({
-        data: { object: { id: "in_1", object: "invoice" } },
-        id: "evt_invoice",
-        type: "invoice.paid",
+        data: { id: "ord_1" },
+        type: "order.paid",
       }),
       logger,
-      payments: gateway,
+      webhookId: "msg_order",
     });
 
     expect(outcome).toBe(WEBHOOK_OUTCOME.ignored);
+    await expect(db.select().from(webhookEvents)).resolves.toHaveLength(1);
   });
 
-  it("does not record an event whose sync failed, so Stripe retries it", async () => {
-    const { gateway } = createFakeGateway();
-
+  it("does not record a delivery whose sync failed, so Polar retries it", async () => {
     await expect(
-      processWebhookEvent({
-        db,
-        event: await subscriptionEvent("evt_fail", "sub_missing"),
-        logger,
-        payments: gateway,
-      })
-    ).rejects.toThrow("sub_missing");
+      deliver(
+        "msg_fail",
+        // Tanggal yang tidak bisa diserialisasi membuat upsert gagal.
+        ownedSubscription({ current_period_end: "not-a-date" })
+      )
+    ).rejects.toThrow("Invalid time value");
     await expect(db.select().from(webhookEvents)).resolves.toHaveLength(0);
   });
 
-  it("opens the portal only for an organization with a customer", async () => {
+  it("opens the portal only for an organization with a subscription", async () => {
     const { gateway } = createFakeGateway();
     const portal = () =>
       createPortalSession({
@@ -359,9 +317,9 @@ describe("billing service (PGlite)", () => {
       code: "NO_BILLING_ACCOUNT",
       status: 409,
     });
-    await checkout(gateway);
+    await deliver("msg_portal", ownedSubscription());
     await expect(portal()).resolves.toStrictEqual({
-      url: "https://portal.stripe.test/cus_1",
+      url: `https://portal.polar.test/${organizationId}`,
     });
   });
 });

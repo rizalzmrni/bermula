@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@bermula/core": "workspace:*",
-    "stripe": "catalog:services"
+    "@polar-sh/sdk": "catalog:services"
   },
   "devDependencies": {
     "@bermula/typescript-config": "workspace:*",

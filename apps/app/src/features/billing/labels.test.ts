@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { getSubscriptionStatusLabel } from "./labels";
 
 describe(getSubscriptionStatusLabel, () => {
-  it("translates known Stripe statuses", () => {
+  it("translates known Polar statuses", () => {
     expect(getSubscriptionStatusLabel("active")).toStrictEqual({
       label: "Aktif",
       variant: "default",

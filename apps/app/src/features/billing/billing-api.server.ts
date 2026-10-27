@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import type { ApiClient } from "../../lib/api-client";
 
-/** Hasil panggilan: URL Stripe untuk redirect, atau pesan error untuk form. */
+/** Hasil panggilan: URL Polar untuk redirect, atau pesan error untuk form. */
 export type BillingRedirectResult = { url: string } | { formError: string };
 
 const FALLBACK_MESSAGE = "Gagal membuka halaman pembayaran. Silakan coba lagi.";

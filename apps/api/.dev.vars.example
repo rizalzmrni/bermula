@@ -81,13 +81,17 @@ POSTHOG_PROJECT_TOKEN=
 # Wajib: tidak (wajib bersama POSTHOG_PROJECT_TOKEN) | Sisi: server | Contoh format: https://eu.i.posthog.com
 POSTHOG_HOST=
 
-# Fungsi: Secret key Stripe untuk Checkout, Billing Portal, dan sinkronisasi langganan (secret; pakai kunci test saat development)
-# Wajib: tidak (wajib bersama STRIPE_WEBHOOK_SECRET; tanpa keduanya endpoint billing membalas 503) | Sisi: server | Contoh format: sk_test_xxx
-STRIPE_SECRET_KEY=
+# Fungsi: Organization Access Token Polar untuk Checkout dan Customer Portal (secret; scope: products:read, checkouts:write, customer_sessions:write)
+# Wajib: tidak (wajib bersama POLAR_WEBHOOK_SECRET; tanpa keduanya endpoint billing membalas 503) | Sisi: server | Contoh format: polar_oat_xxx
+POLAR_ACCESS_TOKEN=
 
-# Fungsi: Signing secret endpoint webhook Stripe (dari dashboard, atau dicetak `stripe listen` saat dev)
-# Wajib: tidak (wajib bersama STRIPE_SECRET_KEY) | Sisi: server | Contoh format: whsec_xxx
-STRIPE_WEBHOOK_SECRET=
+# Fungsi: Secret endpoint webhook Polar (Settings → Webhooks di dashboard Polar)
+# Wajib: tidak (wajib bersama POLAR_ACCESS_TOKEN) | Sisi: server | Contoh format: polar_whs_xxx
+POLAR_WEBHOOK_SECRET=
+
+# Fungsi: Lingkungan Polar yang dipakai token di atas (sandbox dan production terpisah total)
+# Wajib: tidak (default: sandbox) | Sisi: server | Contoh format: sandbox atau production
+POLAR_SERVER=
 
 # Fungsi: Aktifkan dokumentasi API (GET /openapi.json & GET /docs)
 # Wajib: tidak (default: nonaktif; jangan aktifkan di produksi kecuali disengaja) | Sisi: server | Contoh format: true

@@ -19,7 +19,7 @@ const app = new OpenAPIHono<AppEnv>({ defaultHook: validationHook });
 
 // Urutan penting: context (env, logger, auth) → CORS (butuh env) → rate limit.
 // Preflight OPTIONS dijawab CORS sebelum rate limit, jadi tidak ikut terhitung.
-// Webhook datang dari sedikit IP milik Stripe dan dijaga signature, jadi tidak
+// Webhook datang dari sedikit IP milik Polar dan dijaga signature, jadi tidak
 // ikut dibatasi per IP.
 app.use("*", contextMiddleware);
 app.use("*", corsMiddleware);

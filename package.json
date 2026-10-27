@@ -29,14 +29,14 @@
       },
       "services": {
         "@better-auth/drizzle-adapter": "^1.7.12",
+        "@polar-sh/sdk": "^1.0.2",
         "@react-email/components": "^1.0.12",
         "@react-email/render": "2.0.6",
         "@react-email/ui": "6.11.3",
         "better-auth": "^1.7.12",
         "posthog-js": "^1.438.21",
         "react-email": "6.11.3",
-        "resend": "^6.34.1",
-        "stripe": "^23.0.1"
+        "resend": "^6.34.1"
       },
       "react": {
         "@react-router/dev": "^8.5.0",

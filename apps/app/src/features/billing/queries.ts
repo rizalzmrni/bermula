@@ -36,7 +36,7 @@ const PAYMENT_POLL_INTERVAL_MS = 3000;
  * `useQuery`, bukan suspense: loader hanya mencoba prefetch, jadi bila api
  * sedang gagal halaman tetap tampil dengan state error + coba lagi.
  *
- * `awaitingPayment`: baru kembali dari Checkout. Webhook Stripe bisa tiba
+ * `awaitingPayment`: baru kembali dari Checkout. Webhook Polar bisa tiba
  * beberapa detik setelah redirect, jadi data diambil ulang sampai paket berubah.
  */
 export const useBillingOverview = ({

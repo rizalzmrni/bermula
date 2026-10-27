@@ -48,7 +48,7 @@ export const loader = async ({ request, context }: Route.LoaderArgs) => {
   return { dehydratedState: dehydrate(queryClient) };
 };
 
-/** Berhasil: redirect ke halaman Stripe (Checkout/Portal). Gagal: pesan untuk form. */
+/** Berhasil: redirect ke halaman Polar (Checkout/Portal). Gagal: pesan untuk form. */
 export const action = async ({ request, context }: Route.ActionArgs) => {
   await requireSession({ context, request });
 

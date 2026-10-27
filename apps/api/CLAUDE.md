@@ -79,8 +79,9 @@ atau binding R2 langsung.
 ## Email & pembayaran
 
 - Panggil fungsi kirim dari `packages/email`; jangan membangun HTML email di sini.
-- Route webhook Stripe hanya meneruskan body mentah + header ke
-  `packages/payments` (lihat `packages/payments/CLAUDE.md`).
+- Route webhook Polar hanya meneruskan body mentah + header ke
+  `packages/payments` (lihat `packages/payments/CLAUDE.md`). Webhook dikecualikan
+  dari rate limit per IP, termasuk bila kelak dilayani di bawah `/api/auth/*`.
 
 ## Testing
 
@@ -96,7 +97,7 @@ atau binding R2 langsung.
   `exports.default.fetch(...)`.
 - Binding uji (env palsu) ada di `vitest.config.ts`, bukan `.dev.vars`, agar test
   tidak pernah menyambung ke DB atau layanan nyata. Stub layanan eksternal
-  (Stripe, Resend, PostHog); jangan memanggil jaringan nyata.
+  (Polar, Resend, PostHog); jangan memanggil jaringan nyata.
 - Request pertama di workerd lambat (±5 detik, Vite mentransformasi modul),
   jadi file test melakukan request pemanasan di `beforeAll`. Rate limit diuji
   dengan `cf-connecting-ip` berbeda per test agar hitungan tidak saling bocor.
