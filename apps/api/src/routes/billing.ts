@@ -17,13 +17,13 @@ const PlanSchema = paidPlanSchema.openapi({ example: PLAN.pro });
 const BillingOverviewSchema = z
   .object({
     billingEnabled: z.boolean().openapi({
-      description: "`false` bila Stripe belum dikonfigurasi di server.",
+      description: "`false` bila Polar belum dikonfigurasi di server.",
     }),
     canManage: z.boolean().openapi({
       description: "Pengguna boleh membuka Checkout/Portal (owner atau admin).",
     }),
     hasBillingAccount: z.boolean().openapi({
-      description: "Organisasi sudah punya customer Stripe (Portal tersedia).",
+      description: "Organisasi sudah punya customer Polar (Portal tersedia).",
     }),
     plan: z.enum([PLAN.free, PLAN.pro, PLAN.business]).openapi({
       description: "Paket yang berlaku untuk otorisasi fitur.",
@@ -37,7 +37,7 @@ const BillingOverviewSchema = z
         currentPeriodEnd: z.iso.datetime().nullable(),
         plan: PlanSchema,
         status: z.string().openapi({
-          description: "Status Stripe apa adanya.",
+          description: "Status Polar apa adanya.",
           example: SUBSCRIPTION_STATUS.active,
         }),
       })
@@ -55,7 +55,7 @@ const CheckoutRequestSchema = z
 
 const RedirectSchema = z
   .object({
-    url: z.url().openapi({ description: "Arahkan browser ke URL Stripe ini." }),
+    url: z.url().openapi({ description: "Arahkan browser ke URL Polar ini." }),
   })
   .openapi("BillingRedirect");
 
@@ -75,7 +75,7 @@ const shared = {
 const getOverviewRoute = createRoute({
   ...shared,
   description:
-    "Paket dan langganan organisasi aktif, dibaca dari Postgres (disinkronkan webhook Stripe). Bisa dibaca semua anggota.",
+    "Paket dan langganan organisasi aktif, dibaca dari Postgres (disinkronkan webhook Polar). Bisa dibaca semua anggota.",
   method: "get",
   middleware: [requireAuth] as const,
   path: "/api/billing/subscription",
@@ -92,7 +92,7 @@ const getOverviewRoute = createRoute({
 const createCheckoutRoute = createRoute({
   ...shared,
   description:
-    "Membuat sesi Stripe Checkout untuk paket berbayar. Setelah bayar, Stripe mengarahkan kembali ke `/settings/billing?checkout=success`; status langganan diperbarui oleh webhook.",
+    "Membuat sesi Polar Checkout untuk paket berbayar. Mata uang dan pajak dipilih Polar dari IP pengguna (`cf-connecting-ip`). Setelah bayar, Polar mengarahkan kembali ke `/settings/billing?checkout=success`; status langganan diperbarui oleh webhook.",
   method: "post",
   middleware: [requireAuth] as const,
   path: "/api/billing/checkout-sessions",
@@ -112,7 +112,7 @@ const createCheckoutRoute = createRoute({
       "Organisasi sudah berlangganan (`ALREADY_SUBSCRIBED`); ubah paket lewat Portal."
     ),
     503: errorResponse(
-      "Stripe belum dikonfigurasi (`BILLING_NOT_CONFIGURED`) atau Price paket belum ada (`PRICE_NOT_CONFIGURED`)."
+      "Polar belum dikonfigurasi (`BILLING_NOT_CONFIGURED`) atau produk paket belum ada (`PRICE_NOT_CONFIGURED`)."
     ),
     ...COMMON_ERRORS,
   },
@@ -122,24 +122,22 @@ const createCheckoutRoute = createRoute({
 const createPortalRoute = createRoute({
   ...shared,
   description:
-    "Membuat sesi Stripe Billing Portal untuk mengganti paket, metode pembayaran, atau membatalkan langganan.",
+    "Membuat sesi Polar Customer Portal untuk mengganti paket, metode pembayaran, atau membatalkan langganan.",
   method: "post",
   middleware: [requireAuth] as const,
   path: "/api/billing/portal-sessions",
   responses: {
     201: {
       content: { "application/json": { schema: RedirectSchema } },
-      description: "URL Billing Portal.",
+      description: "URL Customer Portal.",
     },
     409: errorResponse(
       "Organisasi belum punya akun tagihan (`NO_BILLING_ACCOUNT`)."
     ),
-    503: errorResponse(
-      "Stripe belum dikonfigurasi (`BILLING_NOT_CONFIGURED`)."
-    ),
+    503: errorResponse("Polar belum dikonfigurasi (`BILLING_NOT_CONFIGURED`)."),
     ...COMMON_ERRORS,
   },
-  summary: "Buka Billing Portal",
+  summary: "Buka Customer Portal",
 });
 
 export const billingRoutes = createRouter()
@@ -155,6 +153,8 @@ export const billingRoutes = createRouter()
   .openapi(createCheckoutRoute, async (c) => {
     const session = await createCheckoutSession({
       appUrl: c.var.env.APP_URL,
+      // Diteruskan apps/app dari request browser asli lewat Service Binding.
+      customerIpAddress: c.req.header("cf-connecting-ip"),
       db: c.var.db,
       organizationId: c.var.organizationId,
       payments: requirePayments(c.var.payments),

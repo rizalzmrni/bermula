@@ -5,8 +5,8 @@ import { formatCurrency } from "./format";
 /**
  * Katalog paket langganan: satu sumber untuk halaman harga (apps/web), halaman
  * tagihan (apps/app), dan api (checkout & otorisasi fitur). Harga yang ditagih
- * tetap milik Stripe; `monthlyPrice` di sini hanya untuk tampilan dan wajib
- * disamakan dengan Price di Stripe (dicari lewat `lookup_key`).
+ * tetap milik Polar; `monthlyPrice` di sini hanya untuk tampilan dan wajib
+ * disamakan dengan harga produk di Polar (dicari lewat metadata `plan`).
  */
 
 export const PLAN = {
@@ -17,7 +17,7 @@ export const PLAN = {
 
 export type PlanId = (typeof PLAN)[keyof typeof PLAN];
 
-/** Paket yang dibeli lewat Stripe Checkout; `free` tidak punya Price. */
+/** Paket yang dibeli lewat Polar Checkout; `free` tidak punya produk. */
 export const PAID_PLANS = [PLAN.pro, PLAN.business] as const;
 
 export type PaidPlanId = (typeof PAID_PLANS)[number];
@@ -35,7 +35,7 @@ export interface PlanDefinition {
   highlighted?: boolean;
 }
 
-/** Contoh isi; sesuaikan dengan produk Anda (dan Price di Stripe). */
+/** Contoh isi; sesuaikan dengan produk Anda (dan produk di Polar). */
 export const PLANS: readonly PlanDefinition[] = [
   {
     description: "Untuk mencoba dan proyek pribadi.",
@@ -83,22 +83,16 @@ export const getPlan = (id: PlanId): PlanDefinition => {
 export const formatPlanPrice = (monthlyPrice: number) =>
   monthlyPrice === 0 ? "Gratis" : formatCurrency(monthlyPrice);
 
-const LOOKUP_KEY_SUFFIX = "_monthly";
-
 /**
- * `lookup_key` Price di Stripe untuk satu paket, mis. `pro_monthly`. Dengan
- * lookup key, ID Price tidak perlu disimpan di env per lingkungan.
+ * Paket berbayar dari nilai bebas (mis. metadata produk Polar), atau `null`
+ * bila bukan paket yang dikenal.
  */
-export const toStripeLookupKey = (plan: PaidPlanId) =>
-  `${plan}${LOOKUP_KEY_SUFFIX}`;
+export const toPaidPlan = (value: unknown): PaidPlanId | null => {
+  const parsed = paidPlanSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
+};
 
-/** Kebalikan `toStripeLookupKey`; `null` untuk Price yang tidak dikenal. */
-export const fromStripeLookupKey = (
-  lookupKey: string | null | undefined
-): PaidPlanId | null =>
-  PAID_PLANS.find((plan) => toStripeLookupKey(plan) === lookupKey) ?? null;
-
-/** Status langganan Stripe yang dipakai di aplikasi. */
+/** Status langganan Polar yang dipakai di aplikasi. */
 export const SUBSCRIPTION_STATUS = {
   active: "active",
   canceled: "canceled",
@@ -114,9 +108,9 @@ export type SubscriptionStatus =
   (typeof SUBSCRIPTION_STATUS)[keyof typeof SUBSCRIPTION_STATUS];
 
 /**
- * Status yang tetap mendapat fitur paket. `past_due` ikut: Stripe masih
+ * Status yang tetap mendapat fitur paket. `past_due` ikut: Polar masih
  * mencoba menagih ulang, dan memutus akses saat itu terlalu agresif. Bila
- * semua percobaan gagal, Stripe mengubah status ke `unpaid`/`canceled`.
+ * semua percobaan gagal, Polar mengubah status ke `unpaid`/`canceled`.
  */
 const ENTITLED_STATUSES: ReadonlySet<string> = new Set([
   SUBSCRIPTION_STATUS.active,

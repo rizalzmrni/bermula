@@ -38,7 +38,7 @@ const STATUS_LABELS = {
 const isKnownStatus = (status: string): status is SubscriptionStatus =>
   Object.hasOwn(STATUS_LABELS, status);
 
-/** Label status Stripe; status baru dari Stripe tampil apa adanya. */
+/** Label status Polar; status baru dari Polar tampil apa adanya. */
 export const getSubscriptionStatusLabel = (status: string): StatusLabel =>
   isKnownStatus(status)
     ? STATUS_LABELS[status]

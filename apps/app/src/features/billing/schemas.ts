@@ -15,7 +15,7 @@ export const billingActionSchema = z.discriminatedUnion("intent", [
   z.object({ intent: z.literal(BILLING_INTENT.portal) }),
 ]);
 
-/** Query `?checkout=` saat Stripe mengarahkan kembali ke halaman tagihan. */
+/** Query `?checkout=` saat Polar mengarahkan kembali ke halaman tagihan. */
 export const CHECKOUT_RESULT = {
   cancel: "cancel",
   success: "success",

@@ -11,7 +11,7 @@ type RateLimitBinding = "AUTH_RATE_LIMIT" | "API_RATE_LIMIT";
  * isolate, tidak seperti penghitung di memori. Batas & periode diatur di
  * `wrangler.jsonc`.
  *
- * `exceptPrefixes` untuk pemanggil server-ke-server (mis. webhook Stripe) yang
+ * `exceptPrefixes` untuk pemanggil server-ke-server (mis. webhook Polar) yang
  * datang dari sedikit IP bersama dan diautentikasi dengan signature.
  */
 export const rateLimit = (

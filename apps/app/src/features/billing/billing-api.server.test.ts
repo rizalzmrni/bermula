@@ -26,10 +26,10 @@ const apiError = (status: number, code: string, message: string) =>
   Response.json({ error: { code, message } }, { status });
 
 describe(startCheckout, () => {
-  it("posts the plan with the session cookie and returns the Stripe URL", async () => {
+  it("posts the plan with the session cookie and returns the Polar URL", async () => {
     const { client, requests } = createClient(
       Response.json(
-        { url: "https://checkout.stripe.test/cs_1" },
+        { url: "https://checkout.polar.test/co_1" },
         { status: 201 }
       )
     );
@@ -37,7 +37,7 @@ describe(startCheckout, () => {
     const result = await startCheckout({ client, plan: "pro" });
 
     const [sent] = requests;
-    expect(result).toStrictEqual({ url: "https://checkout.stripe.test/cs_1" });
+    expect(result).toStrictEqual({ url: "https://checkout.polar.test/co_1" });
     expect(new URL(sent?.url ?? "").pathname).toBe(
       "/api/billing/checkout-sessions"
     );
@@ -59,11 +59,11 @@ describe(startCheckout, () => {
 describe(openBillingPortal, () => {
   it("returns the portal URL", async () => {
     const { client, requests } = createClient(
-      Response.json({ url: "https://portal.stripe.test/s_1" }, { status: 201 })
+      Response.json({ url: "https://portal.polar.test/s_1" }, { status: 201 })
     );
 
     await expect(openBillingPortal({ client })).resolves.toStrictEqual({
-      url: "https://portal.stripe.test/s_1",
+      url: "https://portal.polar.test/s_1",
     });
     expect(new URL(requests[0]?.url ?? "").pathname).toBe(
       "/api/billing/portal-sessions"

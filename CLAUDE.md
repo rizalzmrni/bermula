@@ -90,24 +90,22 @@ lokasi catalog) dan menunggu persetujuan.
 
 Keputusan yang sudah ditetapkan. Jangan menyimpang tanpa persetujuan.
 
-| Topik                       | Keputusan                                                                                                                                                                                         | Detail                        |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
-| Data fetching halaman       | Loader melakukan auth gate + prefetch ke QueryClient (`ensureQueryData`), lalu di-dehydrate; komponen memakai `useQuery` dengan query key yang sama. Mutasi lewat `useMutation` + invalidasi key. | `docs/react-router.md`        |
-| app/web → api saat SSR      | **Service Binding** `API` (bukan URL publik); cookie sesi diteruskan dari request asli.                                                                                                           | `docs/react-router.md`        |
-| Cek sesi di app             | Lewat api (`/api/auth/get-session` via Service Binding). `apps/app` dan `apps/web` **tidak** mengakses DB atau mengimpor konfigurasi server better-auth.                                          | `docs/react-router.md`        |
-| Template & pengiriman email | Template + fungsi kirim di `packages/email`; `apps/email` hanya server preview; `apps/api` yang memanggil fungsi kirim.                                                                           | —                             |
-| Analitik server             | PostHog dari Worker lewat HTTP capture API dengan `fetch` (tanpa SDK Node); `posthog-js` hanya di browser.                                                                                        | `apps/api/CLAUDE.md`          |
-| Rate limiting               | Binding Rate Limiting Workers, bukan state in-memory.                                                                                                                                             | `apps/api/CLAUDE.md`          |
-| Driver DB                   | `neon-http` untuk query biasa; `neon-serverless` (Pool per request) bila butuh transaksi.                                                                                                         | `packages/db/CLAUDE.md`       |
-| Scoping data                | Per-organisasi: plugin organization better-auth; tabel data pengguna memakai `organization_id` dari organisasi aktif di sesi.                                                                     | `packages/db/CLAUDE.md`       |
-| Pembayaran                  | Polar sebagai Merchant of Record; pembayar = organisasi (owner/admin). Checkout & Customer Portal di halaman Polar. Status langganan disalin ke Postgres lewat webhook.                           | `packages/payments/CLAUDE.md` |
+| Topik                       | Keputusan                                                                                                                                                                                                                         | Detail                        |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| Data fetching halaman       | Loader melakukan auth gate + prefetch ke QueryClient (`ensureQueryData`), lalu di-dehydrate; komponen memakai `useQuery` dengan query key yang sama. Mutasi lewat `useMutation` + invalidasi key.                                 | `docs/react-router.md`        |
+| app/web → api saat SSR      | **Service Binding** `API` (bukan URL publik); cookie sesi diteruskan dari request asli.                                                                                                                                           | `docs/react-router.md`        |
+| Cek sesi di app             | Lewat api (`/api/auth/get-session` via Service Binding). `apps/app` dan `apps/web` **tidak** mengakses DB atau mengimpor konfigurasi server better-auth.                                                                          | `docs/react-router.md`        |
+| Template & pengiriman email | Template + fungsi kirim di `packages/email`; `apps/email` hanya server preview; `apps/api` yang memanggil fungsi kirim.                                                                                                           | —                             |
+| Analitik server             | PostHog dari Worker lewat HTTP capture API dengan `fetch` (tanpa SDK Node); `posthog-js` hanya di browser.                                                                                                                        | `apps/api/CLAUDE.md`          |
+| Rate limiting               | Binding Rate Limiting Workers, bukan state in-memory.                                                                                                                                                                             | `apps/api/CLAUDE.md`          |
+| Driver DB                   | `neon-http` untuk query biasa; `neon-serverless` (Pool per request) bila butuh transaksi.                                                                                                                                         | `packages/db/CLAUDE.md`       |
+| Scoping data                | Per-organisasi: plugin organization better-auth; tabel data pengguna memakai `organization_id` dari organisasi aktif di sesi.                                                                                                     | `packages/db/CLAUDE.md`       |
+| Pembayaran                  | Polar sebagai Merchant of Record lewat `@polar-sh/sdk` langsung (bukan plugin better-auth); pembayar = organisasi (owner/admin). Checkout & Customer Portal di halaman Polar. Status langganan disalin ke Postgres lewat webhook. | `packages/payments/CLAUDE.md` |
 
 **Keputusan tertunda** (dicatat di `STATUS.md`): bila tugas menyentuhnya,
 **berhenti dan tanyakan**, jangan memilih sendiri.
 
 - **Domain produksi:** semua URL/origin dari env sampai ditetapkan.
-- **Pendekatan integrasi Polar:** plugin `@polar-sh/better-auth` atau SDK
-  `@polar-sh/sdk` langsung di `packages/payments`.
 
 ## Dependensi (ringkas)
 

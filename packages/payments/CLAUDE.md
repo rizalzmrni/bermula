@@ -3,10 +3,8 @@
 Aturan root `CLAUDE.md` tetap berlaku. Semua pekerjaan di paket ini termasuk
 tugas **berisiko**: tulis rencana dan tunggu persetujuan.
 
-> Kode saat ini masih memakai Stripe dan sedang dimigrasikan ke Polar (lihat
-> `STATUS.md`). Pendekatan integrasi (plugin `@polar-sh/better-auth` atau SDK
-> langsung) masih **keputusan tertunda**: bila tugas menyentuhnya, berhenti dan
-> tanyakan.
+> Pendekatan integrasi (diputuskan 2026-10-27): SDK `@polar-sh/sdk` langsung
+> di balik `PaymentGateway`, **bukan** plugin `@polar-sh/better-auth`.
 
 ## Model
 
@@ -24,8 +22,11 @@ tugas **berisiko**: tulis rencana dan tunggu persetujuan.
 ## Klien
 
 - Pakai `@polar-sh/sdk` dengan klien core (`createPolarCore`) dan fungsi
-  standalone per operasi, agar bundle Worker tetap kecil. Cek API versi
-  terpasang di dokumentasi resmi Polar.
+  standalone per operasi dari `@polar-sh/sdk/<versi-api>/services/<layanan>`,
+  agar bundle Worker tetap kecil. Versi API dipilih lewat path impor (saat ini
+  `2026-10`); field request/response memakai `snake_case`. Cek signature di
+  type definition paket terpasang (paket juga membawa skill
+  `.agents/skills/polar-typescript-sdk`), jangan menebak.
 - Buat klien **per request** dari secret di binding (`c.env`), bukan saat modul
   dimuat.
 - Lingkungan `sandbox` dan `production` terpisah total (token, produk, webhook).
@@ -43,11 +44,15 @@ tugas **berisiko**: tulis rencana dan tunggu persetujuan.
   limit per IP; keamanannya dari signature. Tetap dokumentasikan di OpenAPI.
 - Signature salah → 403. Tipe event yang tidak dikenal → 2xx agar tidak dikirim
   ulang.
-- Handler idempoten: Polar mengirim ulang hingga 10 kali. Ambil ulang state
-  langganan dari Polar lalu upsert; jangan mengandalkan urutan event.
-- Polar memutus request setelah 10 detik dan menonaktifkan endpoint setelah 10
-  kegagalan beruntun. Pekerjaan di webhook harus singkat (satu panggilan Polar +
-  upsert).
+- Handler idempoten: Polar mengirim ulang pengiriman yang gagal dengan header
+  `webhook-id` yang sama; catat ID itu setelah sync berhasil. Jangan
+  mengandalkan urutan event: upsert subscription dari payload hanya bila
+  `modified_at` lebih baru dari yang tersimpan.
+- Polar menyarankan balasan < 2 detik dan menonaktifkan endpoint setelah
+  kegagalan beruntun. Pekerjaan di webhook hanya query DB, tanpa panggilan ke
+  API Polar.
+- Organisasi dipetakan ke customer Polar lewat `external_id` (= ID
+  organisasi, diisi api saat Checkout); tetap cek ke DB bahwa organisasinya ada.
 - Data langganan disimpan di Postgres (sumber kebenaran untuk otorisasi fitur),
   disinkronkan dari webhook; jangan memanggil Polar di setiap request untuk
   mengecek status.
