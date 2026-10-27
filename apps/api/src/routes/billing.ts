@@ -122,7 +122,7 @@ const createCheckoutRoute = createRoute({
 const createPortalRoute = createRoute({
   ...shared,
   description:
-    "Membuat sesi Polar Customer Portal untuk mengganti paket, metode pembayaran, atau membatalkan langganan.",
+    "Membuat sesi Polar Customer Portal untuk mengganti paket, metode pembayaran, atau membatalkan langganan. Saat selesai, Polar mengarahkan kembali ke `/settings/billing?portal=return`; perubahannya tiba lewat webhook.",
   method: "post",
   middleware: [requireAuth] as const,
   path: "/api/billing/portal-sessions",

@@ -13,6 +13,7 @@ import {
   BILLING_INTENT,
   billingActionSchema,
   readCheckoutResult,
+  readPortalReturn,
 } from "../features/billing/schemas";
 import { createApiClient } from "../lib/api-client";
 import { getCloudflare } from "../lib/cloudflare";
@@ -87,7 +88,10 @@ const BillingSettingsPage = ({ loaderData }: Route.ComponentProps) => {
             Paket langganan dan pembayaran organisasi Anda.
           </p>
         </div>
-        <BillingSection checkoutResult={checkoutResult} />
+        <BillingSection
+          checkoutResult={checkoutResult}
+          portalReturn={readPortalReturn(searchParams)}
+        />
       </div>
     </HydrationBoundary>
   );
