@@ -70,8 +70,7 @@ Uji lokal dengan Polar Sandbox:
 1. Di https://sandbox.polar.sh buat organisasi, lalu **Organization Access
    Token** dengan scope `products:read`, `checkouts:write`,
    `customer_sessions:write` → `POLAR_ACCESS_TOKEN` (biarkan `POLAR_SERVER`
-   kosong = `sandbox`). Bila pembuatan Checkout ditolak 401/403, tambahkan
-   `customers:write`.
+   kosong = `sandbox`). `customers:write` tidak dibutuhkan (diuji 2026-10-28).
 2. Buat produk langganan bulanan untuk paket berbayar di `PLANS`
    (`@bermula/core/plans`) dengan metadata `plan` = `pro` / `business`.
    Samakan harga dengan `monthlyPrice` (tampilan di app/web).
