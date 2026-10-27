@@ -21,7 +21,7 @@ sebelum `packages/storage`.
 | 4    | `packages/design-system`, `apps/storybook`, `apps/app`, `apps/web`                                      | ✅     |
 | 5    | `packages/email` + `apps/email`, `packages/storage`                                                     | ✅     |
 | 6    | `packages/payments` (Stripe + webhook) ✅, `packages/analytics` ✅, `packages/seo` (✅ lebih awal)      | ✅     |
-| 7    | CI/CD dan deploy                                                                                        | ⏳     |
+| 7    | CI/CD dan deploy (CI GitHub Actions ✅, deploy ⏳ menunggu domain)                                      | 🚧     |
 
 Status: ⏳ belum · 🚧 sedang · ✅ selesai
 
@@ -121,6 +121,8 @@ Bila tugas menyentuh salah satunya: berhenti dan tanyakan.
 
 - 2026-10-26 — **Analitik dengan persetujuan opt-in** (disetujui developer): tidak ada script analitik sebelum "Terima" (termasuk tanpa Consent Mode GA). PostHog di `apps/web` + `apps/app`, GA hanya di `apps/web`. `posthog-js` ^1.438.21 di catalog `services`. Cookie persetujuan per origin, jadi web dan app menanyakan terpisah. `apps/app` mendapat `VITE_WEB_URL` (wajib) untuk tautan kebijakan privasi.
 
+- 2026-10-27 — **CI di GitHub Actions** (disetujui developer): satu job `ubuntu-latest` menjalankan `bun install --frozen-lockfile`, `check-types`, `check`, `test` pada PR dan push ke `main`; Node 24 + bun 1.4.3 (samakan dengan `devEngines` bila bun di-upgrade); cache bun & `.turbo/cache`; tanpa secret. Gratis tanpa batas menit selama repo public dan memakai runner standar. Deploy otomatis ditunda sampai domain produksi diputuskan.
+
 ## Hal yang perlu diverifikasi
 
 - **Tagihan Stripe belum diuji end-to-end** (butuh akun Stripe test mode, Price dengan lookup key `pro_monthly`/`business_monthly`, Customer Portal aktif, Stripe CLI, dan migrasi `20261025152548_billing` diterapkan ke Neon dev). Langkah di `apps/api/README.md` bagian "Tagihan". Yang sudah teruji: service dengan PGlite + gateway palsu, verifikasi signature di workerd, helper action app.
@@ -165,3 +167,4 @@ Sudah terverifikasi (2026-10-21): `ultracite init` menambah blok sendiri ke `AGE
 - Base UI Select tidak bisa dipilih lewat event sintetis di happy-dom (klik, pointer, keyboard); test `packages/data` mengisi nilainya lewat state form. Pemilihan Select lewat UI belum teruji di browser; cek saat form pertama yang memakainya dibuat.
 - Security page: hasil action (QR, kode cadangan) hanya dibaca lewat `useFetcher`, jadi alur aktivasi 2FA butuh JavaScript (sudah begitu sejak awal).
 - `pre-commit` menjalankan `turbo run check-types --affected` yang membandingkan `main...HEAD`; saat commit langsung di `main` cakupannya bisa kosong, jadi `pre-push`/CI tetap menjalankan check penuh.
+- CI (`.github/workflows/ci.yml`) belum menjadi syarat merge: aktifkan branch protection/ruleset di `main` dengan status check "Type-check, lint, test" (Settings → Rules) setelah run pertama hijau.
