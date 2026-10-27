@@ -14,6 +14,7 @@
     "build:types": "tsc -p tsconfig.types.json",
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
+    "deploy:staging": "wrangler deploy --env staging",
     "typegen": "wrangler types --env-file .dev.vars.example",
     "check-types": "tsc --noEmit",
     "test": "vitest run"

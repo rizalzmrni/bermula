@@ -49,6 +49,7 @@ tanpa menyentuh fitur.
   di `r2-cors.dev.json` (hanya `GET` presigned & `PUT` upload + header
   `content-type`), diterapkan dengan
   `bunx wrangler r2 bucket cors set <R2_BUCKET_NAME> --file r2-cors.dev.json`.
+  Staging memakai `r2-cors.staging.json` untuk bucket `bermula-files-staging`.
   Origin produksi dibuat file terpisah setelah domain diputuskan.
 
 ## Modul

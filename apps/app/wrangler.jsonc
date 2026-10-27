@@ -11,4 +11,11 @@
   // Vite menyambung ke Worker api lewat dev registry wrangler.
   "services": [{ "binding": "API", "service": "bermula-api" }],
   // Domain/route produksi belum ditetapkan (keputusan tertunda di STATUS.md).
+  "env": {
+    // Staging di workers.dev: dipilih saat build lewat `CLOUDFLARE_ENV=staging`
+    // (skrip `build:staging`). `services` tidak diwarisi, jadi ditulis ulang.
+    "staging": {
+      "services": [{ "binding": "API", "service": "bermula-api-staging" }],
+    },
+  },
 }
