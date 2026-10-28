@@ -6,18 +6,26 @@ import {
   IconCookie,
   IconCreditCard,
   IconHome,
+  IconSettings,
   IconShieldLock,
+  IconUsers,
 } from "@tabler/icons-react";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { Outlet } from "react-router";
+import { Outlet, useParams } from "react-router";
 
 import { useAccount } from "../features/account/queries";
 import { UserMenu } from "../features/auth/user-menu";
+import { OrganizationSwitcher } from "../features/organizations/organization-switcher";
+import {
+  organizationsQueryOptions,
+  useOrganizations,
+} from "../features/organizations/queries";
 import { getQueryClient } from "../lib/query-client";
-import { requireSession } from "../lib/session.server";
+import { getServerApiClient, requireSession } from "../lib/session.server";
 import type { Route } from "./+types/app-layout";
 
-const NAVIGATION: NavGroup[] = [
+/** Menu dashboard pribadi (`/`): data dan pengaturan milik pengguna sendiri. */
+const PERSONAL_NAVIGATION: NavGroup[] = [
   { items: [{ href: "/", icon: IconHome, title: "Beranda" }], title: "Menu" },
   {
     items: [
@@ -29,6 +37,21 @@ const NAVIGATION: NavGroup[] = [
   },
 ];
 
+/** Menu dashboard organisasi (`/o/:slug`); konteksnya dari URL, bukan sesi. */
+const getOrganizationNavigation = (slug: string): NavGroup[] => {
+  const base = `/o/${slug}`;
+  return [
+    {
+      items: [
+        { end: true, href: base, icon: IconHome, title: "Beranda" },
+        { href: `${base}/members`, icon: IconUsers, title: "Anggota" },
+        { href: `${base}/settings`, icon: IconSettings, title: "Pengaturan" },
+      ],
+      title: "Organisasi",
+    },
+  ];
+};
+
 /**
  * Auth gate + prefetch akun untuk semua halaman terproteksi. Akun dikirim
  * sebagai state TanStack Query (bukan field loader), lalu dibaca halaman
@@ -37,6 +60,11 @@ const NAVIGATION: NavGroup[] = [
  */
 export const loader = async ({ request, context }: Route.LoaderArgs) => {
   await requireSession({ context, request });
+  // Untuk pemilih organisasi; `prefetchQuery` tidak melempar, jadi bila api
+  // gagal, sidebar tetap tampil dengan state error di pemilih.
+  await getQueryClient(context).prefetchQuery(
+    organizationsQueryOptions(getServerApiClient({ context, request }))
+  );
   return {
     dehydratedState: dehydrate(getQueryClient(context)),
     sidebarOpen: readSidebarOpen(request.headers.get("Cookie")),
@@ -45,28 +73,46 @@ export const loader = async ({ request, context }: Route.LoaderArgs) => {
 
 const AccountUserMenu = () => <UserMenu user={useAccount().user} />;
 
-/** Event PostHog terkait pengguna & organisasi aktif (bila disetujui). */
-const AccountAnalytics = () => {
-  const { organization, user } = useAccount();
+const AccountSwitcher = ({ slug }: { slug: string | undefined }) => (
+  <OrganizationSwitcher currentSlug={slug} user={useAccount().user} />
+);
+
+/**
+ * Event PostHog terkait pengguna, dan organisasi yang sedang dibuka di URL
+ * (bila disetujui). Di dashboard pribadi event tidak dikelompokkan ke organisasi.
+ */
+const AccountAnalytics = ({ slug }: { slug: string | undefined }) => {
+  const { user } = useAccount();
+  const organization = useOrganizations().data?.find(
+    (item) => item.slug === slug
+  );
   return (
     <AnalyticsIdentify
-      organization={{ id: organization.id, name: organization.name }}
+      organization={
+        organization ? { id: organization.id, name: organization.name } : null
+      }
       userId={user.id}
     />
   );
 };
 
-const AppLayout = ({ loaderData }: Route.ComponentProps) => (
-  <HydrationBoundary state={loaderData.dehydratedState}>
-    <AppShell
-      defaultOpen={loaderData.sidebarOpen}
-      groups={NAVIGATION}
-      sidebarFooter={<AccountUserMenu />}
-    >
-      <AccountAnalytics />
-      <Outlet />
-    </AppShell>
-  </HydrationBoundary>
-);
+const AppLayout = ({ loaderData }: Route.ComponentProps) => {
+  // `/o/:slug/*` = dashboard organisasi; selain itu dashboard pribadi.
+  const { slug } = useParams();
+
+  return (
+    <HydrationBoundary state={loaderData.dehydratedState}>
+      <AppShell
+        defaultOpen={loaderData.sidebarOpen}
+        groups={slug ? getOrganizationNavigation(slug) : PERSONAL_NAVIGATION}
+        sidebarFooter={<AccountUserMenu />}
+        sidebarHeader={<AccountSwitcher slug={slug} />}
+      >
+        <AccountAnalytics slug={slug} />
+        <Outlet />
+      </AppShell>
+    </HydrationBoundary>
+  );
+};
 
 export default AppLayout;

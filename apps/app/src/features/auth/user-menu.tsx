@@ -18,17 +18,11 @@ import {
 import { IconLogout, IconSelector } from "@tabler/icons-react";
 import { useSubmit } from "react-router";
 
+import { getInitials } from "../../lib/initials";
+
 interface UserMenuProps {
   user: { name: string; email: string; image: string | null };
 }
-
-const getInitials = (name: string) =>
-  name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part.charAt(0).toUpperCase())
-    .join("");
 
 /** Menu pengguna di footer sidebar: identitas + keluar. */
 export const UserMenu = ({ user }: UserMenuProps) => {
