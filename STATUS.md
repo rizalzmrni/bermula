@@ -22,6 +22,7 @@ sebelum `packages/storage`.
 | 5    | `packages/email` + `apps/email`, `packages/storage`                                                     | ✅     |
 | 6    | `packages/payments` (Polar + webhook) 🚧, `packages/analytics` ✅, `packages/seo` (✅ lebih awal)       | 🚧     |
 | 7    | CI/CD dan deploy (CI GitHub Actions ✅, staging `workers.dev` ✅, produksi ⏳ menunggu domain)          | 🚧     |
+| 8    | Dashboard pengguna & organisasi terpisah (`docs/user-organization-dashboards.md`, fase A–D)             | ⏳     |
 
 Status: ⏳ belum · 🚧 sedang · ✅ selesai
 
@@ -53,9 +54,10 @@ Status: ⏳ belum · 🚧 sedang · ✅ selesai
 
 Bila tugas menyentuh salah satunya: berhenti dan tanyakan.
 
-| Topik           | Opsi | Batas waktu                     |
-| --------------- | ---- | ------------------------------- |
-| Domain produksi | —    | Sebelum deploy pertama (Fase 7) |
+| Topik                                                                                                                                                         | Opsi                                                                             | Batas waktu                     |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------- |
+| Domain produksi                                                                                                                                               | —                                                                                | Sebelum deploy pertama (Fase 7) |
+| Dashboard pengguna & organisasi terpisah (pembayar = pengguna, subjek langganan = pengguna/organisasi, hapus organisasi pribadi, scoping organisasi dari URL) | Rencana di `docs/user-organization-dashboards.md`, termasuk 3 pertanyaan terbuka | Sebelum deploy produksi         |
 
 ## Keputusan yang sudah diambil
 
@@ -158,6 +160,7 @@ Sudah terverifikasi (2026-10-21): `ultracite init` menambah blok sendiri ke `AGE
 - Dev: StrictMode membuat page view pertama GA tercatat dua kali (hanya development).
 - `billing_webhook_events` bertambah terus; kelak bisa dipangkas (mis. >90 hari) lewat Cron Trigger yang sudah ada.
 - Polar (lewat Stripe) kemungkinan hanya menerima kartu dan wallet; QRIS, VA, dan e-wallet lokal tidak tersedia. Bila pelanggan Indonesia membutuhkannya, tambahkan penyedia lokal (mis. Xendit) di balik `PaymentGateway`.
+- **Belum ada UI organisasi** di `apps/app` (buat, pindah, anggota, undangan); tautan email undangan `/accept-invitation/<id>` masih 404. Dicakup fase A rencana dashboard terpisah.
 - Batas fitur per paket (anggota, kuota storage) belum ditegakkan; `resolveEffectivePlan` sudah tersedia untuk itu.
 
 - Preset base tanpa DOM/`types` berarti global Web seperti `URL`/`fetch` tidak tersedia di paket murni; paket yang butuh harus menambah lib/tipe runtime-nya secara eksplisit.
