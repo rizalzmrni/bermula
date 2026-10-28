@@ -10,9 +10,15 @@ tugas **berisiko**: tulis rencana dan tunggu persetujuan.
 
 - Polar adalah **Merchant of Record**: Polar yang menjual ke pelanggan dan
   mengurus pajak penjualan internasional; kita menerima payout.
-- **Pembayar = organisasi**, bukan pengguna. Hanya owner/admin organisasi yang
-  boleh membuka Checkout atau Customer Portal; otorisasi dicek di server, tidak
+- **Pembayar = pengguna, subjek = pengguna atau organisasi** (diputuskan
+  2026-10-28, menggantikan "pembayar = organisasi"; diterapkan di fase C
+  `docs/user-organization-dashboards.md`). Customer Polar = pengguna
+  (`external_customer_id` = `user.id`); subjek langganan dikirim lewat
+  `metadata` Checkout (`subject_type`, `subject_id`). Hanya owner/admin yang
+  boleh membuka Checkout untuk organisasi; otorisasi dicek di server, tidak
   pernah mempercayai ID organisasi dari klien tanpa memeriksa keanggotaan.
+- `allow_multiple_subscriptions` harus aktif di organisasi Polar (Sandbox dan
+  Production disetel terpisah) agar satu pengguna bisa membayar beberapa subjek.
 - Checkout dan Customer Portal memakai halaman Polar; tidak ada form kartu di app.
 - Harga multi-mata uang (IDR untuk Indonesia, USD default) diatur per produk di
   Polar. Mata uang dipilih Polar dari lokasi pelanggan, jadi saat membuat
@@ -51,8 +57,10 @@ tugas **berisiko**: tulis rencana dan tunggu persetujuan.
 - Polar menyarankan balasan < 2 detik dan menonaktifkan endpoint setelah
   kegagalan beruntun. Pekerjaan di webhook hanya query DB, tanpa panggilan ke
   API Polar.
-- Organisasi dipetakan ke customer Polar lewat `external_id` (= ID
-  organisasi, diisi api saat Checkout); tetap cek ke DB bahwa organisasinya ada.
+- Sampai fase C selesai, organisasi masih dipetakan ke customer Polar lewat
+  `external_id` (= ID organisasi). Setelahnya `external_id` = ID pengguna
+  (pembayar) dan subjek dibaca dari `subscription.metadata`; tetap cek ke DB
+  bahwa subjeknya ada.
 - Data langganan disimpan di Postgres (sumber kebenaran untuk otorisasi fitur),
   disinkronkan dari webhook; jangan memanggil Polar di setiap request untuk
   mengecek status.

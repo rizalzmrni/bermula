@@ -12,17 +12,17 @@ sebelum `packages/storage`.
 
 ## Roadmap
 
-| Fase | Isi                                                                                                               | Status |
-| ---- | ----------------------------------------------------------------------------------------------------------------- | ------ |
-| 0    | Root `package.json` + catalog, `turbo.json`, `packages/typescript-config`, Ultracite, Husky, commitlint           | ✅     |
-| 1    | `packages/env`, `packages/core`, `packages/observability`                                                         | ✅     |
-| 2    | `apps/api` (Hono + OpenAPI + Scalar), `packages/db`                                                               | ✅     |
-| 3    | `packages/auth` + better-auth di api, auth gate di `apps/app`                                                     | ✅     |
-| 4    | `packages/design-system`, `apps/storybook`, `apps/app`, `apps/web`                                                | ✅     |
-| 5    | `packages/email` + `apps/email`, `packages/storage`                                                               | ✅     |
-| 6    | `packages/payments` (Polar + webhook) 🚧, `packages/analytics` ✅, `packages/seo` (✅ lebih awal)                 | 🚧     |
-| 7    | CI/CD dan deploy (CI GitHub Actions ✅, staging `workers.dev` ✅, produksi ⏳ menunggu domain)                    | 🚧     |
-| 8    | Dashboard pengguna & organisasi terpisah (`docs/user-organization-dashboards.md`, fase A–D; A selesai 2026-10-28) | ⏳     |
+| Fase | Isi                                                                                                                                        | Status |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------ |
+| 0    | Root `package.json` + catalog, `turbo.json`, `packages/typescript-config`, Ultracite, Husky, commitlint                                    | ✅     |
+| 1    | `packages/env`, `packages/core`, `packages/observability`                                                                                  | ✅     |
+| 2    | `apps/api` (Hono + OpenAPI + Scalar), `packages/db`                                                                                        | ✅     |
+| 3    | `packages/auth` + better-auth di api, auth gate di `apps/app`                                                                              | ✅     |
+| 4    | `packages/design-system`, `apps/storybook`, `apps/app`, `apps/web`                                                                         | ✅     |
+| 5    | `packages/email` + `apps/email`, `packages/storage`                                                                                        | ✅     |
+| 6    | `packages/payments` (Polar + webhook) 🚧, `packages/analytics` ✅, `packages/seo` (✅ lebih awal)                                          | 🚧     |
+| 7    | CI/CD dan deploy (CI GitHub Actions ✅, staging `workers.dev` ✅, produksi ⏳ menunggu domain)                                             | 🚧     |
+| 8    | Dashboard pengguna & organisasi terpisah (`docs/user-organization-dashboards.md`, fase A–D; disetujui 2026-10-28, A selesai, B berikutnya) | 🚧     |
 
 Status: ⏳ belum · 🚧 sedang · ✅ selesai
 
@@ -54,10 +54,9 @@ Status: ⏳ belum · 🚧 sedang · ✅ selesai
 
 Bila tugas menyentuh salah satunya: berhenti dan tanyakan.
 
-| Topik                                                                                                                                                         | Opsi                                                                             | Batas waktu                     |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------- |
-| Domain produksi                                                                                                                                               | —                                                                                | Sebelum deploy pertama (Fase 7) |
-| Dashboard pengguna & organisasi terpisah (pembayar = pengguna, subjek langganan = pengguna/organisasi, hapus organisasi pribadi, scoping organisasi dari URL) | Rencana di `docs/user-organization-dashboards.md`, termasuk 3 pertanyaan terbuka | Sebelum deploy produksi         |
+| Topik           | Opsi | Batas waktu                     |
+| --------------- | ---- | ------------------------------- |
+| Domain produksi | —    | Sebelum deploy pertama (Fase 7) |
 
 ## Keputusan yang sudah diambil
 
@@ -129,6 +128,7 @@ Bila tugas menyentuh salah satunya: berhenti dan tanyakan.
 - 2026-10-27 — **CI di GitHub Actions** (disetujui developer): satu job `ubuntu-latest` menjalankan `bun install --frozen-lockfile`, `check-types`, `check`, `test` pada PR dan push ke `main`; Node 24 + bun 1.4.3 (samakan dengan `devEngines` bila bun di-upgrade); cache bun & `.turbo/cache`; tanpa secret. Gratis tanpa batas menit selama repo public dan memakai runner standar. Deploy otomatis ditunda sampai domain produksi diputuskan.
 
 - 2026-10-28 — **Staging di `workers.dev`** (disetujui developer; bukan keputusan domain produksi): `env.staging` di `wrangler.jsonc` ketiga app → Worker `bermula-{api,app,web}-staging` di `rizalzmrni.workers.dev`. URL staging boleh ditulis di `env.staging` (vars api, skrip `build:staging` app/web) karena hanya berlaku untuk staging. `AUTH_COOKIE_DOMAIN=rizalzmrni.workers.dev` (cookie ikut terkirim ke semua Worker di akun, jadi tidak untuk produksi). Database: Neon branch `staging` terpisah dari dev. Bucket R2 `bermula-files-staging` terpisah karena cron storage-cleanup menghapus objek tanpa baris di DB-nya sendiri. Namespace rate limit staging 2001/2002. VITE_* dipanggang saat build lewat env di skrip (bukan `.env.staging`, karena `.env*` tidak di-commit); `.env` lokal tetap dimuat Vite untuk variabel yang tidak ditimpa (mis. PostHog).
+- 2026-10-28 — **Dashboard pengguna & organisasi terpisah disetujui** (`docs/user-organization-dashboards.md`): pembayar = pengguna (customer Polar), subjek langganan = pengguna/organisasi lewat metadata Checkout; organisasi pribadi dihapus; scoping organisasi dari URL, data pribadi ber-`user_id`. Menggantikan keputusan 2026-10-21 (scoping dari sesi aktif), 2026-10-24 (organisasi pribadi otomatis), dan 2026-10-25/27 (pembayar = organisasi); diterapkan bertahap di fase B–C, jadi kode saat ini masih memakai model lama. Pertanyaan terbuka dijawab sesuai usulan; batas jumlah organisasi per paket ditunda. `allow_multiple_subscriptions` sudah diaktifkan developer di Polar.
 
 ## Hal yang perlu diverifikasi
 
