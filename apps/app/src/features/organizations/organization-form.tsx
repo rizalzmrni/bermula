@@ -53,9 +53,12 @@ export const OrganizationForm = ({
           listeners={{
             onChange: ({ value }) => {
               if (suggestSlug && !form.getFieldMeta("slug")?.isTouched) {
-                // Tanpa mengubah meta: alamat tetap dianggap belum disentuh.
+                // Alamat harus tetap dianggap belum disentuh. `validateField`
+                // (form-core 1.33) ikut menandai field `isTouched`, jadi
+                // validasinya juga dilewati; skema tetap dicek saat submit.
                 form.setFieldValue("slug", toOrganizationSlug(value), {
                   dontUpdateMeta: true,
+                  dontValidate: true,
                 });
               }
             },
