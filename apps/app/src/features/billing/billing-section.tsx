@@ -260,17 +260,20 @@ const toBillingAwait = ({
   return portalReturn ? BILLING_AWAIT.portal : null;
 };
 
-/** Paket organisasi aktif + aksi Checkout/Portal, dengan state loading & error. */
+/** Paket organisasi + aksi Checkout/Portal, dengan state loading & error. */
 export const BillingSection = ({
   checkoutResult,
+  organizationId,
   portalReturn,
 }: {
   checkoutResult: CheckoutResult | null;
+  organizationId: string;
   /** Baru kembali dari Customer Portal (`?portal=return`). */
   portalReturn: boolean;
 }) => {
   const query = useBillingOverview({
     awaiting: toBillingAwait({ checkoutResult, portalReturn }),
+    organizationId,
   });
 
   if (query.isPending) {

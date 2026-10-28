@@ -5,6 +5,10 @@ import {
 import { createRoute, z } from "@hono/zod-openapi";
 
 import { ApiError, errorResponse } from "../lib/errors";
+import {
+  ORGANIZATION_PATH,
+  OrganizationParamsSchema,
+} from "../lib/organization-params";
 import { createRouter } from "../lib/router";
 import { requireOrganizationMember } from "../middleware/require-organization-member";
 import { requireUser } from "../middleware/require-user";
@@ -71,12 +75,6 @@ const OrganizationInvitationSchema = z
   })
   .openapi("OrganizationInvitation");
 
-const OrganizationParamsSchema = z.object({
-  organizationId: z.uuid().openapi({
-    param: { in: "path", name: "organizationId" },
-  }),
-});
-
 const AUTH_ERRORS = {
   401: errorResponse("Belum login."),
   429: errorResponse("Terlalu banyak permintaan."),
@@ -97,7 +95,7 @@ const toRole = (role: string | null) => role ?? ORGANIZATION_ROLE.member;
 const listMyOrganizationsRoute = createRoute({
   ...shared,
   description:
-    "Organisasi yang diikuti pengguna beserta role-nya, untuk pemilih organisasi dan dashboard pribadi. Organisasi pribadi tidak ikut.",
+    "Organisasi yang diikuti pengguna beserta role-nya, untuk pemilih organisasi dan dashboard pribadi.",
   method: "get",
   middleware: [requireUser] as const,
   path: "/api/me/organizations",
@@ -139,7 +137,7 @@ const listMembersRoute = createRoute({
     "Anggota organisasi. Bisa dibaca semua anggota; ubah role dan keluarkan anggota lewat endpoint better-auth `/api/auth/organization/*`.",
   method: "get",
   middleware: [requireOrganizationMember] as const,
-  path: "/api/organizations/{organizationId}/members",
+  path: `${ORGANIZATION_PATH}/members`,
   request: { params: OrganizationParamsSchema },
   responses: {
     200: {
@@ -157,7 +155,7 @@ const listInvitationsRoute = createRoute({
     "Undangan yang belum dijawab dan belum kedaluwarsa. Hanya owner/admin, karena memuat email orang di luar organisasi.",
   method: "get",
   middleware: [requireOrganizationMember] as const,
-  path: "/api/organizations/{organizationId}/invitations",
+  path: `${ORGANIZATION_PATH}/invitations`,
   request: { params: OrganizationParamsSchema },
   responses: {
     200: {

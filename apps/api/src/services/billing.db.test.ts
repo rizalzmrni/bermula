@@ -79,12 +79,14 @@ const deliver = async (
 
 describe("billing service (PGlite)", () => {
   let organizationId = "";
+  let organizationSlug = "";
 
   beforeEach(async () => {
     await db.delete(webhookEvents);
     await db.delete(subscriptions);
     const organization = await insertOrganization(db, "Tim tagihan");
     organizationId = organization.id;
+    organizationSlug = organization.slug;
   });
 
   afterAll(() => testDb.close());
@@ -95,6 +97,7 @@ describe("billing service (PGlite)", () => {
       customerIpAddress: CUSTOMER_IP,
       db,
       organizationId,
+      organizationSlug,
       payments: gateway,
       plan: PLAN.pro,
       role,
@@ -135,8 +138,8 @@ describe("billing service (PGlite)", () => {
         customerIpAddress: CUSTOMER_IP,
         organizationId,
         productId: PRO_PRODUCT_ID,
-        returnUrl: `${APP_URL}/settings/billing?checkout=cancel`,
-        successUrl: `${APP_URL}/settings/billing?checkout=success`,
+        returnUrl: `${APP_URL}/o/${organizationSlug}/billing?checkout=cancel`,
+        successUrl: `${APP_URL}/o/${organizationSlug}/billing?checkout=success`,
       },
     ]);
   });
@@ -160,6 +163,7 @@ describe("billing service (PGlite)", () => {
         customerIpAddress: undefined,
         db,
         organizationId,
+        organizationSlug,
         payments: gateway,
         plan: PLAN.business,
         role: "owner",
@@ -331,6 +335,7 @@ describe("billing service (PGlite)", () => {
         appUrl: APP_URL,
         db,
         organizationId,
+        organizationSlug,
         payments: gateway,
         role: "admin",
       });
@@ -346,7 +351,7 @@ describe("billing service (PGlite)", () => {
     expect(portals).toStrictEqual([
       {
         organizationId,
-        returnUrl: `${APP_URL}/settings/billing?portal=return`,
+        returnUrl: `${APP_URL}/o/${organizationSlug}/billing?portal=return`,
       },
     ]);
   });

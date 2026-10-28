@@ -48,15 +48,3 @@ export const validateOrganizationUpdate = (
     ? {}
     : { slug: parseField(organizationSlugSchema, organization.slug) }),
 });
-
-/** Organisasi pribadi hanya untuk pemiliknya; tidak bisa mengundang anggota. */
-export const assertInvitableOrganization = (
-  organization: Record<string, unknown>
-) => {
-  if (organization["isPersonal"] === true) {
-    throw new APIError("BAD_REQUEST", {
-      code: "PERSONAL_ORGANIZATION",
-      message: "Personal organization cannot have other members",
-    });
-  }
-};

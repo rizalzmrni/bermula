@@ -65,54 +65,15 @@ describe(createAuth, () => {
     ]);
   });
 
-  it("keeps the active organization carried by a replacement session", async () => {
-    const { auth } = setup();
-    const { before } = auth.options.databaseHooks.session.create;
-
-    // Tanpa query DB: `db` di setup kosong, jadi panggilan store akan gagal.
-    await expect(
-      before({
-        activeOrganizationId: "org-current",
-        createdAt: new Date("2026-01-01T00:00:00Z"),
-        expiresAt: new Date("2026-01-08T00:00:00Z"),
-        id: "session-1",
-        token: "token",
-        updatedAt: new Date("2026-01-01T00:00:00Z"),
-        userId: "user-1",
-      })
-    ).resolves.toBeUndefined();
-  });
-
-  it("marks personal organizations as server-only and undeletable", async () => {
+  it("does not create or require an organization for new sessions", () => {
     const { auth } = setup();
     const organizationPlugin = auth.options.plugins.find(
       (plugin) => plugin.id === "organization"
     );
-    const beforeDelete =
-      organizationPlugin?.options?.organizationHooks?.beforeDeleteOrganization;
-    const organization = {
-      createdAt: new Date("2026-01-01T00:00:00Z"),
-      id: "org-1",
-      name: "Budi",
-      slug: "personal-user-1",
-    };
 
-    expect(
-      organizationPlugin?.options?.schema?.organization?.additionalFields
-        ?.isPersonal
-    ).toMatchObject({ input: false, type: "boolean" });
-    await expect(
-      beforeDelete?.({
-        organization: { ...organization, isPersonal: true },
-        user: USER,
-      })
-    ).rejects.toThrow("Personal organization cannot be deleted");
-    await expect(
-      beforeDelete?.({
-        organization: { ...organization, isPersonal: false },
-        user: USER,
-      })
-    ).resolves.toBeUndefined();
+    // Organisasi diambil dari URL di apps/api, bukan dari sesi aktif.
+    expect(auth.options).not.toHaveProperty("databaseHooks");
+    expect(organizationPlugin?.options).not.toHaveProperty("schema");
   });
 
   it("sends the reset password email in the background", async () => {

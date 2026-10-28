@@ -56,11 +56,7 @@ export type OrganizationMembership = Awaited<
   ReturnType<typeof getOrganizationMembership>
 >;
 
-/**
- * Organisasi yang diikuti pengguna. Organisasi pribadi disembunyikan: ia
- * masih menampung data dashboard pribadi sampai scoping per pengguna selesai
- * (`docs/user-organization-dashboards.md`, fase B).
- */
+/** Organisasi yang diikuti pengguna beserta role-nya. */
 export const listUserOrganizations = ({
   db,
   userId,
@@ -79,7 +75,7 @@ export const listUserOrganizations = ({
     })
     .from(members)
     .innerJoin(organizations, eq(members.organizationId, organizations.id))
-    .where(and(eq(members.userId, userId), eq(organizations.isPersonal, false)))
+    .where(eq(members.userId, userId))
     .orderBy(asc(organizations.name), asc(organizations.id));
 
 export const listMembers = ({

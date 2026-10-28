@@ -25,12 +25,6 @@ export const organizations = snakeCase.table("auth_organizations", {
   name: text().notNull(),
   slug: text().notNull().unique(),
   logo: text(),
-  /**
-   * Organisasi pribadi dibuat otomatis untuk setiap pengguna (lihat
-   * `packages/auth`), tidak bisa dihapus, dan boleh disembunyikan dari UI
-   * pada aplikasi yang tidak butuh fitur tim.
-   */
-  isPersonal: boolean().default(false).notNull(),
   metadata: text(),
   createdAt: createdAt(),
 });

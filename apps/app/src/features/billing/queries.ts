@@ -7,16 +7,19 @@ import { getBrowserApiClient } from "../../lib/api-client";
 import type { ApiClient } from "../../lib/api-client";
 import { billingKeys } from "./query-keys";
 
-/** Ringkasan tagihan organisasi aktif dari `GET /api/billing/subscription`. */
+/** Ringkasan tagihan dari `GET /api/organizations/{organizationId}/billing/subscription`. */
 export type BillingOverview = InferResponseType<
-  ApiClient["api"]["billing"]["subscription"]["$get"],
+  ApiClient["api"]["organizations"][":organizationId"]["billing"]["subscription"]["$get"],
   200
 >;
 
 export const fetchBillingOverview = async (
-  client: ApiClient
+  client: ApiClient,
+  organizationId: string
 ): Promise<BillingOverview> => {
-  const response = await client.api.billing.subscription.$get();
+  const response = await client.api.organizations[
+    ":organizationId"
+  ].billing.subscription.$get({ param: { organizationId } });
   if (response.status === 200) {
     return await response.json();
   }
@@ -24,10 +27,13 @@ export const fetchBillingOverview = async (
 };
 
 /** Satu definisi query untuk loader (Service Binding) dan browser. */
-export const billingOverviewQueryOptions = (client: ApiClient) =>
+export const billingOverviewQueryOptions = (
+  client: ApiClient,
+  organizationId: string
+) =>
   queryOptions({
-    queryFn: () => fetchBillingOverview(client),
-    queryKey: billingKeys.overview(),
+    queryFn: () => fetchBillingOverview(client, organizationId),
+    queryKey: billingKeys.overview(organizationId),
   });
 
 /** Alasan halaman menunggu perubahan dari webhook Polar. */
@@ -81,11 +87,13 @@ export const getBillingRefetchInterval = ({
  */
 export const useBillingOverview = ({
   awaiting,
+  organizationId,
 }: {
   awaiting: BillingAwait | null;
+  organizationId: string;
 }) =>
   useQuery({
-    ...billingOverviewQueryOptions(getBrowserApiClient()),
+    ...billingOverviewQueryOptions(getBrowserApiClient(), organizationId),
     refetchInterval: (query) =>
       getBillingRefetchInterval({
         awaiting,

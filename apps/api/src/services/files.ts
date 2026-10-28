@@ -23,7 +23,7 @@ import { and, desc, eq, sql } from "drizzle-orm";
 
 import { ApiError } from "../lib/errors";
 
-/** Segmen URL (`/api/images`) sekaligus prefix key R2 (`images/<org>/...`). */
+/** Segmen URL (`.../images`) sekaligus prefix key R2 (`images/<org>/...`). */
 export const FILE_KIND_PATH = {
   document: "documents",
   image: "images",
@@ -33,7 +33,7 @@ export const FILE_KIND_PATH = {
 const UPLOAD_URL_TTL_SECONDS = 600;
 const DOWNLOAD_URL_TTL_SECONDS = 300;
 
-/** Organisasi aktif + jenis file: setiap query dibatasi keduanya. */
+/** Organisasi (dari path URL) + jenis file: setiap query dibatasi keduanya. */
 export interface FileScope {
   db: QueryDb;
   storage: ObjectStorage;

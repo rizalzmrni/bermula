@@ -10,15 +10,20 @@ cp .dev.vars.example .dev.vars   # isi nilai wajib (lihat komentar di file)
 bun run dev                      # wrangler dev → http://localhost:8787
 ```
 
-| Path                            | Isi                                                      |
-| ------------------------------- | -------------------------------------------------------- |
-| `GET /health`                   | Cek status (tanpa DB)                                    |
-| `GET, POST /api/auth/*`         | better-auth (sign-up, sign-in, organisasi, 2FA, admin)   |
-| `GET /api/me`                   | Pengguna login + organisasi aktif                        |
-| `/api/images`, `/api/documents` | Upload, daftar, unduh, hapus file (lihat di bawah)       |
-| `/api/billing/*`                | Langganan, Checkout & Portal (lihat di bawah)            |
-| `POST /api/webhooks/polar`      | Webhook Polar (Standard Webhooks, tanpa sesi)            |
-| `GET /docs`, `/openapi.json`    | Scalar & dokumen OpenAPI (hanya `API_DOCS_ENABLED=true`) |
+| Path                                                             | Isi                                                      |
+| ---------------------------------------------------------------- | -------------------------------------------------------- |
+| `GET /health`                                                    | Cek status (tanpa DB)                                    |
+| `GET, POST /api/auth/*`                                          | better-auth (sign-up, sign-in, organisasi, 2FA, admin)   |
+| `GET /api/me`                                                    | Pengguna login                                           |
+| `/api/me/organizations`, `/api/me/invitations`                   | Organisasi & undangan pengguna                           |
+| `/api/organizations/{organizationId}/members`, `.../invitations` | Anggota & undangan organisasi                            |
+| `.../images`, `.../documents`                                    | Upload, daftar, unduh, hapus file (lihat di bawah)       |
+| `.../billing/*`                                                  | Langganan, Checkout & Portal (lihat di bawah)            |
+| `POST /api/webhooks/polar`                                       | Webhook Polar (Standard Webhooks, tanpa sesi)            |
+| `GET /docs`, `/openapi.json`                                     | Scalar & dokumen OpenAPI (hanya `API_DOCS_ENABLED=true`) |
+
+Path `...` = `/api/organizations/{organizationId}`; middleware
+`requireOrganizationMember` mengecek keanggotaan ke DB (bukan anggota → 404).
 
 `/openapi.json` juga memuat endpoint better-auth (tag `Auth*`, model `Auth*`),
 digabung dari `auth.api.generateOpenAPISchema()` di `src/lib/auth-openapi.ts`.
@@ -33,31 +38,32 @@ Byte file dikirim browser langsung ke R2 lewat presigned URL, tidak lewat
 Worker. Image dan dokumen punya endpoint, kebijakan (`UPLOAD_POLICIES` di
 `@bermula/core/files`), dan prefix R2 sendiri, tetapi satu tabel `storage_files`.
 
-1. `POST /api/images` `{ fileName, contentType, size }` → `{ file, upload }`.
+1. `POST .../images` `{ fileName, contentType, size }` → `{ file, upload }`.
 2. `PUT upload.url` dengan body file dan header `content-type` dari
    `upload.headers` (URL berlaku 10 menit).
-3. `POST /api/images/{id}/complete` → status `uploaded` setelah objek dicek ada.
+3. `POST .../images/{id}/complete` → status `uploaded` setelah objek dicek ada.
 
-`GET /api/images?cursor&limit` (paginasi keyset), `GET /api/images/{id}/download`
-(URL 5 menit; image `inline`, dokumen `attachment`), `DELETE /api/images/{id}`
-(pengunggah atau owner/admin). Semua endpoint dibatasi organisasi aktif.
+`GET .../images?cursor&limit` (paginasi keyset), `GET .../images/{id}/download`
+(URL 5 menit; image `inline`, dokumen `attachment`), `DELETE .../images/{id}`
+(pengunggah atau owner/admin). Semua endpoint dibatasi organisasi di path.
 
 Bucket R2 harus privat dan punya aturan CORS untuk origin app (`PUT`, `GET`,
 header `content-type`).
 
 ## Tagihan (Polar)
 
-Penyedia: **Polar** (Merchant of Record). Pembayar = organisasi. Opsional: tanpa
-`POLAR_ACCESS_TOKEN` + `POLAR_WEBHOOK_SECRET`, `GET /api/billing/subscription`
+Penyedia: **Polar** (Merchant of Record). Pembayar = organisasi (sampai fase C
+`docs/user-organization-dashboards.md`). Opsional: tanpa
+`POLAR_ACCESS_TOKEN` + `POLAR_WEBHOOK_SECRET`, `GET .../billing/subscription`
 tetap jalan (`billingEnabled: false`, paket `free`) dan endpoint lain membalas 503.
 
-- `GET /api/billing/subscription` — paket berlaku + langganan, dibaca dari
+- `GET .../billing/subscription` — paket berlaku + langganan, dibaca dari
   Postgres (semua anggota).
-- `POST /api/billing/checkout-sessions` `{ plan }` → `{ url }` Polar Checkout
+- `POST .../billing/checkout-sessions` `{ plan }` → `{ url }` Polar Checkout
   (owner/admin; 409 bila sudah berlangganan). Customer Polar ditautkan lewat
   `external_customer_id` = ID organisasi; IP pengguna (`cf-connecting-ip`)
   diteruskan untuk mata uang & pajak.
-- `POST /api/billing/portal-sessions` → `{ url }` Customer Portal
+- `POST .../billing/portal-sessions` → `{ url }` Customer Portal
   (owner/admin; 409 sebelum ada langganan).
 - `POST /api/webhooks/polar` — verifikasi Standard Webhooks atas body mentah
   (signature/timestamp salah → 403), idempoten per `webhook-id`, upsert
@@ -79,7 +85,7 @@ Uji lokal dengan Polar Sandbox:
    `<url-tunnel>/api/webhooks/polar` di Settings → Webhooks (format Raw, event
    `subscription.*`), lalu salin secret-nya ke `POLAR_WEBHOOK_SECRET`.
 4. Restart `wrangler dev` (dan `apps/app`), bayar dengan kartu uji sandbox dari
-   `/settings/billing`, lalu cek paket berubah setelah webhook tiba.
+   `/o/<slug>/billing`, lalu cek paket berubah setelah webhook tiba.
 
 ## Cron (pembersihan storage)
 

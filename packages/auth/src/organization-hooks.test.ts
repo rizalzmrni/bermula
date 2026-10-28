@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  assertInvitableOrganization,
   validateNewOrganization,
   validateOrganizationUpdate,
 } from "./organization-hooks";
@@ -38,16 +37,5 @@ describe(validateOrganizationUpdate, () => {
     expect(() => validateOrganizationUpdate({ slug: "x" })).toThrow(
       "Alamat minimal 3 karakter."
     );
-  });
-});
-
-describe(assertInvitableOrganization, () => {
-  it("blocks invitations to a personal organization", () => {
-    expect(() => assertInvitableOrganization({ isPersonal: true })).toThrow(
-      "Personal organization cannot have other members"
-    );
-    expect(() =>
-      assertInvitableOrganization({ isPersonal: false })
-    ).not.toThrow();
   });
 });

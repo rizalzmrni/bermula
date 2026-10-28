@@ -18,8 +18,14 @@ import { z } from "zod";
 
 import { ApiError } from "../lib/errors";
 
-/** Halaman tagihan di apps/app; tujuan kembali dari Checkout & Portal. */
-const BILLING_PAGE_PATH = "/settings/billing";
+/** Halaman tagihan organisasi di apps/app; tujuan kembali dari Checkout & Portal. */
+const toBillingPageUrl = ({
+  appUrl,
+  organizationSlug,
+}: {
+  appUrl: string;
+  organizationSlug: string;
+}) => `${appUrl}/o/${encodeURIComponent(organizationSlug)}/billing`;
 
 /**
  * Penanda kembali dari Portal: perubahan di Portal tiba lewat webhook beberapa
@@ -113,6 +119,7 @@ export const createCheckoutSession = async ({
   customerIpAddress,
   db,
   organizationId,
+  organizationSlug,
   payments,
   plan,
   role,
@@ -122,6 +129,7 @@ export const createCheckoutSession = async ({
   customerIpAddress: string | undefined;
   db: QueryDb;
   organizationId: string;
+  organizationSlug: string;
   payments: PaymentGateway;
   plan: PaidPlanId;
   role: string;
@@ -148,12 +156,13 @@ export const createCheckoutSession = async ({
     });
   }
 
+  const billingPageUrl = toBillingPageUrl({ appUrl, organizationSlug });
   return payments.createCheckout({
     customerIpAddress,
     organizationId,
     productId,
-    returnUrl: `${appUrl}${BILLING_PAGE_PATH}?checkout=cancel`,
-    successUrl: `${appUrl}${BILLING_PAGE_PATH}?checkout=success`,
+    returnUrl: `${billingPageUrl}?checkout=cancel`,
+    successUrl: `${billingPageUrl}?checkout=success`,
   });
 };
 
@@ -161,12 +170,14 @@ export const createPortalSession = async ({
   appUrl,
   db,
   organizationId,
+  organizationSlug,
   payments,
   role,
 }: {
   appUrl: string;
   db: QueryDb;
   organizationId: string;
+  organizationSlug: string;
   payments: PaymentGateway;
   role: string;
 }) => {
@@ -185,7 +196,7 @@ export const createPortalSession = async ({
 
   return payments.createPortalSession({
     organizationId,
-    returnUrl: `${appUrl}${BILLING_PAGE_PATH}?${PORTAL_RETURN_QUERY}`,
+    returnUrl: `${toBillingPageUrl({ appUrl, organizationSlug })}?${PORTAL_RETURN_QUERY}`,
   });
 };
 
