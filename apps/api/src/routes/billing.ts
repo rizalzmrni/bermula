@@ -2,8 +2,12 @@ import { PLAN, SUBSCRIPTION_STATUS, paidPlanSchema } from "@bermula/core/plans";
 import { createRoute, z } from "@hono/zod-openapi";
 
 import { errorResponse } from "../lib/errors";
+import {
+  ORGANIZATION_PATH,
+  OrganizationParamsSchema,
+} from "../lib/organization-params";
 import { createRouter } from "../lib/router";
-import { requireAuth } from "../middleware/require-auth";
+import { requireOrganizationMember } from "../middleware/require-organization-member";
 import { SESSION_SECURITY } from "../openapi";
 import {
   createCheckoutSession,
@@ -61,9 +65,8 @@ const RedirectSchema = z
 
 const COMMON_ERRORS = {
   401: errorResponse("Belum login."),
-  403: errorResponse(
-    "Tidak ada organisasi aktif, bukan anggotanya, atau bukan owner/admin (`FORBIDDEN`)."
-  ),
+  403: errorResponse("Bukan owner/admin (`FORBIDDEN`)."),
+  404: errorResponse("Organisasi tidak ditemukan atau bukan anggotanya."),
   429: errorResponse("Terlalu banyak permintaan."),
 };
 
@@ -75,10 +78,11 @@ const shared = {
 const getOverviewRoute = createRoute({
   ...shared,
   description:
-    "Paket dan langganan organisasi aktif, dibaca dari Postgres (disinkronkan webhook Polar). Bisa dibaca semua anggota.",
+    "Paket dan langganan organisasi, dibaca dari Postgres (disinkronkan webhook Polar). Bisa dibaca semua anggota.",
   method: "get",
-  middleware: [requireAuth] as const,
-  path: "/api/billing/subscription",
+  middleware: [requireOrganizationMember] as const,
+  path: `${ORGANIZATION_PATH}/billing/subscription`,
+  request: { params: OrganizationParamsSchema },
   responses: {
     200: {
       content: { "application/json": { schema: BillingOverviewSchema } },
@@ -92,15 +96,16 @@ const getOverviewRoute = createRoute({
 const createCheckoutRoute = createRoute({
   ...shared,
   description:
-    "Membuat sesi Polar Checkout untuk paket berbayar. Mata uang dan pajak dipilih Polar dari IP pengguna (`cf-connecting-ip`). Setelah bayar, Polar mengarahkan kembali ke `/settings/billing?checkout=success`; status langganan diperbarui oleh webhook.",
+    "Membuat sesi Polar Checkout untuk paket berbayar. Mata uang dan pajak dipilih Polar dari IP pengguna (`cf-connecting-ip`). Setelah bayar, Polar mengarahkan kembali ke `/o/{slug}/billing?checkout=success`; status langganan diperbarui oleh webhook.",
   method: "post",
-  middleware: [requireAuth] as const,
-  path: "/api/billing/checkout-sessions",
+  middleware: [requireOrganizationMember] as const,
+  path: `${ORGANIZATION_PATH}/billing/checkout-sessions`,
   request: {
     body: {
       content: { "application/json": { schema: CheckoutRequestSchema } },
       required: true,
     },
+    params: OrganizationParamsSchema,
   },
   responses: {
     201: {
@@ -122,10 +127,11 @@ const createCheckoutRoute = createRoute({
 const createPortalRoute = createRoute({
   ...shared,
   description:
-    "Membuat sesi Polar Customer Portal untuk mengganti paket, metode pembayaran, atau membatalkan langganan. Saat selesai, Polar mengarahkan kembali ke `/settings/billing?portal=return`; perubahannya tiba lewat webhook.",
+    "Membuat sesi Polar Customer Portal untuk mengganti paket, metode pembayaran, atau membatalkan langganan. Saat selesai, Polar mengarahkan kembali ke `/o/{slug}/billing?portal=return`; perubahannya tiba lewat webhook.",
   method: "post",
-  middleware: [requireAuth] as const,
-  path: "/api/billing/portal-sessions",
+  middleware: [requireOrganizationMember] as const,
+  path: `${ORGANIZATION_PATH}/billing/portal-sessions`,
+  request: { params: OrganizationParamsSchema },
   responses: {
     201: {
       content: { "application/json": { schema: RedirectSchema } },
@@ -157,6 +163,7 @@ export const billingRoutes = createRouter()
       customerIpAddress: c.req.header("cf-connecting-ip"),
       db: c.var.db,
       organizationId: c.var.organizationId,
+      organizationSlug: c.var.membership.slug,
       payments: requirePayments(c.var.payments),
       plan: c.req.valid("json").plan,
       role: c.var.membership.role,
@@ -168,6 +175,7 @@ export const billingRoutes = createRouter()
       appUrl: c.var.env.APP_URL,
       db: c.var.db,
       organizationId: c.var.organizationId,
+      organizationSlug: c.var.membership.slug,
       payments: requirePayments(c.var.payments),
       role: c.var.membership.role,
     });

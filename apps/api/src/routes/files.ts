@@ -8,8 +8,12 @@ import type { FileKind } from "@bermula/core/files";
 import { createRoute, z } from "@hono/zod-openapi";
 
 import { errorResponse } from "../lib/errors";
+import {
+  ORGANIZATION_PATH,
+  OrganizationParamsSchema,
+} from "../lib/organization-params";
 import { createRouter } from "../lib/router";
-import { requireAuth } from "../middleware/require-auth";
+import { requireOrganizationMember } from "../middleware/require-organization-member";
 import { SESSION_SECURITY } from "../openapi";
 import {
   FILE_KIND_PATH,
@@ -85,7 +89,7 @@ const DownloadSchema = z
   .object({ expiresAt: z.iso.datetime(), url: z.url() })
   .openapi("FileDownload");
 
-const FileParamsSchema = z.object({
+const FileParamsSchema = OrganizationParamsSchema.extend({
   id: z.uuid().openapi({ param: { in: "path", name: "id" } }),
 });
 
@@ -101,7 +105,7 @@ const ListQuerySchema = z.object({
 
 const COMMON_ERRORS = {
   401: errorResponse("Belum login."),
-  403: errorResponse("Tidak ada organisasi aktif atau bukan anggotanya."),
+  404: errorResponse("Organisasi tidak ditemukan atau bukan anggotanya."),
   429: errorResponse("Terlalu banyak permintaan."),
 };
 
@@ -116,12 +120,13 @@ const toPolicyDescription = (kind: FileKind) => {
 };
 
 /**
- * Route satu jenis file (`/api/images` atau `/api/documents`). Keduanya berbagi
+ * Route satu jenis file (`.../images` atau `.../documents` di bawah path
+ * organisasi). Keduanya berbagi
  * service & tabel, tetapi kebijakan, prefix R2, dan dokumentasinya terpisah.
  */
 const createFileRoutes = <K extends FileKind>(kind: K) => {
   const base =
-    `/api/${FILE_KIND_PATH[kind]}` as `/api/${(typeof FILE_KIND_PATH)[K]}`;
+    `${ORGANIZATION_PATH}/${FILE_KIND_PATH[kind]}` as `${typeof ORGANIZATION_PATH}/${(typeof FILE_KIND_PATH)[K]}`;
   const tags: string[] = [TAGS[kind]];
   const shared = {
     security: SESSION_SECURITY,
@@ -132,13 +137,14 @@ const createFileRoutes = <K extends FileKind>(kind: K) => {
     ...shared,
     description: `Langkah 1: simpan metadata dan dapatkan presigned URL. Klien lalu mengirim file dengan \`PUT\` ke \`upload.url\`, kemudian memanggil \`/complete\`. ${toPolicyDescription(kind)}`,
     method: "post",
-    middleware: [requireAuth] as const,
+    middleware: [requireOrganizationMember] as const,
     path: base,
     request: {
       body: {
         content: { "application/json": { schema: UploadRequestSchema } },
         required: true,
       },
+      params: OrganizationParamsSchema,
     },
     responses: {
       201: {
@@ -158,31 +164,30 @@ const createFileRoutes = <K extends FileKind>(kind: K) => {
     description:
       "Langkah 2: memastikan file sudah ada di penyimpanan dengan ukuran & tipe yang sama. Aman dipanggil ulang.",
     method: "post",
-    middleware: [requireAuth] as const,
+    middleware: [requireOrganizationMember] as const,
     path: `${base}/{id}/complete`,
     request: { params: FileParamsSchema },
     responses: {
+      ...COMMON_ERRORS,
       200: {
         content: { "application/json": { schema: FileSchema } },
         description: "File berstatus `uploaded`.",
       },
-      404: errorResponse("File tidak ditemukan di organisasi aktif."),
+      404: errorResponse("Organisasi atau file tidak ditemukan."),
       409: errorResponse(
         "File belum diunggah (`UPLOAD_NOT_FOUND`) atau tidak sesuai (`UPLOAD_MISMATCH`)."
       ),
-      ...COMMON_ERRORS,
     },
     summary: "Selesaikan upload",
   });
 
   const listRoute = createRoute({
     ...shared,
-    description:
-      "File berstatus `uploaded` milik organisasi aktif, terbaru dulu.",
+    description: "File berstatus `uploaded` milik organisasi, terbaru dulu.",
     method: "get",
-    middleware: [requireAuth] as const,
+    middleware: [requireOrganizationMember] as const,
     path: base,
-    request: { query: ListQuerySchema },
+    request: { params: OrganizationParamsSchema, query: ListQuerySchema },
     responses: {
       200: {
         content: { "application/json": { schema: FilePageSchema } },
@@ -200,7 +205,7 @@ const createFileRoutes = <K extends FileKind>(kind: K) => {
         ? "Presigned URL berumur 5 menit; ditampilkan inline (bisa dipakai di `<img>`)."
         : "Presigned URL berumur 5 menit; browser mengunduh dengan nama asli file.",
     method: "get",
-    middleware: [requireAuth] as const,
+    middleware: [requireOrganizationMember] as const,
     path: `${base}/{id}/download`,
     request: { params: FileParamsSchema },
     responses: {
@@ -208,8 +213,8 @@ const createFileRoutes = <K extends FileKind>(kind: K) => {
         content: { "application/json": { schema: DownloadSchema } },
         description: "URL unduhan.",
       },
-      404: errorResponse("File tidak ditemukan di organisasi aktif."),
       ...COMMON_ERRORS,
+      404: errorResponse("Organisasi atau file tidak ditemukan."),
     },
     summary: "URL unduhan",
   });
@@ -218,14 +223,14 @@ const createFileRoutes = <K extends FileKind>(kind: K) => {
     ...shared,
     description: "Hanya pengunggah atau owner/admin organisasi.",
     method: "delete",
-    middleware: [requireAuth] as const,
+    middleware: [requireOrganizationMember] as const,
     path: `${base}/{id}`,
     request: { params: FileParamsSchema },
     responses: {
       204: { description: "File dihapus." },
       401: COMMON_ERRORS[401],
       403: errorResponse("Tidak berhak menghapus file ini."),
-      404: errorResponse("File tidak ditemukan di organisasi aktif."),
+      404: errorResponse("Organisasi atau file tidak ditemukan."),
       429: COMMON_ERRORS[429],
     },
     summary: "Hapus file",

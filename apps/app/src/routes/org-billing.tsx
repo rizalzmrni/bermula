@@ -15,43 +15,54 @@ import {
   readCheckoutResult,
   readPortalReturn,
 } from "../features/billing/schemas";
-import { createApiClient } from "../lib/api-client";
-import { getCloudflare } from "../lib/cloudflare";
+import { useCurrentOrganization } from "../features/organizations/current-organization";
+import { requireOrganization } from "../features/organizations/organization.server";
 import { getQueryClient } from "../lib/query-client";
-import { requireSession } from "../lib/session.server";
-import type { Route } from "./+types/settings-billing";
+import { getServerApiClient, requireSession } from "../lib/session.server";
+import type { Route } from "./+types/org-billing";
 
 const HTTP_BAD_REQUEST = 400;
 const HTTP_UNPROCESSABLE = 422;
 
 export const meta = () => [{ title: `Tagihan — ${APP_NAME}` }];
 
-const createServerClient = ({
-  request,
-  context,
-}: Pick<Route.LoaderArgs, "request" | "context">) =>
-  createApiClient({
-    api: getCloudflare(context).env.API,
-    mode: "server",
-    request,
-  });
-
 /**
  * `prefetchQuery` tidak melempar: bila api gagal, query tidak ikut di-dehydrate
  * dan komponen menampilkan state error dengan tombol coba lagi.
  */
-export const loader = async ({ request, context }: Route.LoaderArgs) => {
+export const loader = async ({
+  request,
+  context,
+  params,
+}: Route.LoaderArgs) => {
   await requireSession({ context, request });
+  const organization = await requireOrganization({
+    context,
+    request,
+    slug: params.slug,
+  });
   const queryClient = getQueryClient(context);
   await queryClient.prefetchQuery(
-    billingOverviewQueryOptions(createServerClient({ context, request }))
+    billingOverviewQueryOptions(
+      getServerApiClient({ context, request }),
+      organization.id
+    )
   );
   return { dehydratedState: dehydrate(queryClient) };
 };
 
 /** Berhasil: redirect ke halaman Polar (Checkout/Portal). Gagal: pesan untuk form. */
-export const action = async ({ request, context }: Route.ActionArgs) => {
+export const action = async ({
+  request,
+  context,
+  params,
+}: Route.ActionArgs) => {
   await requireSession({ context, request });
+  const organization = await requireOrganization({
+    context,
+    request,
+    slug: params.slug,
+  });
 
   const parsed = billingActionSchema.safeParse(
     Object.fromEntries(await request.formData())
@@ -63,11 +74,14 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
     );
   }
 
-  const client = createServerClient({ context, request });
+  const args = {
+    client: getServerApiClient({ context, request }),
+    organizationId: organization.id,
+  };
   const result =
     parsed.data.intent === BILLING_INTENT.checkout
-      ? await startCheckout({ client, plan: parsed.data.plan })
-      : await openBillingPortal({ client });
+      ? await startCheckout({ ...args, plan: parsed.data.plan })
+      : await openBillingPortal(args);
 
   if ("url" in result) {
     throw redirect(result.url);
@@ -75,7 +89,8 @@ export const action = async ({ request, context }: Route.ActionArgs) => {
   return data<BillingActionResult>(result, { status: HTTP_UNPROCESSABLE });
 };
 
-const BillingSettingsPage = ({ loaderData }: Route.ComponentProps) => {
+const OrganizationBillingPage = ({ loaderData }: Route.ComponentProps) => {
+  const organization = useCurrentOrganization();
   const [searchParams] = useSearchParams();
   const checkoutResult = readCheckoutResult(searchParams);
 
@@ -85,11 +100,12 @@ const BillingSettingsPage = ({ loaderData }: Route.ComponentProps) => {
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-semibold tracking-tight">Tagihan</h1>
           <p className="text-muted-foreground text-sm">
-            Paket langganan dan pembayaran organisasi Anda.
+            Paket langganan dan pembayaran {organization.name}.
           </p>
         </div>
         <BillingSection
           checkoutResult={checkoutResult}
+          organizationId={organization.id}
           portalReturn={readPortalReturn(searchParams)}
         />
       </div>
@@ -97,4 +113,4 @@ const BillingSettingsPage = ({ loaderData }: Route.ComponentProps) => {
   );
 };
 
-export default BillingSettingsPage;
+export default OrganizationBillingPage;

@@ -45,21 +45,13 @@ const auth = createAuth({
 
 Instance dibuat **per request**, karena env dan `waitUntil` baru ada saat request.
 
-## Organisasi pribadi
+## Organisasi
 
-Setiap pengguna otomatis punya satu **organisasi pribadi** (`isPersonal: true`),
-sehingga semua data selalu ter-scope ke organisasi, baik di aplikasi personal
-maupun aplikasi tim. Aplikasi yang tidak butuh fitur tim cukup menyembunyikan
-UI organisasi.
-
-- Dibuat di hook `databaseHooks.session.create.before` saat sesi pertama
-  (pengguna email baru mendapat sesi setelah verifikasi), sekaligus mengisi
-  `activeOrganizationId` di setiap sesi baru dengan organisasi pertama pengguna.
-- Organisasi + keanggotaan owner ditulis dalam satu `db.batch` (atomik di
-  neon-http). Slug `personal-<userId>` unik, jadi login bersamaan tidak
-  menghasilkan dua organisasi pribadi.
-- Tidak bisa dihapus (`beforeDeleteOrganization`) dan `isPersonal` tidak bisa
-  diisi dari klien (`input: false`).
+Tidak ada organisasi pribadi: pengguna baru tidak punya organisasi sampai ia
+membuat atau menerima undangan. `activeOrganizationId` di sesi tidak dipakai
+untuk scoping; apps/api mengambil organisasi dari path URL
+(`/api/organizations/{organizationId}/...`) dan mengecek keanggotaannya ke DB.
+Nama & slug divalidasi di `organizationHooks` dengan skema `@bermula/core`.
 
 ## Database
 
@@ -67,6 +59,6 @@ Tabel di `@bermula/db/schema/users` dan `@bermula/db/schema/auth` (nama
 `auth_*`, jamak; adapter `usePlural: true`). Adapter:
 `@better-auth/drizzle-adapter/relations-v2` (untuk `defineRelations` Drizzle
 v1), tanpa transaksi karena `createDb` memakai `neon-http`. Operasi
-multi-langkah bawaan better-auth (mis. buat organisasi tim + anggota pertama)
-tidak atomik; pembuatan organisasi pribadi memakai `db.batch` sehingga atomik.
+multi-langkah bawaan better-auth (mis. buat organisasi + anggota pertama)
+tidak atomik.
 Adapter menemukan tabel lewat kunci `relations.ts` di `packages/db`.

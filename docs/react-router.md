@@ -44,7 +44,8 @@ Diimpor oleh `apps/app/CLAUDE.md` dan `apps/web/CLAUDE.md`.
 ## Auth gate
 
 - Loader halaman terproteksi memanggil `GET /api/me` lewat Service Binding
-  (sesi + organisasi aktif + role dalam satu panggilan; lebih lengkap dari
+  (data pengguna; organisasi diambil dari `:slug` URL lewat
+  `/api/me/organizations`, bukan dari sesi; lebih lengkap dari
   `/api/auth/get-session`). 401 → `redirect` ke `/sign-in?redirectTo=…`; status
   error lain dilempar ke ErrorBoundary. `redirectTo` selalu disaring
   `getSafeRedirect` (hanya path internal) untuk mencegah open redirect.

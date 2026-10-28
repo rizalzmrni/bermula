@@ -6,7 +6,6 @@ import type { CaptureException } from "@bermula/observability/posthog";
 import type { PaymentGateway } from "@bermula/payments/gateway";
 import type { ObjectStorage } from "@bermula/storage/object-storage";
 
-import type { ActiveMembership } from "./services/account";
 import type { OrganizationMembership } from "./services/organizations";
 
 /** Binding Worker (`c.env`), dihasilkan `wrangler types` dari `wrangler.jsonc`. */
@@ -28,18 +27,6 @@ export interface AppVariables {
 export interface AppEnv {
   Bindings: Bindings;
   Variables: AppVariables;
-}
-
-/** Tambahan context setelah `requireAuth`: sesi pasti ada dan ter-scope organisasi. */
-export interface AuthenticatedEnv {
-  Bindings: Bindings;
-  Variables: AppVariables & {
-    user: Session["user"];
-    session: Session["session"];
-    organizationId: string;
-    /** Organisasi aktif + role pengguna, sudah dicek ke tabel anggota. */
-    membership: ActiveMembership;
-  };
 }
 
 /** Tambahan context setelah `requireUser`: sesi pasti ada, tanpa organisasi. */

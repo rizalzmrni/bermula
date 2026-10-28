@@ -2,21 +2,11 @@ import { createRoute, z } from "@hono/zod-openapi";
 
 import { errorResponse } from "../lib/errors";
 import { createRouter } from "../lib/router";
-import { requireAuth } from "../middleware/require-auth";
+import { requireUser } from "../middleware/require-user";
 import { SESSION_SECURITY } from "../openapi";
 
 const AccountSchema = z
   .object({
-    organization: z.object({
-      id: z.uuid(),
-      isPersonal: z.boolean().openapi({
-        description: "Organisasi pribadi yang dibuat otomatis untuk pengguna.",
-      }),
-      logo: z.string().nullable(),
-      name: z.string().openapi({ example: "Budi" }),
-      role: z.string().openapi({ example: "owner" }),
-      slug: z.string().openapi({ example: "personal-8d3c1f0e" }),
-    }),
     user: z.object({
       email: z.email().openapi({ example: "budi@example.com" }),
       id: z.uuid(),
@@ -34,9 +24,9 @@ const AccountSchema = z
 
 const getMeRoute = createRoute({
   description:
-    "Pengguna yang sedang login beserta organisasi aktif di sesinya dan role-nya di organisasi tersebut.",
+    "Pengguna yang sedang login. Organisasinya ada di `/api/me/organizations`.",
   method: "get",
-  middleware: [requireAuth] as const,
+  middleware: [requireUser] as const,
   path: "/api/me",
   responses: {
     200: {
@@ -44,9 +34,6 @@ const getMeRoute = createRoute({
       description: "Akun pengguna saat ini.",
     },
     401: errorResponse("Belum login."),
-    403: errorResponse(
-      "Tidak ada organisasi aktif atau pengguna bukan anggotanya."
-    ),
     429: errorResponse("Terlalu banyak permintaan."),
   },
   security: SESSION_SECURITY,
@@ -55,11 +42,10 @@ const getMeRoute = createRoute({
 });
 
 export const meRoutes = createRouter().openapi(getMeRoute, (c) => {
-  const { membership: organization, user } = c.var;
+  const { user } = c.var;
 
   return c.json(
     {
-      organization,
       user: {
         email: user.email,
         id: user.id,

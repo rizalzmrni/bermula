@@ -1,0 +1,1 @@
+ALTER TABLE "auth_organizations" DROP COLUMN "is_personal";

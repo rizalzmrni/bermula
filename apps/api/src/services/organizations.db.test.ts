@@ -1,6 +1,5 @@
-import { invitations, organizations } from "@bermula/db/schema/auth";
+import { invitations } from "@bermula/db/schema/auth";
 import { createTestDb } from "@bermula/db/testing";
-import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import {
@@ -37,11 +36,7 @@ describe("organization queries", () => {
 
     const toko = await insertOrganization(db, "Toko Budi");
     const other = await insertOrganization(db, "Toko Lain");
-    const personal = await insertOrganization(db, "Budi");
-    await db
-      .update(organizations)
-      .set({ isPersonal: true })
-      .where(eq(organizations.id, personal.id));
+    const kafe = await insertOrganization(db, "Kafe Budi");
     tokoId = toko.id;
     otherId = other.id;
 
@@ -51,8 +46,8 @@ describe("organization queries", () => {
       userId: owner.id,
     });
     await insertMember(db, {
-      organizationId: personal.id,
-      role: "owner",
+      organizationId: kafe.id,
+      role: "admin",
       userId: owner.id,
     });
     await insertMember(db, {
@@ -111,10 +106,11 @@ describe("organization queries", () => {
     ).rejects.toMatchObject({ code: "ORGANIZATION_NOT_FOUND", status: 404 });
   });
 
-  it("lists the user's organizations without the personal one", async () => {
+  it("lists the user's organizations by name with their role", async () => {
     const rows = await listUserOrganizations({ db, userId: budi.id });
 
     expect(rows.map((row) => [row.name, row.role])).toStrictEqual([
+      ["Kafe Budi", "admin"],
       ["Toko Budi", "owner"],
     ]);
   });

@@ -1,6 +1,7 @@
 import { APP_NAME } from "@bermula/core/brand";
-import { data, redirect, useParams } from "react-router";
+import { data, redirect } from "react-router";
 
+import { useCurrentOrganization } from "../features/organizations/current-organization";
 import {
   OrganizationDangerZone,
   OrganizationProfileCard,
@@ -12,7 +13,6 @@ import {
   leaveOrganization,
   updateOrganization,
 } from "../features/organizations/organizations-api.server";
-import { useCurrentOrganization } from "../features/organizations/queries";
 import {
   SETTINGS_INTENT,
   settingsActionSchema,
@@ -104,7 +104,7 @@ export const action = async ({
 };
 
 const OrganizationSettingsPage = () => {
-  const organization = useCurrentOrganization(useParams().slug ?? "");
+  const organization = useCurrentOrganization();
 
   return (
     <div className="flex max-w-2xl flex-col gap-6">

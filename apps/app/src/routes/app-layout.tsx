@@ -30,7 +30,6 @@ const PERSONAL_NAVIGATION: NavGroup[] = [
   {
     items: [
       { href: "/settings/security", icon: IconShieldLock, title: "Keamanan" },
-      { href: "/settings/billing", icon: IconCreditCard, title: "Tagihan" },
       { href: "/settings/cookies", icon: IconCookie, title: "Cookie" },
     ],
     title: "Pengaturan",
@@ -45,6 +44,7 @@ const getOrganizationNavigation = (slug: string): NavGroup[] => {
       items: [
         { end: true, href: base, icon: IconHome, title: "Beranda" },
         { href: `${base}/members`, icon: IconUsers, title: "Anggota" },
+        { href: `${base}/billing`, icon: IconCreditCard, title: "Tagihan" },
         { href: `${base}/settings`, icon: IconSettings, title: "Pengaturan" },
       ],
       title: "Organisasi",

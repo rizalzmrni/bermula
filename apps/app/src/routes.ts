@@ -15,7 +15,6 @@ export default [
   layout("routes/app-layout.tsx", [
     index("routes/dashboard.tsx"),
     route("settings/security", "routes/settings-security.tsx"),
-    route("settings/billing", "routes/settings-billing.tsx"),
     route("settings/cookies", "routes/settings-cookies.tsx"),
     route("organizations/new", "routes/organizations-new.tsx"),
     // Tautan email undangan (`ACCEPT_INVITATION_PATH` di packages/auth).
@@ -24,6 +23,7 @@ export default [
     route("o/:slug", "routes/org-layout.tsx", [
       index("routes/org-dashboard.tsx"),
       route("members", "routes/org-members.tsx"),
+      route("billing", "routes/org-billing.tsx"),
       route("settings", "routes/org-settings.tsx"),
     ]),
   ]),

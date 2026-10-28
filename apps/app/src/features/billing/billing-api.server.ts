@@ -25,13 +25,18 @@ export const readBillingErrorMessage = async (response: {
 
 export const startCheckout = async ({
   client,
+  organizationId,
   plan,
 }: {
   client: ApiClient;
+  organizationId: string;
   plan: PaidPlanId;
 }): Promise<BillingRedirectResult> => {
-  const response = await client.api.billing["checkout-sessions"].$post({
+  const response = await client.api.organizations[":organizationId"].billing[
+    "checkout-sessions"
+  ].$post({
     json: { plan },
+    param: { organizationId },
   });
   if (response.status === 201) {
     const { url } = await response.json();
@@ -42,10 +47,14 @@ export const startCheckout = async ({
 
 export const openBillingPortal = async ({
   client,
+  organizationId,
 }: {
   client: ApiClient;
+  organizationId: string;
 }): Promise<BillingRedirectResult> => {
-  const response = await client.api.billing["portal-sessions"].$post();
+  const response = await client.api.organizations[":organizationId"].billing[
+    "portal-sessions"
+  ].$post({ param: { organizationId } });
   if (response.status === 201) {
     const { url } = await response.json();
     return { url };

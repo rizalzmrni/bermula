@@ -5,6 +5,9 @@ import { beforeAll, describe, expect, it } from "vitest";
 import type { ErrorBody } from "./lib/errors";
 
 const APP_ORIGIN = "http://localhost:5173";
+const ORGANIZATION = "/api/organizations/{organizationId}";
+// Organisasi acak: tanpa sesi, request ditolak sebelum keanggotaan dicek.
+const ORGANIZATION_URL = `/api/organizations/${crypto.randomUUID()}`;
 
 // Setiap test memakai IP sendiri agar kuota rate limit tidak saling memengaruhi.
 const request = (path: string, init: RequestInit & { ip: string }) => {
@@ -127,22 +130,22 @@ describe("api worker", () => {
 
     expect(Object.keys(document.paths)).toStrictEqual(
       expect.arrayContaining([
-        "/api/images",
-        "/api/images/{id}/complete",
-        "/api/images/{id}/download",
-        "/api/images/{id}",
-        "/api/documents",
-        "/api/documents/{id}/complete",
-        "/api/documents/{id}/download",
-        "/api/documents/{id}",
+        `${ORGANIZATION}/images`,
+        `${ORGANIZATION}/images/{id}/complete`,
+        `${ORGANIZATION}/images/{id}/download`,
+        `${ORGANIZATION}/images/{id}`,
+        `${ORGANIZATION}/documents`,
+        `${ORGANIZATION}/documents/{id}/complete`,
+        `${ORGANIZATION}/documents/{id}/download`,
+        `${ORGANIZATION}/documents/{id}`,
       ])
     );
   });
 
   it("requires a session for file uploads", async () => {
     const statuses = await Promise.all(
-      ["/api/images", "/api/documents"].map(async (path) => {
-        const response = await request(path, {
+      ["images", "documents"].map(async (kind) => {
+        const response = await request(`${ORGANIZATION_URL}/${kind}`, {
           body: JSON.stringify({
             contentType: "image/png",
             fileName: "a.png",
@@ -190,14 +193,14 @@ describe("api worker", () => {
 
   it("requires a session for billing endpoints", async () => {
     const responses = await Promise.all([
-      request("/api/billing/subscription", { ip: "10.0.0.11" }),
-      request("/api/billing/checkout-sessions", {
+      request(`${ORGANIZATION_URL}/billing/subscription`, { ip: "10.0.0.11" }),
+      request(`${ORGANIZATION_URL}/billing/checkout-sessions`, {
         body: JSON.stringify({ plan: "pro" }),
         headers: { "content-type": "application/json" },
         ip: "10.0.0.11",
         method: "POST",
       }),
-      request("/api/billing/portal-sessions", {
+      request(`${ORGANIZATION_URL}/billing/portal-sessions`, {
         ip: "10.0.0.11",
         method: "POST",
       }),
@@ -274,9 +277,9 @@ describe("api worker", () => {
 
     expect(Object.keys(document.paths)).toStrictEqual(
       expect.arrayContaining([
-        "/api/billing/subscription",
-        "/api/billing/checkout-sessions",
-        "/api/billing/portal-sessions",
+        `${ORGANIZATION}/billing/subscription`,
+        `${ORGANIZATION}/billing/checkout-sessions`,
+        `${ORGANIZATION}/billing/portal-sessions`,
         "/api/webhooks/polar",
       ])
     );

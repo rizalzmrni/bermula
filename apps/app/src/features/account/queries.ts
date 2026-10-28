@@ -6,7 +6,7 @@ import { getBrowserApiClient } from "../../lib/api-client";
 import type { ApiClient } from "../../lib/api-client";
 import { accountKeys } from "./query-keys";
 
-/** Akun dari `GET /api/me`: pengguna + organisasi aktif + role-nya. */
+/** Akun dari `GET /api/me`: pengguna yang login (tanpa organisasi). */
 export type Account = InferResponseType<ApiClient["api"]["me"]["$get"], 200>;
 
 /** Selain 200, status dilempar sebagai `HttpError` (401 = belum login). */

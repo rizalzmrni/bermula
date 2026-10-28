@@ -29,8 +29,8 @@ export const getServerApiClient = ({ request, context }: SessionArgs) =>
 
 /**
  * Akun pengguna lewat QueryClient request ini (hasilnya ikut `dehydrate()`
- * di loader), atau `null` bila belum login. Status lain dari api (403 tanpa
- * organisasi aktif, 429, 5xx) dilempar sebagai respons error ke
+ * di loader), atau `null` bila belum login. Status lain dari api (429, 5xx)
+ * dilempar sebagai respons error ke
  * ErrorBoundary, bukan dianggap "belum login".
  */
 export const loadAccount = async ({

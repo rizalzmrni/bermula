@@ -29,8 +29,8 @@ export const createOrganization = ({
   input,
   ...args
 }: RequestArgs & { input: OrganizationInput }) =>
-  // Organisasi aktif di sesi tetap organisasi pribadi; konteks organisasi
-  // diambil dari URL `/o/:slug` (docs/user-organization-dashboards.md).
+  // Organisasi aktif di sesi tidak dipakai (konteks dari URL `/o/:slug`),
+  // jadi tidak perlu ikut diubah saat membuat organisasi.
   post(args, "/create", { ...input, keepCurrentActiveOrganization: true });
 
 export const updateOrganization = ({

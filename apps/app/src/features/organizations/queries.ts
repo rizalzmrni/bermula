@@ -1,9 +1,5 @@
 import { HttpError } from "@bermula/data/query-client";
-import {
-  queryOptions,
-  useQuery,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 
 import { getBrowserApiClient } from "../../lib/api-client";
@@ -115,21 +111,6 @@ export const organizationInvitationsQueryOptions = (
 /** Pemilih organisasi: `useQuery` agar sidebar tetap tampil bila api gagal. */
 export const useOrganizations = () =>
   useQuery(organizationsQueryOptions(getBrowserApiClient()));
-
-/**
- * Organisasi dari `:slug` di halaman `/o/:slug/*`. Loader `org-layout` sudah
- * memastikan daftarnya ada dan slug-nya milik pengguna (404 bila tidak).
- */
-export const useCurrentOrganization = (slug: string) => {
-  const { data } = useSuspenseQuery(
-    organizationsQueryOptions(getBrowserApiClient())
-  );
-  const organization = data.find((item) => item.slug === slug);
-  if (!organization) {
-    throw new Error(`Organization ${slug} is not in the cached list`);
-  }
-  return organization;
-};
 
 export const useMyInvitations = () =>
   useQuery(myInvitationsQueryOptions(getBrowserApiClient()));

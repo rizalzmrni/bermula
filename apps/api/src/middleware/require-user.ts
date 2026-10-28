@@ -4,7 +4,7 @@ import { createMiddleware } from "hono/factory";
 import { ApiError } from "../lib/errors";
 import type { UserEnv } from "../types";
 
-/** Sesi dari cookie, atau 401. Dipakai bersama `requireUser` dan `requireAuth`. */
+/** Sesi dari cookie, atau 401. Dipakai bersama `requireUser` dan `requireOrganizationMember`. */
 export const getSessionOrThrow = async ({
   auth,
   headers,

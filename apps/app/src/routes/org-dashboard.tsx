@@ -2,16 +2,15 @@ import { APP_NAME } from "@bermula/core/brand";
 import { EmptyState } from "@bermula/design-system/components/feedback/empty-state";
 import { Badge } from "@bermula/design-system/components/ui/badge";
 import { IconLayoutDashboard } from "@tabler/icons-react";
-import { useParams } from "react-router";
 
+import { useCurrentOrganization } from "../features/organizations/current-organization";
 import { formatRole } from "../features/organizations/labels";
-import { useCurrentOrganization } from "../features/organizations/queries";
 
 export const meta = () => [{ title: `Organisasi — ${APP_NAME}` }];
 
 /** Beranda dashboard organisasi; data ter-scope organisasi di URL. */
 const OrganizationDashboardPage = () => {
-  const organization = useCurrentOrganization(useParams().slug ?? "");
+  const organization = useCurrentOrganization();
 
   return (
     <div className="flex max-w-3xl flex-col gap-6">

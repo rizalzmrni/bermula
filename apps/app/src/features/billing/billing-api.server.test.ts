@@ -4,7 +4,9 @@ import { createApiClient } from "../../lib/api-client";
 import type { ApiBinding } from "../../lib/api-client";
 import { openBillingPortal, startCheckout } from "./billing-api.server";
 
-const APP_REQUEST = new Request("http://localhost:5173/settings/billing", {
+const ORGANIZATION_ID = "0b9c7c1e-7f5a-4c8e-9a51-2f3a4b5c6d7e";
+
+const APP_REQUEST = new Request("http://localhost:5173/o/toko-budi/billing", {
   headers: { cookie: "session=abc", origin: "http://localhost:5173" },
   method: "POST",
 });
@@ -34,12 +36,16 @@ describe(startCheckout, () => {
       )
     );
 
-    const result = await startCheckout({ client, plan: "pro" });
+    const result = await startCheckout({
+      client,
+      organizationId: ORGANIZATION_ID,
+      plan: "pro",
+    });
 
     const [sent] = requests;
     expect(result).toStrictEqual({ url: "https://checkout.polar.test/co_1" });
     expect(new URL(sent?.url ?? "").pathname).toBe(
-      "/api/billing/checkout-sessions"
+      `/api/organizations/${ORGANIZATION_ID}/billing/checkout-sessions`
     );
     expect(sent?.headers.get("cookie")).toBe("session=abc");
     await expect(sent?.json()).resolves.toStrictEqual({ plan: "pro" });
@@ -50,9 +56,9 @@ describe(startCheckout, () => {
       apiError(409, "ALREADY_SUBSCRIBED", "Organisasi sudah berlangganan.")
     );
 
-    await expect(startCheckout({ client, plan: "pro" })).resolves.toStrictEqual(
-      { formError: "Organisasi sudah berlangganan." }
-    );
+    await expect(
+      startCheckout({ client, organizationId: ORGANIZATION_ID, plan: "pro" })
+    ).resolves.toStrictEqual({ formError: "Organisasi sudah berlangganan." });
   });
 });
 
@@ -62,11 +68,13 @@ describe(openBillingPortal, () => {
       Response.json({ url: "https://portal.polar.test/s_1" }, { status: 201 })
     );
 
-    await expect(openBillingPortal({ client })).resolves.toStrictEqual({
+    await expect(
+      openBillingPortal({ client, organizationId: ORGANIZATION_ID })
+    ).resolves.toStrictEqual({
       url: "https://portal.polar.test/s_1",
     });
     expect(new URL(requests[0]?.url ?? "").pathname).toBe(
-      "/api/billing/portal-sessions"
+      `/api/organizations/${ORGANIZATION_ID}/billing/portal-sessions`
     );
   });
 
@@ -75,7 +83,10 @@ describe(openBillingPortal, () => {
       new Response("Bad gateway", { status: 502 })
     );
 
-    const result = await openBillingPortal({ client });
+    const result = await openBillingPortal({
+      client,
+      organizationId: ORGANIZATION_ID,
+    });
 
     expect(result).toStrictEqual({
       formError: "Gagal membuka halaman pembayaran. Silakan coba lagi.",

@@ -3,7 +3,6 @@ import type { Db } from "@bermula/db/client";
 import type { Logger } from "@bermula/observability/logger";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
 import { betterAuth } from "better-auth";
-import { APIError } from "better-auth/api";
 import { admin } from "better-auth/plugins/admin";
 import { openAPI } from "better-auth/plugins/open-api";
 import { organization } from "better-auth/plugins/organization";
@@ -18,14 +17,9 @@ import {
 } from "./config";
 import type { AuthEnv } from "./config";
 import {
-  assertInvitableOrganization,
   validateNewOrganization,
   validateOrganizationUpdate,
 } from "./organization-hooks";
-import {
-  createPersonalOrganizationStore,
-  resolveActiveOrganizationId,
-} from "./personal-organization";
 
 const SECONDS_PER_DAY = 60 * 60 * 24;
 const SESSION_EXPIRES_IN = 7 * SECONDS_PER_DAY;
@@ -92,8 +86,6 @@ export const createAuth = ({
     return Promise.resolve();
   };
 
-  const personalOrganizations = createPersonalOrganizationStore(db);
-
   return betterAuth({
     account: {
       // Default better-auth sudah aman: penautan otomatis hanya bila email
@@ -113,30 +105,6 @@ export const createAuth = ({
     baseURL: env.BETTER_AUTH_URL,
     // Tabel memakai nama jamak (`users`, `sessions`, ...) di `packages/db`.
     database: drizzleAdapter(db, { provider: "pg", usePlural: true }),
-    databaseHooks: {
-      session: {
-        create: {
-          // Setiap sesi selalu punya organisasi aktif, sehingga service di
-          // apps/api bisa langsung men-scope data dengan `activeOrganizationId`.
-          // Sesi pengganti (aktivasi 2FA, refresh) sudah membawa organisasi
-          // aktif sebelumnya; nilai itu dipertahankan.
-          before: async (session) => {
-            if (typeof session.activeOrganizationId === "string") {
-              return;
-            }
-            return {
-              data: {
-                ...session,
-                activeOrganizationId: await resolveActiveOrganizationId({
-                  store: personalOrganizations,
-                  userId: session.userId,
-                }),
-              },
-            };
-          },
-        },
-      },
-    },
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: true,
@@ -169,45 +137,16 @@ export const createAuth = ({
       organization({
         invitationExpiresIn: INVITATION_EXPIRES_IN,
         organizationHooks: {
-          beforeCreateInvitation: ({ organization: org }) => {
-            assertInvitableOrganization(org);
-            return Promise.resolve();
-          },
           beforeCreateOrganization: ({ organization: org }) =>
             Promise.resolve({
               data: { ...org, ...validateNewOrganization(org) },
             }),
-          // Organisasi pribadi menjadi tempat data default pengguna; bila
-          // terhapus, sesi berikutnya akan membuat organisasi pribadi kosong.
-          beforeDeleteOrganization: ({ organization: org }) => {
-            if (org.isPersonal === true) {
-              return Promise.reject(
-                new APIError("BAD_REQUEST", {
-                  message: "Personal organization cannot be deleted",
-                })
-              );
-            }
-            return Promise.resolve();
-          },
           beforeUpdateOrganization: ({ organization: org }) =>
             Promise.resolve({
               data: { ...org, ...validateOrganizationUpdate(org) },
             }),
         },
         requireEmailVerificationOnInvitation: true,
-        schema: {
-          organization: {
-            additionalFields: {
-              // `input: false`: hanya server yang boleh menandai organisasi pribadi.
-              isPersonal: {
-                defaultValue: false,
-                input: false,
-                required: false,
-                type: "boolean",
-              },
-            },
-          },
-        },
         sendInvitationEmail: ({ email, id, inviter, organization: org }) =>
           sendInBackground("organization-invitation", () =>
             emails.sendOrganizationInvitationEmail({
