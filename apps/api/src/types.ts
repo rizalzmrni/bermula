@@ -7,6 +7,7 @@ import type { PaymentGateway } from "@bermula/payments/gateway";
 import type { ObjectStorage } from "@bermula/storage/object-storage";
 
 import type { ActiveMembership } from "./services/account";
+import type { OrganizationMembership } from "./services/organizations";
 
 /** Binding Worker (`c.env`), dihasilkan `wrangler types` dari `wrangler.jsonc`. */
 export type Bindings = Env;
@@ -38,5 +39,26 @@ export interface AuthenticatedEnv {
     organizationId: string;
     /** Organisasi aktif + role pengguna, sudah dicek ke tabel anggota. */
     membership: ActiveMembership;
+  };
+}
+
+/** Tambahan context setelah `requireUser`: sesi pasti ada, tanpa organisasi. */
+export interface UserEnv {
+  Bindings: Bindings;
+  Variables: AppVariables & {
+    user: Session["user"];
+    session: Session["session"];
+  };
+}
+
+/**
+ * Tambahan context setelah `requireOrganizationMember`: organisasi dari path
+ * `{organizationId}`, bukan dari sesi, sudah dicek ke tabel anggota.
+ */
+export interface OrganizationEnv {
+  Bindings: Bindings;
+  Variables: UserEnv["Variables"] & {
+    organizationId: string;
+    membership: OrganizationMembership;
   };
 }

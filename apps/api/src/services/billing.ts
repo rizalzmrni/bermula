@@ -1,3 +1,4 @@
+import { isOrganizationManager } from "@bermula/core/organizations";
 import { isEntitledStatus, resolveEffectivePlan } from "@bermula/core/plans";
 import type { PaidPlanId } from "@bermula/core/plans";
 import type { QueryDb } from "@bermula/db/client";
@@ -16,7 +17,6 @@ import { desc, eq, lt } from "drizzle-orm";
 import { z } from "zod";
 
 import { ApiError } from "../lib/errors";
-import { ORGANIZATION_MANAGER_ROLES, hasOrganizationRole } from "../lib/roles";
 
 /** Halaman tagihan di apps/app; tujuan kembali dari Checkout & Portal. */
 const BILLING_PAGE_PATH = "/settings/billing";
@@ -51,7 +51,7 @@ export const requireWebhookSecret = (secret: string | undefined) => {
 };
 
 const assertBillingManager = (role: string) => {
-  if (!hasOrganizationRole(role, ORGANIZATION_MANAGER_ROLES)) {
+  if (!isOrganizationManager(role)) {
     throw new ApiError({
       code: "FORBIDDEN",
       message: "Hanya owner atau admin yang dapat mengelola tagihan.",
@@ -99,7 +99,7 @@ export const getBillingOverview = async ({
 
   return {
     billingEnabled,
-    canManage: hasOrganizationRole(role, ORGANIZATION_MANAGER_ROLES),
+    canManage: isOrganizationManager(role),
     // Customer Polar baru ada setelah Checkout pertama selesai; saat itu
     // webhook sudah menyimpan langganannya.
     hasBillingAccount: subscription !== null,

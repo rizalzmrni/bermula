@@ -9,6 +9,7 @@ import { billingRoutes } from "./routes/billing";
 import { documentRoutes, imageRoutes } from "./routes/files";
 import { healthRoutes } from "./routes/health";
 import { meRoutes } from "./routes/me";
+import { organizationRoutes } from "./routes/organizations";
 import { webhookRoutes } from "./routes/webhooks";
 import { scheduled } from "./scheduled";
 import type { AppEnv, Bindings } from "./types";
@@ -41,6 +42,7 @@ app.notFound(notFoundHandler);
 const routes = app
   .route("/", healthRoutes)
   .route("/", meRoutes)
+  .route("/", organizationRoutes)
   .route("/", imageRoutes)
   .route("/", documentRoutes)
   .route("/", billingRoutes)
