@@ -17,5 +17,14 @@ export default [
     route("settings/security", "routes/settings-security.tsx"),
     route("settings/billing", "routes/settings-billing.tsx"),
     route("settings/cookies", "routes/settings-cookies.tsx"),
+    route("organizations/new", "routes/organizations-new.tsx"),
+    // Tautan email undangan (`ACCEPT_INVITATION_PATH` di packages/auth).
+    route("accept-invitation/:invitationId", "routes/accept-invitation.tsx"),
+    // Dashboard organisasi: konteks dari `:slug`, bukan organisasi aktif sesi.
+    route("o/:slug", "routes/org-layout.tsx", [
+      index("routes/org-dashboard.tsx"),
+      route("members", "routes/org-members.tsx"),
+      route("settings", "routes/org-settings.tsx"),
+    ]),
   ]),
 ] satisfies RouteConfig;

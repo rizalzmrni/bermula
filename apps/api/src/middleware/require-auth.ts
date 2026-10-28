@@ -3,6 +3,7 @@ import { createMiddleware } from "hono/factory";
 import { ApiError } from "../lib/errors";
 import { getActiveMembership } from "../services/account";
 import type { AuthenticatedEnv } from "../types";
+import { getSessionOrThrow } from "./require-user";
 
 /**
  * Wajib login dan masih anggota organisasi aktif. Menaruh `user`, `session`,
@@ -11,17 +12,10 @@ import type { AuthenticatedEnv } from "../types";
  */
 export const requireAuth = createMiddleware<AuthenticatedEnv>(
   async (c, next) => {
-    const result = await c.var.auth.api.getSession({
+    const result = await getSessionOrThrow({
+      auth: c.var.auth,
       headers: c.req.raw.headers,
     });
-
-    if (!result) {
-      throw new ApiError({
-        code: "UNAUTHORIZED",
-        message: "Silakan masuk terlebih dahulu.",
-        status: 401,
-      });
-    }
 
     // Hook sesi di packages/auth selalu mengisi organisasi aktif; kosong
     // berarti organisasi itu sudah dihapus (FK `set null`).

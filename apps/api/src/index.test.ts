@@ -270,4 +270,41 @@ describe("api worker", () => {
       document.paths["/api/webhooks/polar"]?.post?.security
     ).toBeUndefined();
   });
+
+  it("requires a session for organization endpoints", async () => {
+    const organizationId = crypto.randomUUID();
+    const responses = await Promise.all(
+      [
+        "/api/me/organizations",
+        "/api/me/invitations",
+        `/api/organizations/${organizationId}/members`,
+        `/api/organizations/${organizationId}/invitations`,
+      ].map((path) => request(path, { ip: "10.0.0.15" }))
+    );
+
+    expect(responses.map((response) => response.status)).toStrictEqual([
+      401, 401, 401, 401,
+    ]);
+  });
+
+  it("documents the organization routes with the session scheme", async () => {
+    const response = await request("/openapi.json", { ip: "10.0.0.16" });
+    const document: {
+      paths: Record<string, { get?: { security?: unknown; tags?: string[] } }>;
+    } = await response.json();
+
+    const members =
+      document.paths["/api/organizations/{organizationId}/members"]?.get;
+
+    expect(Object.keys(document.paths)).toStrictEqual(
+      expect.arrayContaining([
+        "/api/me/organizations",
+        "/api/me/invitations",
+        "/api/organizations/{organizationId}/members",
+        "/api/organizations/{organizationId}/invitations",
+      ])
+    );
+    expect(members?.tags).toStrictEqual(["Organizations"]);
+    expect(members?.security).toStrictEqual([{ sessionCookie: [] }]);
+  });
 });

@@ -60,6 +60,31 @@ describe(AppShell, () => {
     expect(isActive("Beranda")).toBeFalsy();
   });
 
+  it("keeps an `end` item inactive on its child routes", () => {
+    renderWithRouter(
+      <AppShell
+        groups={[
+          {
+            items: [
+              { end: true, href: "/o/toko-a", icon: IconHome, title: "Toko" },
+              {
+                href: "/o/toko-a/members",
+                icon: IconSettings,
+                title: "Anggota",
+              },
+            ],
+            title: "Organisasi",
+          },
+        ]}
+      >
+        <p>Isi</p>
+      </AppShell>,
+      { path: "/o/toko-a/members" }
+    );
+    expect(isActive("Anggota")).toBeTruthy();
+    expect(isActive("Toko")).toBeFalsy();
+  });
+
   it("collapses the sidebar from the header trigger", () => {
     const { container } = renderWithRouter(
       <AppShell groups={GROUPS}>

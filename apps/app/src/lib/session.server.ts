@@ -14,10 +14,18 @@ import { getLoginUrl } from "./redirect";
 
 const HTTP_UNAUTHORIZED = 401;
 
-interface SessionArgs {
+export interface SessionArgs {
   request: Request;
   context: Readonly<RouterContextProvider>;
 }
+
+/** Klien api untuk loader/action: Service Binding + cookie dari request asli. */
+export const getServerApiClient = ({ request, context }: SessionArgs) =>
+  createApiClient({
+    api: getCloudflare(context).env.API,
+    mode: "server",
+    request,
+  });
 
 /**
  * Akun pengguna lewat QueryClient request ini (hasilnya ikut `dehydrate()`
@@ -46,14 +54,10 @@ export const loadAccount = async ({
 };
 
 /** Akun pengguna saat ini dari loader/action (klien Service Binding). */
-export const getAccount = ({ request, context }: SessionArgs) =>
+export const getAccount = (args: SessionArgs) =>
   loadAccount({
-    client: createApiClient({
-      api: getCloudflare(context).env.API,
-      mode: "server",
-      request,
-    }),
-    queryClient: getQueryClient(context),
+    client: getServerApiClient(args),
+    queryClient: getQueryClient(args.context),
   });
 
 /** Auth gate halaman terproteksi: tanpa sesi → redirect ke login + `redirectTo`. */

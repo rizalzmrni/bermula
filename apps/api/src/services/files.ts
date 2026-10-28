@@ -10,6 +10,7 @@ import type {
   UploadRejection,
   UploadRequest,
 } from "@bermula/core/files";
+import { isOrganizationManager } from "@bermula/core/organizations";
 import type { QueryDb } from "@bermula/db/client";
 import { files } from "@bermula/db/schema/storage";
 import type { StoredFile } from "@bermula/db/schema/storage";
@@ -21,7 +22,6 @@ import type {
 import { and, desc, eq, sql } from "drizzle-orm";
 
 import { ApiError } from "../lib/errors";
-import { ORGANIZATION_MANAGER_ROLES, hasOrganizationRole } from "../lib/roles";
 
 /** Segmen URL (`/api/images`) sekaligus prefix key R2 (`images/<org>/...`). */
 export const FILE_KIND_PATH = {
@@ -79,9 +79,7 @@ export const canDeleteFile = ({
   file: Pick<StoredFile, "uploadedBy">;
   role: string;
   userId: string;
-}) =>
-  file.uploadedBy === userId ||
-  hasOrganizationRole(role, ORGANIZATION_MANAGER_ROLES);
+}) => file.uploadedBy === userId || isOrganizationManager(role);
 
 export const UPLOAD_CHECK = {
   matches: "matches",

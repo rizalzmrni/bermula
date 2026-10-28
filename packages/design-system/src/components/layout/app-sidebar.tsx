@@ -20,15 +20,17 @@ import type { NavGroup, NavItem } from "@bermula/design-system/lib/navigation";
 import type { ReactNode } from "react";
 import { NavLink, useMatch, useResolvedPath } from "react-router";
 
-/** Aktif untuk path itu dan turunannya; "/" hanya aktif persis di beranda. */
-const useIsActive = (href: string) => {
-  const { pathname } = useResolvedPath(href);
-  return useMatch({ end: href === "/", path: pathname }) !== null;
+/** "/" (dan item ber-`end`) hanya aktif persis; item lain juga di turunannya. */
+const isExactMatch = (item: NavItem) => item.end ?? item.href === "/";
+
+const useIsActive = (item: NavItem) => {
+  const { pathname } = useResolvedPath(item.href);
+  return useMatch({ end: isExactMatch(item), path: pathname }) !== null;
 };
 
 // Elemen `render` Base UI: props tombol (kelas, anak, data-active) digabung ke NavLink.
 const itemLink = (item: NavItem) => (
-  <NavLink end={item.href === "/"} to={item.href} />
+  <NavLink end={isExactMatch(item)} to={item.href} />
 );
 
 const SubItem = ({
@@ -38,7 +40,7 @@ const SubItem = ({
   item: NavItem;
   onNavigate: () => void;
 }) => {
-  const active = useIsActive(item.href);
+  const active = useIsActive(item);
 
   return (
     <SidebarMenuSubItem>
@@ -54,7 +56,7 @@ const SubItem = ({
 };
 
 const Item = ({ item }: { item: NavItem }) => {
-  const active = useIsActive(item.href);
+  const active = useIsActive(item);
   const { isMobile, setOpenMobile } = useSidebar();
   // Sheet mobile menutupi konten, jadi ditutup setelah pengguna memilih menu.
   const closeOnMobile = () => {
