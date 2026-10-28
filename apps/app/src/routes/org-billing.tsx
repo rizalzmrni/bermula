@@ -1,6 +1,6 @@
 import { APP_NAME } from "@bermula/core/brand";
 import { HydrationBoundary, dehydrate } from "@tanstack/react-query";
-import { data, redirect, useParams, useSearchParams } from "react-router";
+import { data, redirect, useSearchParams } from "react-router";
 
 import {
   openBillingPortal,
@@ -15,8 +15,8 @@ import {
   readCheckoutResult,
   readPortalReturn,
 } from "../features/billing/schemas";
+import { useCurrentOrganization } from "../features/organizations/current-organization";
 import { requireOrganization } from "../features/organizations/organization.server";
-import { useCurrentOrganization } from "../features/organizations/queries";
 import { getQueryClient } from "../lib/query-client";
 import { getServerApiClient, requireSession } from "../lib/session.server";
 import type { Route } from "./+types/org-billing";
@@ -90,7 +90,7 @@ export const action = async ({
 };
 
 const OrganizationBillingPage = ({ loaderData }: Route.ComponentProps) => {
-  const organization = useCurrentOrganization(useParams().slug ?? "");
+  const organization = useCurrentOrganization();
   const [searchParams] = useSearchParams();
   const checkoutResult = readCheckoutResult(searchParams);
 

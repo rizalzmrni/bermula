@@ -1,9 +1,10 @@
 import { APP_NAME } from "@bermula/core/brand";
 import { isOrganizationManager } from "@bermula/core/organizations";
 import { HydrationBoundary, dehydrate } from "@tanstack/react-query";
-import { data, useParams } from "react-router";
+import { data } from "react-router";
 
 import { useAccount } from "../features/account/queries";
+import { useCurrentOrganization } from "../features/organizations/current-organization";
 import {
   InviteMemberCard,
   MembersCard,
@@ -20,7 +21,6 @@ import {
 import {
   membersQueryOptions,
   organizationInvitationsQueryOptions,
-  useCurrentOrganization,
 } from "../features/organizations/queries";
 import {
   MEMBERS_INTENT,
@@ -134,7 +134,7 @@ export const action = async ({
 };
 
 const MembersPage = ({ loaderData }: Route.ComponentProps) => {
-  const organization = useCurrentOrganization(useParams().slug ?? "");
+  const organization = useCurrentOrganization();
   const { user } = useAccount();
   const canManage = isOrganizationManager(organization.role);
 
