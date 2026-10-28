@@ -158,6 +158,28 @@ sendiri, sehingga bisa dideploy independen.
 3. Siapkan binding (database Neon, bucket R2) sesuai `wrangler.jsonc`.
 4. Jalankan deploy (`bun run deploy`, atau `wrangler deploy` di folder app).
 
+### Staging (`workers.dev`)
+
+`env.staging` di `wrangler.jsonc` ketiga app men-deploy `bermula-{api,app,web}-staging`
+ke `<akun>.workers.dev`. URL non-secret ada di `vars` api dan skrip `build:staging`
+app/web; secret disetel sekali per Worker:
+
+1. Buat Neon branch `staging` (dari branch dev) dan bucket R2 `bermula-files-staging`,
+   lalu terapkan CORS bucket:
+   `bunx wrangler r2 bucket cors set bermula-files-staging --file packages/storage/r2-cors.staging.json`.
+2. Di `apps/api`, tulis secret staging ke `.dev.vars.staging` (ter-ignore git):
+   `BETTER_AUTH_SECRET` (baru), `DATABASE_URL` (branch staging), `RESEND_API_KEY`,
+   `EMAIL_FROM`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`,
+   `POLAR_ACCESS_TOKEN`, `POLAR_WEBHOOK_SECRET`.
+3. Deploy berurutan (Service Binding app butuh api yang sudah ada): di `apps/api`
+   `bun run deploy:staging -- --secrets-file .dev.vars.staging` (secret ikut dalam
+   versi yang sama; deploy berikutnya cukup `bun run deploy:staging`), lalu
+   `bun run deploy:staging` di `apps/app`, lalu `apps/web`.
+4. Webhook Polar Sandbox: `https://bermula-api-staging.<akun>.workers.dev/api/webhooks/polar`.
+
+Skrip `build:staging` app/web memilih `env.staging` lewat `CLOUDFLARE_ENV=staging`;
+`wrangler deploy` sesudahnya memakai konfigurasi hasil build, jadi **tanpa** `--env`.
+
 Untuk autentikasi lintas-origin, tempatkan app dan api pada subdomain dari satu
 domain induk (mis. `app.domain.com` dan `api.domain.com`) dan isi variabel URL/CORS
 yang relevan — detailnya ada di `CLAUDE.md`.

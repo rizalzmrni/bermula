@@ -8,6 +8,8 @@
     "build": "react-router build",
     "preview": "bun run build && vite preview",
     "deploy": "wrangler deploy",
+    "build:staging": "CLOUDFLARE_ENV=staging VITE_API_URL=https://bermula-api-staging.rizalzmrni.workers.dev VITE_WEB_URL=https://bermula-web-staging.rizalzmrni.workers.dev react-router build",
+    "deploy:staging": "bun run build:staging && wrangler deploy",
     "typegen": "wrangler types && react-router typegen",
     "check-types": "tsc --noEmit",
     "test": "vitest run"

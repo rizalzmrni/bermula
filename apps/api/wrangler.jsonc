@@ -25,4 +25,41 @@
       "simple": { "limit": 100, "period": 60 },
     },
   ],
+  "env": {
+    // Staging di workers.dev (`bun run deploy:staging`). Nama Worker otomatis
+    // `bermula-api-staging`. URL di sini hanya untuk staging; domain produksi
+    // masih keputusan tertunda (STATUS.md). Secret: `wrangler secret put --env staging`.
+    "staging": {
+      "vars": {
+        "APP_URL": "https://bermula-app-staging.rizalzmrni.workers.dev",
+        "WEB_URL": "https://bermula-web-staging.rizalzmrni.workers.dev",
+        "CORS_ORIGINS": "https://bermula-app-staging.rizalzmrni.workers.dev,https://bermula-web-staging.rizalzmrni.workers.dev",
+        "BETTER_AUTH_URL": "https://bermula-api-staging.rizalzmrni.workers.dev",
+        // `workers.dev` ada di Public Suffix List, jadi `<akun>.workers.dev`
+        // adalah domain induk bersama ketiga Worker. Cookie ini ikut terkirim
+        // ke semua Worker di akun, jadi hanya untuk staging.
+        "AUTH_COOKIE_DOMAIN": "rizalzmrni.workers.dev",
+        // Bucket terpisah dari dev: cron storage-cleanup menghapus objek yang
+        // tidak punya baris di DB staging, termasuk file milik dev.
+        "R2_BUCKET_NAME": "bermula-files-staging",
+        "POLAR_SERVER": "sandbox",
+        "LOG_LEVEL": "debug",
+        "API_DOCS_ENABLED": "true",
+      },
+      // `ratelimits` tidak diwarisi dari level atas. Namespace berbeda agar
+      // hitungan staging tidak bercampur dengan produksi.
+      "ratelimits": [
+        {
+          "name": "AUTH_RATE_LIMIT",
+          "namespace_id": "2001",
+          "simple": { "limit": 10, "period": 60 },
+        },
+        {
+          "name": "API_RATE_LIMIT",
+          "namespace_id": "2002",
+          "simple": { "limit": 100, "period": 60 },
+        },
+      ],
+    },
+  },
 }

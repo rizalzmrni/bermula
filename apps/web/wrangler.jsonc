@@ -8,4 +8,9 @@
   "upload_source_maps": true,
   // Situs marketing statis: tidak memanggil apps/api, jadi tanpa Service
   // Binding. Domain/route produksi belum ditetapkan (keputusan tertunda).
+  "env": {
+    // Staging di workers.dev (`bermula-web-staging`), dipilih saat build lewat
+    // `CLOUDFLARE_ENV=staging` (skrip `build:staging`).
+    "staging": {},
+  },
 }
