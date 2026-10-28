@@ -12,17 +12,18 @@ kodenya. `CLAUDE.md` di subfolder dimuat otomatis saat Claude membaca file di
 folder tersebut; file di `docs/` **tidak** dimuat otomatis, jadi baca saat
 diperlukan:
 
-| File                                       | Isi                                                                                     |
-| ------------------------------------------ | --------------------------------------------------------------------------------------- |
-| `apps/api/CLAUDE.md`                       | Hono, kontrak API, OpenAPI/Scalar, error, rate limit, logging                           |
-| `apps/app/CLAUDE.md`, `apps/web/CLAUDE.md` | React Router di Workers (keduanya mengimpor `docs/react-router.md`)                     |
-| `packages/db/CLAUDE.md`                    | Drizzle, Neon, migrasi, scoping data                                                    |
-| `packages/storage/CLAUDE.md`               | Cloudflare R2, presigned URL                                                            |
-| `packages/payments/CLAUDE.md`              | Polar & webhook                                                                         |
-| `docs/dependencies.md`                     | bun catalog lengkap — **baca sebelum menambah/upgrade dependensi**                      |
-| `docs/git.md`                              | Detail branch, commit, hook — **baca sebelum commit pertama di sesi**                   |
-| `STATUS.md`                                | Paket yang sudah ada, fase berjalan, keputusan tertunda — **baca di awal setiap tugas** |
-| `DESIGN.md`                                | Token & aturan UI — **baca sebelum tugas UI**                                           |
+| File                                       | Isi                                                                                                                         |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| `apps/api/CLAUDE.md`                       | Hono, kontrak API, OpenAPI/Scalar, error, rate limit, logging                                                               |
+| `apps/app/CLAUDE.md`, `apps/web/CLAUDE.md` | React Router di Workers (keduanya mengimpor `docs/react-router.md`)                                                         |
+| `packages/db/CLAUDE.md`                    | Drizzle, Neon, migrasi, scoping data                                                                                        |
+| `packages/storage/CLAUDE.md`               | Cloudflare R2, presigned URL                                                                                                |
+| `packages/payments/CLAUDE.md`              | Polar & webhook                                                                                                             |
+| `docs/dependencies.md`                     | bun catalog lengkap — **baca sebelum menambah/upgrade dependensi**                                                          |
+| `docs/git.md`                              | Detail branch, commit, hook — **baca sebelum commit pertama di sesi**                                                       |
+| `STATUS.md`                                | Paket yang sudah ada, fase berjalan, keputusan tertunda — **baca di awal setiap tugas**                                     |
+| `DESIGN.md`                                | Token & aturan UI — **baca sebelum tugas UI**                                                                               |
+| `docs/user-organization-dashboards.md`     | Rencana dashboard pengguna & organisasi terpisah (diusulkan) — **baca sebelum menyentuh organisasi, scoping, atau tagihan** |
 
 @AGENTS.md
 
