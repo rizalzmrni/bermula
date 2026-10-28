@@ -1,11 +1,12 @@
 # Rencana: Dashboard Pengguna & Organisasi Terpisah
 
-> Status: **diusulkan 2026-10-28, menunggu persetujuan developer.** Menyentuh
+> Status: **disetujui developer 2026-10-28.** Fase A selesai (#20). Menyentuh
 > auth, scoping data, skema DB, pembayaran, dan webhook, jadi termasuk tugas
-> **berisiko**. Setiap fase dikerjakan di branch/PR sendiri setelah disetujui.
-> Bila disetujui, keputusan di bagian [Keputusan yang diubah](#keputusan-yang-diubah)
-> dipindahkan ke `CLAUDE.md`, `packages/db/CLAUDE.md`, `packages/payments/CLAUDE.md`,
-> dan `STATUS.md`.
+> **berisiko**. Setiap fase dikerjakan di branch/PR sendiri. Keputusan di
+> bagian [Keputusan yang diubah](#keputusan-yang-diubah) sudah dipindahkan ke
+> `CLAUDE.md`, `packages/db/CLAUDE.md`, `packages/payments/CLAUDE.md`, dan
+> `STATUS.md`. `allow_multiple_subscriptions` sudah diaktifkan developer di
+> Polar.
 
 ## Latar belakang
 
@@ -145,9 +146,48 @@ organisasi.
 Setiap fase: test service/middleware baru, OpenAPI diperbarui, `check-types`,
 `check`, `test` lolos, daftar periksa `DESIGN.md` untuk UI.
 
+### Rincian fase B
+
+Fase A sudah menyediakan `requireOrganizationMember` dan
+`/api/organizations/{organizationId}/members|invitations`. Fase B memindahkan
+sisa endpoint yang masih memakai `requireAuth` (organisasi aktif di sesi), lalu
+menghapus organisasi pribadi. Tagihan **belum** berubah model (pembayar tetap
+organisasi sampai fase C); hanya lokasinya yang pindah, supaya `main` selalu
+berfungsi di antara fase.
+
+- **api**
+  - `/api/images/*` & `/api/documents/*` →
+    `/api/organizations/{organizationId}/images|documents/*`; `/api/billing/*`
+    → `/api/organizations/{organizationId}/billing/*`. Semua lewat
+    `requireOrganizationMember`; signature service tidak berubah
+    (`organizationId` + role tetap parameter eksplisit).
+  - `GET /api/me` memakai `requireUser` dan hanya mengembalikan `user`.
+  - Hapus `requireAuth`, `AuthenticatedEnv`, dan `getActiveMembership` bila
+    tidak dipakai lagi. `listUserOrganizations` tidak lagi menyaring
+    `is_personal`.
+- **auth**
+  - Hapus hook `session.create.before`, `personal-organization.ts` (+ test),
+    field tambahan `isPersonal`, larangan hapus/undang organisasi pribadi
+    (`assertInvitableOrganization`).
+  - Kolom `auth_sessions.active_organization_id` tetap ada (field wajib plugin
+    organization) tetapi tidak dipakai untuk scoping.
+- **db**: migrasi `drop column is_personal`. Organisasi pribadi yang sudah ada
+  di dev/staging menjadi organisasi biasa (slug `personal-<uuid>` tetap, bisa
+  diganti owner). Diterapkan ke Neon dev, lalu staging (minta izin saat itu).
+- **app**
+  - Halaman tagihan pindah dari `/settings/billing` ke `/o/:slug/billing`
+    (menu di navigasi organisasi). `/settings/billing` dihapus dan kembali di
+    fase C sebagai tagihan pribadi.
+  - Query akun tanpa organisasi; konteks organisasi (termasuk grup analitik
+    di `app-layout`) diambil dari loader `org-layout`.
+  - Pengguna baru tanpa organisasi melihat dashboard pribadi dengan state
+    kosong + ajakan "Buat organisasi".
+- **Test**: route yang pindah (403/404 non-anggota, organisasi lain), `/api/me`
+  tanpa organisasi, hook auth yang dihapus, alur sign-up tanpa organisasi.
+
 ## Keputusan yang diubah
 
-Bila disetujui, menggantikan keputusan berikut:
+Disetujui 2026-10-28, menggantikan keputusan berikut:
 
 - 2026-10-21 **Scoping data per-organisasi dari sesi aktif** → organisasi dari
   URL; data pribadi ber-`user_id`.
@@ -155,15 +195,15 @@ Bila disetujui, menggantikan keputusan berikut:
 - 2026-10-25/27 **Pembayar = organisasi** → pembayar = pengguna (customer
   Polar), subjek langganan = pengguna atau organisasi.
 
-## Pertanyaan terbuka
+## Pertanyaan yang sudah dijawab (2026-10-28)
 
-1. **Pembayar keluar dari organisasi.** Usulan: langganan organisasi tetap
-   aktif sampai dibatalkan; owner/admin melihat peringatan "pembayar bukan
-   anggota lagi" dan hanya pembayar yang bisa membuka Portal. Pindah pembayar =
+1. **Pembayar keluar dari organisasi.** Langganan organisasi tetap aktif
+   sampai dibatalkan; owner/admin melihat peringatan "pembayar bukan anggota
+   lagi" dan hanya pembayar yang bisa membuka Portal. Pindah pembayar =
    batalkan lalu berlangganan ulang oleh owner lain.
-2. **File pribadi.** Apakah pengguna juga butuh upload di dashboard pribadi
-   (mis. avatar), atau `storage_files` tetap hanya untuk organisasi pada fase
-   ini? Usulan: tetap organisasi saja; avatar menyusul.
-3. **Batas paket gratis.** `plans.ts` menyebut "1 organisasi" untuk paket
-   gratis; dengan model baru, batas jumlah organisasi bergantung pada paket
-   **pribadi** pengguna. Apakah batas itu ditegakkan di fase C atau ditunda?
+2. **File pribadi.** `storage_files` tetap hanya untuk organisasi pada fase
+   ini; upload pribadi (mis. avatar) menyusul.
+3. **Batas paket gratis.** Batas jumlah organisasi per paket pribadi
+   **ditunda**, bersama batas fitur per paket lainnya (anggota, kuota
+   storage). Teks "1 organisasi" di `plans.ts` disesuaikan di fase C agar
+   tidak menjanjikan batas yang belum ditegakkan.

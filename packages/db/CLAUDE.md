@@ -44,9 +44,16 @@ Aturan root `CLAUDE.md` tetap berlaku.
 
 ## Scoping data
 
-- **Per-organisasi** (diputuskan 2026-10-21): setiap tabel data pengguna punya
-  kolom `organization_id` (FK ke `auth_organizations.id`), dan setiap
-  query di service membatasi hasil dengan `activeOrganizationId` dari sesi.
+- **Dua konteks** (diputuskan 2026-10-28, menggantikan scoping dari sesi aktif
+  2026-10-21; diterapkan bertahap di fase B/C
+  `docs/user-organization-dashboards.md`):
+  - Data organisasi punya kolom `organization_id` (FK ke
+    `auth_organizations.id`). Service menerima `organizationId` yang diambil
+    dari path URL dan sudah dicek keanggotaannya oleh middleware
+    `requireOrganizationMember`, bukan dari `activeOrganizationId` sesi.
+  - Data pribadi punya kolom `user_id` (FK ke `auth_users.id`). Service
+    menerima `userId` dari sesi.
+  - Tidak ada organisasi pribadi otomatis; pengguna bisa punya nol organisasi.
 - Tabel milik better-auth (`auth_users`, `auth_sessions`, `auth_accounts`,
   `auth_verifications`, `auth_organizations`, `auth_members`,
   `auth_invitations`) mengikuti field better-auth (adapter `usePlural: true`),
