@@ -18,6 +18,11 @@ import {
 } from "./config";
 import type { AuthEnv } from "./config";
 import {
+  assertInvitableOrganization,
+  validateNewOrganization,
+  validateOrganizationUpdate,
+} from "./organization-hooks";
+import {
   createPersonalOrganizationStore,
   resolveActiveOrganizationId,
 } from "./personal-organization";
@@ -164,6 +169,14 @@ export const createAuth = ({
       organization({
         invitationExpiresIn: INVITATION_EXPIRES_IN,
         organizationHooks: {
+          beforeCreateInvitation: ({ organization: org }) => {
+            assertInvitableOrganization(org);
+            return Promise.resolve();
+          },
+          beforeCreateOrganization: ({ organization: org }) =>
+            Promise.resolve({
+              data: { ...org, ...validateNewOrganization(org) },
+            }),
           // Organisasi pribadi menjadi tempat data default pengguna; bila
           // terhapus, sesi berikutnya akan membuat organisasi pribadi kosong.
           beforeDeleteOrganization: ({ organization: org }) => {
@@ -176,6 +189,10 @@ export const createAuth = ({
             }
             return Promise.resolve();
           },
+          beforeUpdateOrganization: ({ organization: org }) =>
+            Promise.resolve({
+              data: { ...org, ...validateOrganizationUpdate(org) },
+            }),
         },
         requireEmailVerificationOnInvitation: true,
         schema: {

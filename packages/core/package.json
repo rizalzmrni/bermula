@@ -7,6 +7,7 @@
     "./brand": "./src/brand.ts",
     "./files": "./src/files.ts",
     "./format": "./src/format.ts",
+    "./organizations": "./src/organizations.ts",
     "./plans": "./src/plans.ts"
   },
   "scripts": {
