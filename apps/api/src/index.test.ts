@@ -174,6 +174,20 @@ describe("api worker", () => {
     expect(statuses[10]).toBe(429);
   });
 
+  it("limits organization auth endpoints with the API limit only", async () => {
+    const statuses: number[] = [];
+    // Satu lebih banyak dari batas AUTH_RATE_LIMIT (10/menit).
+    for (let attempt = 0; attempt < 11; attempt += 1) {
+      // oxlint-disable-next-line no-await-in-loop
+      const response = await request("/api/auth/organization/list", {
+        ip: "10.0.0.17",
+      });
+      statuses.push(response.status);
+    }
+
+    expect(statuses).not.toContain(429);
+  });
+
   it("requires a session for billing endpoints", async () => {
     const responses = await Promise.all([
       request("/api/billing/subscription", { ip: "10.0.0.11" }),

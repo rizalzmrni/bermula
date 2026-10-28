@@ -15,6 +15,10 @@ import { scheduled } from "./scheduled";
 import type { AppEnv, Bindings } from "./types";
 
 const WEBHOOK_PATH_PREFIX = "/api/webhooks/";
+// Kelola organisasi (undang, ubah role, dst.) butuh sesi dan dipakai rutin
+// oleh admin; batas ketat 10/menit untuk brute force login tidak relevan dan
+// cepat habis di balik NAT kantor. Tetap ikut API_RATE_LIMIT.
+const ORGANIZATION_AUTH_PATH_PREFIX = "/api/auth/organization/";
 
 const app = new OpenAPIHono<AppEnv>({ defaultHook: validationHook });
 
@@ -24,7 +28,12 @@ const app = new OpenAPIHono<AppEnv>({ defaultHook: validationHook });
 // ikut dibatasi per IP.
 app.use("*", contextMiddleware);
 app.use("*", corsMiddleware);
-app.use("/api/auth/*", rateLimit("AUTH_RATE_LIMIT"));
+app.use(
+  "/api/auth/*",
+  rateLimit("AUTH_RATE_LIMIT", {
+    exceptPrefixes: [ORGANIZATION_AUTH_PATH_PREFIX],
+  })
+);
 app.use(
   "/api/*",
   rateLimit("API_RATE_LIMIT", { exceptPrefixes: [WEBHOOK_PATH_PREFIX] })

@@ -14,7 +14,7 @@
   // tidak di file ini. Skema: packages/env/src/api.ts.
   "ratelimits": [
     {
-      // /api/auth/*: membatasi brute force login & spam email verifikasi.
+      // /api/auth/* (kecuali /organization/*): brute force login & spam email.
       "name": "AUTH_RATE_LIMIT",
       "namespace_id": "1001",
       "simple": { "limit": 10, "period": 60 },
